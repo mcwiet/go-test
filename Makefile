@@ -4,6 +4,9 @@
 
 APP_NAME_API = "api"
 BUILD_DIR = "./dist"
+CDK_DIR = "./cdk.out"
+GOOS = linux
+GOARCH = amd64
 
 #################################################################################
 # COMMANDS                                                                      #
@@ -16,19 +19,43 @@ build: build-api
 ## Build the API application
 build-api:
 	@ echo "⏳ Start building API..."
-	@ go build -o ${BUILD_DIR}/${APP_NAME_API} ./cmd/api
+	@ GOARCH=${GOARCH} GOOS=${GOOS} go build -o ${BUILD_DIR}/${APP_NAME_API} ./cmd/api
 	@ echo "✅ Done building API"
+
+## Build the infrastructure
+build-infra:
+	@ echo "⏳ Start building infrastructure..."
+	@ cdk synth
+	@ echo "✅ Done building infrastructure"
 
 ## Clean all build output
 clean:
 	@ echo "⏳ Start cleaning..."
 	@ rm -rf ${BUILD_DIR}
+	@ rm -rf ${CDK_DIR}
 	@ echo "✅ Done cleaning"
 
-## Start the API application
-start-api:
-	@ echo "🏎  Starting the API"
-	@ ${BUILD_DIR}/${APP_NAME_API}
+## Build, package, and update the API application Lambda code (expects infrastructure to have been deployed)
+deploy-api: build-api
+	@ echo "⏳ Start updating API Lambda code..."
+	@ rm -f ${BUILD_DIR}/bootstrap ${BUILD_DIR}/bootstrap.zip
+	@ cp ${BUILD_DIR}/${APP_NAME_API} ${BUILD_DIR}/bootstrap
+	@ zip -jr ${BUILD_DIR}/bootstrap.zip ${BUILD_DIR}/bootstrap
+	@ aws lambda update-function-code --function-name go-api-lambda --zip-file fileb://${BUILD_DIR}/bootstrap.zip
+	@ rm -f ${BUILD_DIR}/bootstrap ${BUILD_DIR}/bootstrap.zip
+	@ echo "✅ Done updating API Lambda code"
+
+## Deploy the infrastructure
+deploy-infra:
+	@ echo "⏳ Start deploying infrastructure..."
+	@ cdk deploy
+	@ echo "✅ Done deploying infrastructure"
+
+## Install dependencies
+install:
+	@ echo "⏳ Start installing dependencies..."
+	@ go mod download
+	@ echo "✅ Done installing dependencies"
 
 #################################################################################
 # RESERVED                                                                      #

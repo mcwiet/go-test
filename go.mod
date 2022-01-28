@@ -1,3 +1,15 @@
 module git-codecommit.us-east-2.amazonaws.com/v1/repos/go-test
 
 go 1.17
+
+require (
+	github.com/aws/aws-cdk-go/awscdk/v2 v2.9.0
+	github.com/aws/aws-lambda-go v1.28.0
+	github.com/aws/constructs-go/constructs/v10 v10.0.47
+	github.com/aws/jsii-runtime-go v1.52.1
+)
+
+require (
+	github.com/Masterminds/semver/v3 v3.1.1 // indirect
+	github.com/aws/aws-cdk-go/awscdklambdagoalpha/v2 v2.9.0-alpha.0
+)

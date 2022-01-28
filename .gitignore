@@ -1,1 +1,4 @@
+.DS_Store
+
+cdk.out/
 dist/

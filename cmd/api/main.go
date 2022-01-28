@@ -1,16 +1,18 @@
+// main.go
 package main
 
 import (
+	"context"
 	"fmt"
-	"net/http"
+
+	"github.com/aws/aws-lambda-go/lambda"
 )
 
-func main() {
-	http.HandleFunc("/", HelloServer)
-	http.ListenAndServe(":8080", nil)
+func hello(ctx context.Context, request interface{}) (string, error) {
+	return fmt.Sprintf("%+v\n", request), nil
 }
 
-func HelloServer(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("Test log")
-	fmt.Fprintf(w, "Hello, Mike!")
+func main() {
+	// Make the handler available for Remote Procedure Call by AWS Lambda
+	lambda.Start(hello)
 }
