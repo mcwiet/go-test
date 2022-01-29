@@ -1,4 +1,3 @@
-// main.go
 package main
 
 import (
@@ -12,19 +11,20 @@ import (
 
 func handle(ctx context.Context, rawRequest interface{}) (interface{}, error) {
 	request := controller.NewRequest(rawRequest)
-	var ret interface{} = nil
-	var err error = nil
+	var response controller.Response
 
 	switch request.Info.FieldName {
 	case "person":
-		ret = controller.GetPerson(request)
+		response = controller.GetPerson(request)
 	case "people":
-		ret = controller.GetPeople(request)
+		response = controller.GetPeople(request)
 	default:
-		err = errors.New("request not recognized")
+		response = controller.Response{
+			Error: errors.New("request not recognized"),
+		}
 	}
 
-	return ret, err
+	return response.Data, response.Error
 }
 
 func main() {
