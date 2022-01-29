@@ -5,6 +5,7 @@
 APP_NAME_API = "api"
 BUILD_DIR = "./dist"
 CDK_DIR = "./cdk.out"
+EVENTS_DIR = "./test/_events"
 GOOS = linux
 GOARCH = amd64
 
@@ -36,7 +37,7 @@ clean:
 	@ echo "✅ Done cleaning"
 
 ## Build, package, and update the API application Lambda code (expects infrastructure to have been deployed)
-deploy-code-api: build-api
+deploy-api: build-api
 	@ echo "⏳ Start updating API Lambda code..."
 	@ rm -f ${BUILD_DIR}/bootstrap ${BUILD_DIR}/bootstrap.zip
 	@ cp ${BUILD_DIR}/${APP_NAME_API} ${BUILD_DIR}/bootstrap
@@ -56,6 +57,12 @@ install:
 	@ echo "⏳ Start installing dependencies..."
 	@ go mod download
 	@ echo "✅ Done installing dependencies"
+
+## Invoke the API; set EVENT=[name of event] (e.g. use 'person' for ./test/_events/person.json)
+invoke-api:
+	@ echo "⏳ Invoking API with event '${EVENTS_DIR}/${EVENT}.json'..."
+	@ sam local invoke go-api-lambda -e ${EVENTS_DIR}/${EVENT}.json  -t ${CDK_DIR}/go-api.template.json
+	@ echo "\n✅ Done invoking API"
 
 #################################################################################
 # RESERVED                                                                      #
