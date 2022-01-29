@@ -5,7 +5,7 @@
 APP_NAME_API = "api"
 BUILD_DIR = "./dist"
 CDK_DIR = "./cdk.out"
-EVENTS_DIR = "./test/_events"
+EVENTS_DIR = "./test/_request"
 GOOS = linux
 GOARCH = amd64
 
@@ -14,7 +14,7 @@ GOARCH = amd64
 #################################################################################
 
 ## Build everything
-build: build-api
+build: build-api build-infra
 	@ echo "✅ Done building everything"
 
 ## Build the API application
@@ -58,10 +58,10 @@ install:
 	@ go mod download
 	@ echo "✅ Done installing dependencies"
 
-## Invoke the API; set EVENT=[name of event] (e.g. use 'person' for ./test/_events/person.json)
+## Invoke the API; set API_REQUEST=[name of request] (e.g. use 'person' for ./test/_request/person.json)
 invoke-api:
-	@ echo "⏳ Invoking API with event '${EVENTS_DIR}/${EVENT}.json'..."
-	@ sam local invoke go-api-lambda -e ${EVENTS_DIR}/${EVENT}.json  -t ${CDK_DIR}/go-api.template.json
+	@ echo "⏳ Invoking API with event '${EVENTS_DIR}/${API_REQUEST}.json'..."
+	@ sam local invoke go-api-lambda -e ${EVENTS_DIR}/${API_REQUEST}.json  -t ${CDK_DIR}/go-api.template.json
 	@ echo "\n✅ Done invoking API"
 
 #################################################################################
