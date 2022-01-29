@@ -22,14 +22,14 @@ var (
 	}
 )
 
-func GetPerson(id string) model.Person {
-	return people[id]
+func GetPerson(id string) (model.Person, error) {
+	return people[id], nil
 }
 
-func GetPeople() *[]model.Person {
+func GetPeople() ([]model.Person, error) {
 	arr := []model.Person{}
 	for _, value := range people {
 		arr = append(arr, value)
 	}
-	return &arr
+	return arr, nil
 }

@@ -46,3 +46,4 @@ Once the infrastructure has been deployed, changes to code can be quickly upload
 
 1. [Directory structure recommendations](https://github.com/golang-standards/project-layout)
 1. [GraphQL knowledge base](https://graphql.org/learn/)
+1. [GraphQL specification](https://spec.graphql.org/)
