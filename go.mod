@@ -1,4 +1,4 @@
-module git-codecommit.us-east-2.amazonaws.com/v1/repos/go-test
+module cwietnie/go-test
 
 go 1.17
 
@@ -11,5 +11,6 @@ require (
 
 require (
 	github.com/Masterminds/semver/v3 v3.1.1 // indirect
+	github.com/aws/aws-cdk-go/awscdkappsyncalpha/v2 v2.9.0-alpha.0
 	github.com/aws/aws-cdk-go/awscdklambdagoalpha/v2 v2.9.0-alpha.0
 )

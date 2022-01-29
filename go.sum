@@ -3,6 +3,8 @@ github.com/Masterminds/semver/v3 v3.1.1 h1:hLg3sBzpNErnxhQtUy/mmLR2I9foDujNK030I
 github.com/Masterminds/semver/v3 v3.1.1/go.mod h1:VPu/7SZ7ePZ3QOrcuXROw5FAcLl4a0cBrbBpGY/8hQs=
 github.com/aws/aws-cdk-go/awscdk/v2 v2.9.0 h1:9Vx0zufA2C6BRtZnTh9zmzH5jy3YRW9u4jmaHCHAfqQ=
 github.com/aws/aws-cdk-go/awscdk/v2 v2.9.0/go.mod h1:mO/02PJT3m7MdYfnxHFAvD5/4tPcVb5ALovWXX9qf+k=
+github.com/aws/aws-cdk-go/awscdkappsyncalpha/v2 v2.9.0-alpha.0 h1:j6h7EQPpgSFfGEsCpnJ5Is3RrAR5WeevNMidC7CQfd4=
+github.com/aws/aws-cdk-go/awscdkappsyncalpha/v2 v2.9.0-alpha.0/go.mod h1:P2HxPtsAXRfdxn1L9tySlWWVUNFkdWZs8TB5XQRqVfE=
 github.com/aws/aws-cdk-go/awscdklambdagoalpha/v2 v2.9.0-alpha.0 h1:P6EMa06ZAwM52WBnmlpHgWdQns6uKMfid5rgz7d1rtw=
 github.com/aws/aws-cdk-go/awscdklambdagoalpha/v2 v2.9.0-alpha.0/go.mod h1:lfTLN7kp2V1jpFA/naylYZkwGf5wVap0MhyTWIfUbrU=
 github.com/aws/aws-lambda-go v1.28.0 h1:fZiik1PZqW2IyAN4rj+Y0UBaO1IDFlsNo9Zz/XnArK4=

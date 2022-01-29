@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/aws/aws-cdk-go/awscdk/v2"
+	"github.com/aws/aws-cdk-go/awscdkappsyncalpha/v2"
 	"github.com/aws/aws-cdk-go/awscdklambdagoalpha/v2"
 	"github.com/aws/constructs-go/constructs/v10"
 	"github.com/aws/jsii-runtime-go"
@@ -18,12 +19,35 @@ func NewApiStack(scope constructs.Construct, id string, props *ApiStackProps) aw
 	}
 	stack := awscdk.NewStack(scope, &id, &sprops)
 
-	// The code that defines your stack goes here
-
-	awscdklambdagoalpha.NewGoFunction(stack, jsii.String("go-api-lambda"), &awscdklambdagoalpha.GoFunctionProps{
+	// Lambda resolver
+	lambda := awscdklambdagoalpha.NewGoFunction(stack, jsii.String("go-api-lambda"), &awscdklambdagoalpha.GoFunctionProps{
 		Entry:        jsii.String("./cmd/api"),
 		FunctionName: jsii.String("go-api-lambda"),
 		Timeout:      awscdk.Duration_Seconds(jsii.Number(5)),
+	})
+
+	// Schema definition
+	schema := awscdkappsyncalpha.Schema_FromAsset(jsii.String("./api/schema.graphql"))
+
+	// AppSync API
+	api := awscdkappsyncalpha.NewGraphqlApi(stack, jsii.String("go-api-appsync"), &awscdkappsyncalpha.GraphqlApiProps{
+		Name:   jsii.String("go-api-appsync"),
+		Schema: schema,
+	})
+
+	// Data source(s) and resolvers
+	lambdaSource := api.AddLambdaDataSource(jsii.String("lambda_source"), lambda, &awscdkappsyncalpha.DataSourceOptions{
+		Name: jsii.String("lambda_source"),
+	})
+	api.CreateResolver(&awscdkappsyncalpha.ExtendedResolverProps{
+		TypeName:   jsii.String("Query"),
+		FieldName:  jsii.String("person"),
+		DataSource: lambdaSource,
+	})
+	api.CreateResolver(&awscdkappsyncalpha.ExtendedResolverProps{
+		TypeName:   jsii.String("Query"),
+		FieldName:  jsii.String("people"),
+		DataSource: lambdaSource,
 	})
 
 	return stack

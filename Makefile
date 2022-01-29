@@ -36,7 +36,7 @@ clean:
 	@ echo "✅ Done cleaning"
 
 ## Build, package, and update the API application Lambda code (expects infrastructure to have been deployed)
-deploy-api: build-api
+deploy-code-api: build-api
 	@ echo "⏳ Start updating API Lambda code..."
 	@ rm -f ${BUILD_DIR}/bootstrap ${BUILD_DIR}/bootstrap.zip
 	@ cp ${BUILD_DIR}/${APP_NAME_API} ${BUILD_DIR}/bootstrap
