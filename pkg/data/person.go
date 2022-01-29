@@ -1,6 +1,6 @@
 package data
 
-import "cwietnie/go-test/pkg/model"
+import "github.com/mcwiet/go-test/pkg/model"
 
 var (
 	people = map[string]model.Person{

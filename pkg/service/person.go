@@ -1,8 +1,8 @@
 package service
 
 import (
-	"cwietnie/go-test/pkg/data"
-	"cwietnie/go-test/pkg/model"
+	"github.com/mcwiet/go-test/pkg/data"
+	"github.com/mcwiet/go-test/pkg/model"
 )
 
 func GetPerson(id string) model.Person {

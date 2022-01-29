@@ -1,4 +1,4 @@
-module cwietnie/go-test
+module github.com/mcwiet/go-test
 
 go 1.17
 

@@ -3,9 +3,10 @@ package main
 
 import (
 	"context"
-	"cwietnie/go-test/pkg/service"
 	"encoding/json"
 	"errors"
+
+	"github.com/mcwiet/go-test/pkg/service"
 
 	"github.com/aws/aws-lambda-go/lambda"
 )
