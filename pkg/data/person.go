@@ -37,7 +37,7 @@ func (p *PersonDao) GetPerson(id string) (*model.Person, error) {
 
 	if err != nil {
 		log.Println(err)
-		return nil, errors.New("internal error retrieving person")
+		return nil, errors.New("error retrieving person")
 	} else if ret.Item == nil {
 		return nil, errors.New("person not found")
 	}
@@ -55,11 +55,10 @@ func (p *PersonDao) GetPerson(id string) (*model.Person, error) {
 
 func (p *PersonDao) GetPeople() (*[]model.Person, error) {
 	ret, err := p.client.Query(&dynamodb.QueryInput{
-		TableName: &p.tableName,
-		// TODO index name
+		TableName:              &p.tableName,
 		IndexName:              jsii.String("sort-key-gsi"),
 		KeyConditionExpression: jsii.String("Sort = :sortVal"),
-		ProjectionExpression:   jsii.String("#name, Age"),
+		ProjectionExpression:   jsii.String("Id, #name, Age"),
 		ExpressionAttributeNames: map[string]*string{
 			"#name": jsii.String("Name"),
 		},
@@ -70,7 +69,7 @@ func (p *PersonDao) GetPeople() (*[]model.Person, error) {
 
 	if err != nil {
 		log.Println(err)
-		return nil, errors.New("could not retrieve people")
+		return nil, errors.New("error retrieving people")
 	}
 
 	items := ret.Items
@@ -78,6 +77,7 @@ func (p *PersonDao) GetPeople() (*[]model.Person, error) {
 	for _, item := range items {
 		age, _ := strconv.Atoi(*item["Age"].N)
 		arr = append(arr, model.Person{
+			Id:   *item["Id"].S,
 			Name: *item["Name"].S,
 			Age:  age,
 		})

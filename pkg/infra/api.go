@@ -72,7 +72,7 @@ func NewApiStack(scope constructs.Construct, id string, props *awscdk.StackProps
 	})
 
 	// Add environment variables to Lambda to reference other infra
-	// lambda.AddEnvironment()
+	lambda.AddEnvironment(jsii.String("DDB_TABLE_NAME"), &tableName, nil)
 
 	return stack
 }

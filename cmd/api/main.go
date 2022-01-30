@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"errors"
+	"os"
 
 	"github.com/mcwiet/go-test/pkg/controller"
 	"github.com/mcwiet/go-test/pkg/data"
@@ -21,7 +22,8 @@ func init() {
 	sess := session.Must(session.NewSession())
 	ddbClient := dynamodb.New(sess)
 
-	personDao := data.NewPersonDao(ddbClient, "go-api-primary-table")
+	tableName := os.Getenv("DDB_TABLE_NAME")
+	personDao := data.NewPersonDao(ddbClient, tableName)
 	personService := service.NewPersonService(personDao)
 	personController = controller.NewPerosnController(personService)
 }
