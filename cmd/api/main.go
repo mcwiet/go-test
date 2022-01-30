@@ -5,9 +5,26 @@ import (
 	"errors"
 
 	"github.com/mcwiet/go-test/pkg/controller"
+	"github.com/mcwiet/go-test/pkg/data"
+	"github.com/mcwiet/go-test/pkg/service"
 
 	"github.com/aws/aws-lambda-go/lambda"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/dynamodb"
 )
+
+var (
+	personController controller.PersonController
+)
+
+func init() {
+	sess := session.Must(session.NewSession())
+	ddbClient := dynamodb.New(sess)
+
+	personDao := data.NewPersonDao(ddbClient, "go-api-primary-table")
+	personService := service.NewPersonService(personDao)
+	personController = controller.NewPerosnController(personService)
+}
 
 func handle(ctx context.Context, rawRequest interface{}) (interface{}, error) {
 	request := controller.NewRequest(rawRequest)
@@ -15,9 +32,9 @@ func handle(ctx context.Context, rawRequest interface{}) (interface{}, error) {
 
 	switch request.Info.FieldName {
 	case "person":
-		response = controller.GetPerson(request)
+		response = personController.GetPerson(request)
 	case "people":
-		response = controller.GetPeople(request)
+		response = personController.GetPeople(request)
 	default:
 		response = controller.Response{
 			Error: errors.New("request not recognized"),

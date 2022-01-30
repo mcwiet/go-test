@@ -2,6 +2,8 @@ package infra
 
 import (
 	"github.com/aws/aws-cdk-go/awscdk/v2"
+	"github.com/aws/aws-cdk-go/awscdk/v2/awsdynamodb"
+	"github.com/aws/aws-cdk-go/awscdk/v2/awslambda"
 	"github.com/aws/aws-cdk-go/awscdkappsyncalpha/v2"
 	"github.com/aws/aws-cdk-go/awscdklambdagoalpha/v2"
 	"github.com/aws/constructs-go/constructs/v10"
@@ -22,6 +24,7 @@ func NewApiStack(scope constructs.Construct, id string, props *awscdk.StackProps
 		Entry:        jsii.String("./cmd/api"),
 		FunctionName: &lambdaName,
 		Timeout:      awscdk.Duration_Seconds(jsii.Number(5)),
+		Tracing:      awslambda.Tracing_ACTIVE,
 	})
 
 	// Schema definition
@@ -51,6 +54,25 @@ func NewApiStack(scope constructs.Construct, id string, props *awscdk.StackProps
 		FieldName:  jsii.String("people"),
 		DataSource: lambdaSource,
 	})
+
+	// Database
+	tableName := *stackName + "-primary-table"
+	partitionKey := awsdynamodb.Attribute{Name: jsii.String("Id"), Type: awsdynamodb.AttributeType_STRING}
+	sortKey := awsdynamodb.Attribute{Name: jsii.String("Sort"), Type: awsdynamodb.AttributeType_STRING}
+	table := awsdynamodb.NewTable(stack, &tableName, &awsdynamodb.TableProps{
+		TableName:    &tableName,
+		PartitionKey: &partitionKey,
+		SortKey:      &sortKey,
+		BillingMode:  awsdynamodb.BillingMode_PAY_PER_REQUEST,
+	})
+	table.AddGlobalSecondaryIndex(&awsdynamodb.GlobalSecondaryIndexProps{
+		IndexName:      jsii.String("sort-key-gsi"),
+		ProjectionType: awsdynamodb.ProjectionType_ALL,
+		PartitionKey:   &sortKey,
+	})
+
+	// Add environment variables to Lambda to reference other infra
+	// lambda.AddEnvironment()
 
 	return stack
 }

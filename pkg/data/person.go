@@ -1,35 +1,86 @@
 package data
 
-import "github.com/mcwiet/go-test/pkg/model"
+import (
+	"errors"
+	"log"
+	"strconv"
 
-var (
-	people = map[string]model.Person{
-		"6e483041-002a-4942-bc18-5605e5826078": {
-			Id:   "6e483041-002a-4942-bc18-5605e5826078",
-			Name: "Mike",
-			Age:  28,
-		},
-		"0231d150-fee7-4158-a0c2-95831b152062": {
-			Id:   "0231d150-fee7-4158-a0c2-95831b152062",
-			Name: "Katherine",
-			Age:  28,
-		},
-		"43186a74-db2f-463c-a1d9-d4adea731cfc": {
-			Id:   "43186a74-db2f-463c-a1d9-d4adea731cfc",
-			Name: "Levi",
-			Age:  1,
-		},
-	}
+	"github.com/aws/aws-sdk-go/service/dynamodb"
+	"github.com/aws/jsii-runtime-go"
+	"github.com/mcwiet/go-test/pkg/model"
 )
 
-func GetPerson(id string) (model.Person, error) {
-	return people[id], nil
+type PersonDao struct {
+	client    *dynamodb.DynamoDB
+	tableName string
 }
 
-func GetPeople() ([]model.Person, error) {
-	arr := []model.Person{}
-	for _, value := range people {
-		arr = append(arr, value)
+func NewPersonDao(client *dynamodb.DynamoDB, tableName string) PersonDao {
+	return PersonDao{
+		client:    client,
+		tableName: tableName,
 	}
-	return arr, nil
+}
+
+func (p *PersonDao) GetPerson(id string) (*model.Person, error) {
+	ret, err := p.client.GetItem(&dynamodb.GetItemInput{
+		TableName: &p.tableName,
+		Key: map[string]*dynamodb.AttributeValue{
+			"Id":   {S: jsii.String("person-" + id)},
+			"Sort": {S: jsii.String("person")},
+		},
+		ProjectionExpression: jsii.String("#name, Age"),
+		ExpressionAttributeNames: map[string]*string{
+			"#name": jsii.String("Name"),
+		},
+	})
+
+	if err != nil {
+		log.Println(err)
+		return nil, errors.New("internal error retrieving person")
+	} else if ret.Item == nil {
+		return nil, errors.New("person not found")
+	}
+
+	item := ret.Item
+	age, err := strconv.Atoi(*item["Age"].N)
+	person := model.Person{
+		Id:   id,
+		Name: *item["Name"].S,
+		Age:  age,
+	}
+
+	return &person, err
+}
+
+func (p *PersonDao) GetPeople() (*[]model.Person, error) {
+	ret, err := p.client.Query(&dynamodb.QueryInput{
+		TableName: &p.tableName,
+		// TODO index name
+		IndexName:              jsii.String("sort-key-gsi"),
+		KeyConditionExpression: jsii.String("Sort = :sortVal"),
+		ProjectionExpression:   jsii.String("#name, Age"),
+		ExpressionAttributeNames: map[string]*string{
+			"#name": jsii.String("Name"),
+		},
+		ExpressionAttributeValues: map[string]*dynamodb.AttributeValue{
+			":sortVal": {S: jsii.String("person")},
+		},
+	})
+
+	if err != nil {
+		log.Println(err)
+		return nil, errors.New("could not retrieve people")
+	}
+
+	items := ret.Items
+	arr := []model.Person{}
+	for _, item := range items {
+		age, _ := strconv.Atoi(*item["Age"].N)
+		arr = append(arr, model.Person{
+			Name: *item["Name"].S,
+			Age:  age,
+		})
+	}
+	return &arr, nil
 }
