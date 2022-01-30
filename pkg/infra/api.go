@@ -3,6 +3,7 @@ package infra
 import (
 	"github.com/aws/aws-cdk-go/awscdk/v2"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awsdynamodb"
+	"github.com/aws/aws-cdk-go/awscdk/v2/awsiam"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awslambda"
 	"github.com/aws/aws-cdk-go/awscdkappsyncalpha/v2"
 	"github.com/aws/aws-cdk-go/awscdklambdagoalpha/v2"
@@ -55,7 +56,7 @@ func NewApiStack(scope constructs.Construct, id string, props *awscdk.StackProps
 		DataSource: lambdaSource,
 	})
 
-	// Database
+	// Dynamo DB table
 	tableName := *stackName + "-primary-table"
 	partitionKey := awsdynamodb.Attribute{Name: jsii.String("Id"), Type: awsdynamodb.AttributeType_STRING}
 	sortKey := awsdynamodb.Attribute{Name: jsii.String("Sort"), Type: awsdynamodb.AttributeType_STRING}
@@ -70,6 +71,22 @@ func NewApiStack(scope constructs.Construct, id string, props *awscdk.StackProps
 		ProjectionType: awsdynamodb.ProjectionType_ALL,
 		PartitionKey:   &sortKey,
 	})
+
+	// Permission for Lambda to access Dynamo DB table
+	lambda.AddToRolePolicy(awsiam.NewPolicyStatement(&awsiam.PolicyStatementProps{
+		Effect: awsiam.Effect_ALLOW,
+		Actions: jsii.Strings(
+			"dynamodb:BatchGetItem",
+			"dynamodb:DescribeTable",
+			"dynamodb:GetItem",
+			"dynamodb:Query",
+			"dynamodb:Scan",
+			"dynamodb:BatchWriteItem",
+			"dynamodb:DeleteItem",
+			"dynamodb:UpdateItem",
+			"dynamodb:PutItem"),
+		Resources: jsii.Strings(*table.TableArn(), *table.TableArn()+"/*"),
+	}))
 
 	// Add environment variables to Lambda to reference other infra
 	lambda.AddEnvironment(jsii.String("DDB_TABLE_NAME"), &tableName, nil)
