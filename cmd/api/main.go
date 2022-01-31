@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"errors"
+	"log"
 	"os"
 
 	"github.com/mcwiet/go-test/pkg/controller"
@@ -32,15 +33,28 @@ func handle(ctx context.Context, rawRequest interface{}) (interface{}, error) {
 	request := controller.NewRequest(rawRequest)
 	var response controller.Response
 
-	switch request.Info.FieldName {
-	case "person":
-		response = personController.GetPerson(request)
-	case "people":
-		response = personController.GetPeople(request)
-	default:
-		response = controller.Response{
-			Error: errors.New("request not recognized"),
+	log.Println(request.Info.ParentTypeName)
+	log.Println(request.Info.FieldName)
+
+	switch request.Info.ParentTypeName {
+	case "Query":
+		switch request.Info.FieldName {
+		case "person":
+			response = personController.HandleGetPerson(request)
+		case "people":
+			response = personController.HandleGetPeople(request)
+		default:
+			response = controller.Response{Error: errors.New("query not recognized")}
 		}
+	case "Mutation":
+		switch request.Info.FieldName {
+		case "createPerson":
+			response = personController.HandleCreatePerson(request)
+		default:
+			response = controller.Response{Error: errors.New("mutation not recognized")}
+		}
+	default:
+		response = controller.Response{Error: errors.New("request type not recognized")}
 	}
 
 	return response.Data, response.Error

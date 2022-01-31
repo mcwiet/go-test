@@ -10,11 +10,13 @@ import (
 	"github.com/mcwiet/go-test/pkg/model"
 )
 
+// Object containing information needed to access the Person data store
 type PersonDao struct {
 	client    *dynamodb.DynamoDB
 	tableName string
 }
 
+// Creates a Person data store access object
 func NewPersonDao(client *dynamodb.DynamoDB, tableName string) PersonDao {
 	return PersonDao{
 		client:    client,
@@ -22,6 +24,28 @@ func NewPersonDao(client *dynamodb.DynamoDB, tableName string) PersonDao {
 	}
 }
 
+// Adds a person to the data store
+func (p *PersonDao) AddPerson(person *model.Person) error {
+	age := strconv.Itoa(person.Age)
+	_, err := p.client.PutItem(&dynamodb.PutItemInput{
+		TableName: &p.tableName,
+		Item: map[string]*dynamodb.AttributeValue{
+			"Id":   {S: jsii.String("person-" + person.Id)},
+			"Sort": {S: jsii.String("person")},
+			"Name": {S: &person.Name},
+			"Age":  {N: &age},
+		},
+	})
+
+	if err != nil {
+		log.Println(err)
+		return errors.New("error adding person")
+	}
+
+	return nil
+}
+
+// Gets a person from the data store using the ID
 func (p *PersonDao) GetPerson(id string) (*model.Person, error) {
 	ret, err := p.client.GetItem(&dynamodb.GetItemInput{
 		TableName: &p.tableName,
@@ -53,6 +77,7 @@ func (p *PersonDao) GetPerson(id string) (*model.Person, error) {
 	return &person, err
 }
 
+// Get a list of persons from the data store
 func (p *PersonDao) GetPeople() (*[]model.Person, error) {
 	ret, err := p.client.Query(&dynamodb.QueryInput{
 		TableName:              &p.tableName,

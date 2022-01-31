@@ -3,8 +3,8 @@ package controller
 import "encoding/json"
 
 type Request struct {
-	Arguments map[string]string `json:"arguments"`
-	Identity  string            `json:"identity"`
+	Arguments map[string]interface{} `json:"arguments"`
+	Identity  string                 `json:"identity"`
 	Info      struct {
 		FieldName           string            `json:"fieldName"`
 		ParentTypeName      string            `json:"parentTypeName"`

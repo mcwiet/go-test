@@ -1,0 +1,10 @@
+{
+  "info": {
+    "parentTypeName": "Mutation",
+    "fieldName": "createPerson"
+  },
+  "arguments": {
+    "name": "DUMMY",
+    "age": 3
+  }
+}

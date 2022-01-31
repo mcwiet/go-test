@@ -9,7 +9,10 @@ require (
 	github.com/aws/jsii-runtime-go v1.52.1
 )
 
-require github.com/jmespath/go-jmespath v0.4.0 // indirect
+require (
+	github.com/google/uuid v1.3.0 // indirect
+	github.com/jmespath/go-jmespath v0.4.0 // indirect
+)
 
 require (
 	github.com/Masterminds/semver/v3 v3.1.1 // indirect
