@@ -26,7 +26,7 @@ func init() {
 	tableName := os.Getenv("DDB_TABLE_NAME")
 	personDao := data.NewPersonDao(ddbClient, tableName)
 	personService := service.NewPersonService(personDao)
-	personController = controller.NewPerosnController(personService)
+	personController = controller.NewPersonController(personService)
 }
 
 func handle(ctx context.Context, rawRequest interface{}) (interface{}, error) {

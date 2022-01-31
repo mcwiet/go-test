@@ -12,7 +12,7 @@ type PersonController struct {
 }
 
 // Creates a new Person controller object
-func NewPerosnController(service service.PersonService) PersonController {
+func NewPersonController(service service.PersonService) PersonController {
 	return PersonController{
 		personService: service,
 	}
