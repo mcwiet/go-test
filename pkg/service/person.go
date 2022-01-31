@@ -29,13 +29,19 @@ func (s PersonService) CreatePerson(name string, age int) (*model.Person, error)
 	return &person, err
 }
 
-// Get a single person
+// Deletes a person
+func (s PersonService) DeletePerson(id string) error {
+	err := s.personDao.DeletePerson(id)
+	return err
+}
+
+// Gets a single person
 func (s PersonService) GetPerson(id string) (*model.Person, error) {
 	person, err := s.personDao.GetPerson(id)
 	return person, err
 }
 
-// Get a list of people
+// Gets a list of people
 func (s PersonService) GetPeople() (*[]model.Person, error) {
 	people, err := s.personDao.GetPeople()
 	return people, err

@@ -45,6 +45,25 @@ func (p *PersonDao) AddPerson(person *model.Person) error {
 	return nil
 }
 
+// Delets a person from the data store
+func (p *PersonDao) DeletePerson(id string) error {
+	_, err := p.client.DeleteItem(&dynamodb.DeleteItemInput{
+		TableName: &p.tableName,
+		Key: map[string]*dynamodb.AttributeValue{
+			"Id":   {S: jsii.String("person-" + id)},
+			"Sort": {S: jsii.String("person")},
+		},
+		ConditionExpression: jsii.String("attribute_exists(Id)"),
+	})
+
+	if err != nil {
+		log.Println(err)
+		return errors.New("error deleting person")
+	}
+
+	return nil
+}
+
 // Gets a person from the data store using the ID
 func (p *PersonDao) GetPerson(id string) (*model.Person, error) {
 	ret, err := p.client.GetItem(&dynamodb.GetItemInput{

@@ -50,6 +50,8 @@ func handle(ctx context.Context, rawRequest interface{}) (interface{}, error) {
 		switch request.Info.FieldName {
 		case "createPerson":
 			response = personController.HandleCreatePerson(request)
+		case "deletePerson":
+			response = personController.HandleDeletePerson(request)
 		default:
 			response = controller.Response{Error: errors.New("mutation not recognized")}
 		}
