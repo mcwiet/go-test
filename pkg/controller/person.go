@@ -19,7 +19,7 @@ func NewPersonController(service service.PersonService) PersonController {
 }
 
 // Handles request for creating a person
-func (c PersonController) HandleCreatePerson(request Request) Response {
+func (c *PersonController) HandleCreatePerson(request Request) Response {
 	log.Println(request.Arguments["age"])
 	person, err := c.personService.CreatePerson(
 		request.Arguments["name"].(string),
@@ -32,7 +32,7 @@ func (c PersonController) HandleCreatePerson(request Request) Response {
 }
 
 // Handles request for deleting a person
-func (c PersonController) HandleDeletePerson(request Request) Response {
+func (c *PersonController) HandleDeletePerson(request Request) Response {
 	err := c.personService.DeletePerson(request.Arguments["id"].(string))
 	if err == nil {
 		return Response{Data: true}
@@ -42,7 +42,7 @@ func (c PersonController) HandleDeletePerson(request Request) Response {
 }
 
 // Handles request for getting a specific person
-func (c PersonController) HandleGetPerson(request Request) Response {
+func (c *PersonController) HandleGetPerson(request Request) Response {
 	person, err := c.personService.GetPerson(request.Arguments["id"].(string))
 	if err == nil {
 		return Response{Data: *person}
@@ -52,7 +52,7 @@ func (c PersonController) HandleGetPerson(request Request) Response {
 }
 
 // Handles request for getting a list of people
-func (c PersonController) HandleGetPeople(request Request) Response {
+func (c *PersonController) HandleGetPeople(request Request) Response {
 	people, err := c.personService.GetPeople()
 	if err == nil {
 		return Response{Data: *people}

@@ -19,7 +19,7 @@ func NewPersonService(personDao data.PersonDao) PersonService {
 }
 
 // Create a new person
-func (s PersonService) CreatePerson(name string, age int) (*model.Person, error) {
+func (s *PersonService) CreatePerson(name string, age int) (*model.Person, error) {
 	person := model.Person{
 		Id:   uuid.NewString(),
 		Name: name,
@@ -30,19 +30,19 @@ func (s PersonService) CreatePerson(name string, age int) (*model.Person, error)
 }
 
 // Deletes a person
-func (s PersonService) DeletePerson(id string) error {
+func (s *PersonService) DeletePerson(id string) error {
 	err := s.personDao.DeletePerson(id)
 	return err
 }
 
 // Gets a single person
-func (s PersonService) GetPerson(id string) (*model.Person, error) {
+func (s *PersonService) GetPerson(id string) (*model.Person, error) {
 	person, err := s.personDao.GetPerson(id)
 	return person, err
 }
 
 // Gets a list of people
-func (s PersonService) GetPeople() (*[]model.Person, error) {
+func (s *PersonService) GetPeople() (*[]model.Person, error) {
 	people, err := s.personDao.GetPeople()
 	return people, err
 }
