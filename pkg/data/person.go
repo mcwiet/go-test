@@ -56,9 +56,16 @@ func (p *PersonDao) DeletePerson(id string) error {
 		ConditionExpression: jsii.String("attribute_exists(Id)"),
 	})
 
+	log.Println(err.Error())
+
 	if err != nil {
 		log.Println(err)
-		return errors.New("error deleting person")
+		var notFoundError *dynamodb.ConditionalCheckFailedException
+		if errors.As(err, &notFoundError) {
+			return errors.New("could not delete person; person not found")
+		} else {
+			return errors.New("error deleting person")
+		}
 	}
 
 	return nil
