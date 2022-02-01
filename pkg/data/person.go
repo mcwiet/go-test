@@ -24,29 +24,8 @@ func NewPersonDao(client *dynamodb.DynamoDB, tableName string) PersonDao {
 	}
 }
 
-// Adds a person to the data store
-func (p *PersonDao) AddPerson(person *model.Person) error {
-	age := strconv.Itoa(person.Age)
-	_, err := p.client.PutItem(&dynamodb.PutItemInput{
-		TableName: &p.tableName,
-		Item: map[string]*dynamodb.AttributeValue{
-			"Id":   {S: jsii.String("person-" + person.Id)},
-			"Sort": {S: jsii.String("person")},
-			"Name": {S: &person.Name},
-			"Age":  {N: &age},
-		},
-	})
-
-	if err != nil {
-		log.Println(err)
-		return errors.New("error adding person")
-	}
-
-	return nil
-}
-
 // Delets a person from the data store
-func (p *PersonDao) DeletePerson(id string) error {
+func (p *PersonDao) Delete(id string) error {
 	_, err := p.client.DeleteItem(&dynamodb.DeleteItemInput{
 		TableName: &p.tableName,
 		Key: map[string]*dynamodb.AttributeValue{
@@ -72,7 +51,7 @@ func (p *PersonDao) DeletePerson(id string) error {
 }
 
 // Gets a person from the data store using the ID
-func (p *PersonDao) GetPerson(id string) (*model.Person, error) {
+func (p *PersonDao) GetById(id string) (*model.Person, error) {
 	ret, err := p.client.GetItem(&dynamodb.GetItemInput{
 		TableName: &p.tableName,
 		Key: map[string]*dynamodb.AttributeValue{
@@ -103,8 +82,29 @@ func (p *PersonDao) GetPerson(id string) (*model.Person, error) {
 	return &person, err
 }
 
-// Get a list of persons from the data store
-func (p *PersonDao) GetPeople() (*[]model.Person, error) {
+// Inserts a person to the data store
+func (p *PersonDao) Insert(person *model.Person) error {
+	age := strconv.Itoa(person.Age)
+	_, err := p.client.PutItem(&dynamodb.PutItemInput{
+		TableName: &p.tableName,
+		Item: map[string]*dynamodb.AttributeValue{
+			"Id":   {S: jsii.String("person-" + person.Id)},
+			"Sort": {S: jsii.String("person")},
+			"Name": {S: &person.Name},
+			"Age":  {N: &age},
+		},
+	})
+
+	if err != nil {
+		log.Println(err)
+		return errors.New("error adding person")
+	}
+
+	return nil
+}
+
+// Lists persons from the data store
+func (p *PersonDao) List() (*[]model.Person, error) {
 	ret, err := p.client.Query(&dynamodb.QueryInput{
 		TableName:              &p.tableName,
 		IndexName:              jsii.String("sort-key-gsi"),

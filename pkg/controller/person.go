@@ -8,20 +8,20 @@ import (
 
 // Object containing data needed for the Person controller
 type PersonController struct {
-	personService service.PersonService
+	personService *service.PersonService
 }
 
 // Creates a new Person controller object
-func NewPersonController(service service.PersonService) PersonController {
+func NewPersonController(service *service.PersonService) PersonController {
 	return PersonController{
 		personService: service,
 	}
 }
 
 // Handles request for creating a person
-func (c *PersonController) HandleCreatePerson(request Request) Response {
+func (c *PersonController) HandleCreate(request Request) Response {
 	log.Println(request.Arguments["age"])
-	person, err := c.personService.CreatePerson(
+	person, err := c.personService.Create(
 		request.Arguments["name"].(string),
 		int(request.Arguments["age"].(float64)))
 	if err == nil {
@@ -32,8 +32,8 @@ func (c *PersonController) HandleCreatePerson(request Request) Response {
 }
 
 // Handles request for deleting a person
-func (c *PersonController) HandleDeletePerson(request Request) Response {
-	err := c.personService.DeletePerson(request.Arguments["id"].(string))
+func (c *PersonController) HandleDelete(request Request) Response {
+	err := c.personService.Delete(request.Arguments["id"].(string))
 	if err == nil {
 		return Response{Data: true}
 	} else {
@@ -42,8 +42,8 @@ func (c *PersonController) HandleDeletePerson(request Request) Response {
 }
 
 // Handles request for getting a specific person
-func (c *PersonController) HandleGetPerson(request Request) Response {
-	person, err := c.personService.GetPerson(request.Arguments["id"].(string))
+func (c *PersonController) HandleGet(request Request) Response {
+	person, err := c.personService.GetById(request.Arguments["id"].(string))
 	if err == nil {
 		return Response{Data: *person}
 	} else {
@@ -51,9 +51,9 @@ func (c *PersonController) HandleGetPerson(request Request) Response {
 	}
 }
 
-// Handles request for getting a list of people
-func (c *PersonController) HandleGetPeople(request Request) Response {
-	people, err := c.personService.GetPeople()
+// Handles request for listing people
+func (c *PersonController) HandleList(request Request) Response {
+	people, err := c.personService.List()
 	if err == nil {
 		return Response{Data: *people}
 	} else {

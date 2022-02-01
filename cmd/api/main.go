@@ -25,8 +25,8 @@ func init() {
 
 	tableName := os.Getenv("DDB_TABLE_NAME")
 	personDao := data.NewPersonDao(ddbClient, tableName)
-	personService := service.NewPersonService(personDao)
-	personController = controller.NewPersonController(personService)
+	personService := service.NewPersonService(&personDao)
+	personController = controller.NewPersonController(&personService)
 }
 
 func handle(ctx context.Context, rawRequest interface{}) (interface{}, error) {
@@ -40,18 +40,18 @@ func handle(ctx context.Context, rawRequest interface{}) (interface{}, error) {
 	case "Query":
 		switch request.Info.FieldName {
 		case "person":
-			response = personController.HandleGetPerson(request)
+			response = personController.HandleGet(request)
 		case "people":
-			response = personController.HandleGetPeople(request)
+			response = personController.HandleList(request)
 		default:
 			response = controller.Response{Error: errors.New("query not recognized")}
 		}
 	case "Mutation":
 		switch request.Info.FieldName {
 		case "createPerson":
-			response = personController.HandleCreatePerson(request)
+			response = personController.HandleCreate(request)
 		case "deletePerson":
-			response = personController.HandleDeletePerson(request)
+			response = personController.HandleDelete(request)
 		default:
 			response = controller.Response{Error: errors.New("mutation not recognized")}
 		}
