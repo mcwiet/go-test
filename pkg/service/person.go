@@ -2,17 +2,23 @@ package service
 
 import (
 	"github.com/google/uuid"
-	"github.com/mcwiet/go-test/pkg/data"
 	"github.com/mcwiet/go-test/pkg/model"
 )
 
+type PersonDao interface {
+	Delete(string) error
+	GetById(string) (*model.Person, error)
+	Insert(*model.Person) error
+	List() (*[]model.Person, error)
+}
+
 // Object containing data needed to use the Person service
 type PersonService struct {
-	personDao *data.PersonDao
+	personDao PersonDao
 }
 
 // Creates a Person service object
-func NewPersonService(personDao *data.PersonDao) PersonService {
+func NewPersonService(personDao PersonDao) PersonService {
 	return PersonService{
 		personDao: personDao,
 	}

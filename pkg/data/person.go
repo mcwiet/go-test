@@ -10,13 +10,13 @@ import (
 	"github.com/mcwiet/go-test/pkg/model"
 )
 
-// Object containing information needed to access the Person data store
+// Object containing information needed to access the person data store
 type PersonDao struct {
 	client    *dynamodb.DynamoDB
 	tableName string
 }
 
-// Creates a Person data store access object
+// Creates a person data store access object
 func NewPersonDao(client *dynamodb.DynamoDB, tableName string) PersonDao {
 	return PersonDao{
 		client:    client,
