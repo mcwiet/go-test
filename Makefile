@@ -64,6 +64,9 @@ invoke-api: build-infra
 	@ sam local invoke go-api-lambda -e ${EVENTS_DIR}/${API_REQUEST}.json  -t ${CDK_DIR}/go-api.template.json
 	@ echo "\n✅ Done invoking API"
 
+## Builds all code and runs all tests
+release: build test-unit
+
 ## Run unit tests on library code (i.e. pkg/ directory)
 test-unit: 
 	@ go test ./pkg/... -cover

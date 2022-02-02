@@ -1,18 +1,23 @@
 package controller
 
 import (
-	"log"
-
-	"github.com/mcwiet/go-test/pkg/service"
+	"github.com/mcwiet/go-test/pkg/model"
 )
+
+type PersonService interface {
+	Create(name string, age int) (*model.Person, error)
+	Delete(id string) error
+	GetById(id string) (*model.Person, error)
+	List() (*[]model.Person, error)
+}
 
 // Object containing data needed for the Person controller
 type PersonController struct {
-	personService *service.PersonService
+	personService PersonService
 }
 
-// Creates a new Person controller object
-func NewPersonController(service *service.PersonService) PersonController {
+// Creates a new person controller object
+func NewPersonController(service PersonService) PersonController {
 	return PersonController{
 		personService: service,
 	}
@@ -20,7 +25,6 @@ func NewPersonController(service *service.PersonService) PersonController {
 
 // Handles request for creating a person
 func (c *PersonController) HandleCreate(request Request) Response {
-	log.Println(request.Arguments["age"])
 	person, err := c.personService.Create(
 		request.Arguments["name"].(string),
 		int(request.Arguments["age"].(float64)))
@@ -35,7 +39,7 @@ func (c *PersonController) HandleCreate(request Request) Response {
 func (c *PersonController) HandleDelete(request Request) Response {
 	err := c.personService.Delete(request.Arguments["id"].(string))
 	if err == nil {
-		return Response{Data: true}
+		return Response{}
 	} else {
 		return Response{Error: err}
 	}

@@ -9,26 +9,29 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-type mockPersonDao struct {
-	valReturn interface{}
-	errReturn error
+// Define mocks / stubs
+type fakePersonDao struct {
+	returnedValue interface{}
+	returnedErr   error
 }
 
-func (m mockPersonDao) Delete(string) error {
-	return m.errReturn
+// Define mock / stub functionality
+func (m fakePersonDao) Delete(string) error {
+	return m.returnedErr
 }
-func (m mockPersonDao) GetById(string) (*model.Person, error) {
-	ret, _ := m.valReturn.(*model.Person)
-	return ret, m.errReturn
+func (m fakePersonDao) GetById(string) (*model.Person, error) {
+	ret, _ := m.returnedValue.(*model.Person)
+	return ret, m.returnedErr
 }
-func (m mockPersonDao) Insert(*model.Person) error {
-	return m.errReturn
+func (m fakePersonDao) Insert(*model.Person) error {
+	return m.returnedErr
 }
-func (m mockPersonDao) List() (*[]model.Person, error) {
-	ret, _ := m.valReturn.(*[]model.Person)
-	return ret, m.errReturn
+func (m fakePersonDao) List() (*[]model.Person, error) {
+	ret, _ := m.returnedValue.(*[]model.Person)
+	return ret, m.returnedErr
 }
 
+// Define common data
 var (
 	samplePerson = model.Person{
 		Id:   uuid.NewString(),
@@ -41,7 +44,7 @@ func TestCreate(t *testing.T) {
 	// Define test struct
 	type Test struct {
 		name       string
-		personDao  mockPersonDao
+		personDao  fakePersonDao
 		personName string
 		personAge  int
 		expectErr  bool
@@ -51,14 +54,14 @@ func TestCreate(t *testing.T) {
 	tests := []Test{
 		{
 			name:       "valid input",
-			personDao:  mockPersonDao{},
+			personDao:  fakePersonDao{},
 			personName: samplePerson.Name,
 			personAge:  samplePerson.Age,
 			expectErr:  false,
 		},
 		{
 			name:       "DAO insert error",
-			personDao:  mockPersonDao{errReturn: errors.New("dao error")},
+			personDao:  fakePersonDao{returnedErr: errors.New("dao error")},
 			personName: samplePerson.Name,
 			personAge:  samplePerson.Age,
 			expectErr:  true,
@@ -89,7 +92,7 @@ func TestGetById(t *testing.T) {
 	// Define test struct
 	type Test struct {
 		name           string
-		personDao      mockPersonDao
+		personDao      fakePersonDao
 		personId       string
 		expectedPerson *model.Person
 		expectErr      bool
@@ -99,14 +102,14 @@ func TestGetById(t *testing.T) {
 	tests := []Test{
 		{
 			name:           "valid input",
-			personDao:      mockPersonDao{valReturn: &samplePerson},
+			personDao:      fakePersonDao{returnedValue: &samplePerson},
 			personId:       samplePerson.Id,
 			expectedPerson: &samplePerson,
 			expectErr:      false,
 		},
 		{
 			name:           "DAO get error",
-			personDao:      mockPersonDao{errReturn: errors.New("dao error")},
+			personDao:      fakePersonDao{returnedErr: errors.New("dao error")},
 			personId:       samplePerson.Id,
 			expectedPerson: &samplePerson,
 			expectErr:      true,
@@ -134,7 +137,7 @@ func TestDelete(t *testing.T) {
 	// Define test struct
 	type Test struct {
 		name      string
-		personDao mockPersonDao
+		personDao fakePersonDao
 		personId  string
 		expectErr bool
 	}
@@ -143,7 +146,7 @@ func TestDelete(t *testing.T) {
 	tests := []Test{
 		{
 			name:      "valid input",
-			personDao: mockPersonDao{errReturn: nil},
+			personDao: fakePersonDao{returnedErr: nil},
 			personId:  samplePerson.Id,
 			expectErr: false,
 		},
@@ -170,7 +173,7 @@ func TestList(t *testing.T) {
 	// Define test struct
 	type Test struct {
 		name           string
-		personDao      mockPersonDao
+		personDao      fakePersonDao
 		expectedPeople *[]model.Person
 		expectErr      bool
 	}
@@ -179,7 +182,7 @@ func TestList(t *testing.T) {
 	tests := []Test{
 		{
 			name:           "valid input",
-			personDao:      mockPersonDao{valReturn: &[]model.Person{samplePerson}},
+			personDao:      fakePersonDao{returnedValue: &[]model.Person{samplePerson}},
 			expectedPeople: &[]model.Person{samplePerson},
 			expectErr:      false,
 		},
