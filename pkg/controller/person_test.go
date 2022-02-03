@@ -1,10 +1,11 @@
-package controller
+package controller_test
 
 import (
 	"errors"
 	"testing"
 
 	"github.com/google/uuid"
+	"github.com/mcwiet/go-test/pkg/controller"
 	"github.com/mcwiet/go-test/pkg/model"
 	"github.com/stretchr/testify/assert"
 )
@@ -45,8 +46,8 @@ var (
 type Test struct {
 	name             string
 	personService    fakePersonService
-	request          Request
-	expectedResponse Response
+	request          controller.Request
+	expectedResponse controller.Response
 	expectErr        bool
 }
 
@@ -56,19 +57,19 @@ func TestHandleCreate(t *testing.T) {
 		{
 			name:          "valid input",
 			personService: fakePersonService{returnedValue: &samplePerson},
-			request: Request{
+			request: controller.Request{
 				Arguments: map[string]interface{}{
 					"name": samplePerson.Name,
 					"age":  float64(samplePerson.Age),
 				},
 			},
-			expectedResponse: Response{Data: samplePerson},
+			expectedResponse: controller.Response{Data: samplePerson},
 			expectErr:        false,
 		},
 		{
 			name:          "service create error",
 			personService: fakePersonService{returnedErr: errors.New("create error")},
-			request: Request{
+			request: controller.Request{
 				Arguments: map[string]interface{}{
 					"name": samplePerson.Name,
 					"age":  float64(samplePerson.Age),
@@ -81,7 +82,7 @@ func TestHandleCreate(t *testing.T) {
 	// Run tests
 	for _, test := range tests {
 		// Setup
-		controller := NewPersonController(&test.personService)
+		controller := controller.NewPersonController(&test.personService)
 
 		// Execute
 		response := controller.HandleCreate(test.request)
@@ -101,23 +102,23 @@ func TestHandleDelete(t *testing.T) {
 		{
 			name:          "valid input",
 			personService: fakePersonService{},
-			request: Request{
+			request: controller.Request{
 				Arguments: map[string]interface{}{
 					"id": samplePerson.Id,
 				},
 			},
-			expectedResponse: Response{},
+			expectedResponse: controller.Response{},
 			expectErr:        false,
 		},
 		{
 			name:          "service delete error",
 			personService: fakePersonService{returnedErr: errors.New("delete error")},
-			request: Request{
+			request: controller.Request{
 				Arguments: map[string]interface{}{
 					"id": samplePerson.Id,
 				},
 			},
-			expectedResponse: Response{},
+			expectedResponse: controller.Response{},
 			expectErr:        true,
 		},
 	}
@@ -125,7 +126,7 @@ func TestHandleDelete(t *testing.T) {
 	// Run tests
 	for _, test := range tests {
 		// Setup
-		controller := NewPersonController(&test.personService)
+		controller := controller.NewPersonController(&test.personService)
 
 		// Execute
 		response := controller.HandleDelete(test.request)
@@ -145,23 +146,23 @@ func TestHandleGet(t *testing.T) {
 		{
 			name:          "valid input",
 			personService: fakePersonService{returnedValue: &samplePerson},
-			request: Request{
+			request: controller.Request{
 				Arguments: map[string]interface{}{
 					"id": samplePerson.Id,
 				},
 			},
-			expectedResponse: Response{Data: samplePerson},
+			expectedResponse: controller.Response{Data: samplePerson},
 			expectErr:        false,
 		},
 		{
 			name:          "service get error",
 			personService: fakePersonService{returnedErr: errors.New("get error")},
-			request: Request{
+			request: controller.Request{
 				Arguments: map[string]interface{}{
 					"id": samplePerson.Id,
 				},
 			},
-			expectedResponse: Response{},
+			expectedResponse: controller.Response{},
 			expectErr:        true,
 		},
 	}
@@ -169,7 +170,7 @@ func TestHandleGet(t *testing.T) {
 	// Run tests
 	for _, test := range tests {
 		// Setup
-		controller := NewPersonController(&test.personService)
+		controller := controller.NewPersonController(&test.personService)
 
 		// Execute
 		response := controller.HandleGet(test.request)
@@ -189,15 +190,15 @@ func TestHandleList(t *testing.T) {
 		{
 			name:             "valid input",
 			personService:    fakePersonService{returnedValue: &[]model.Person{samplePerson}},
-			request:          Request{},
-			expectedResponse: Response{Data: []model.Person{samplePerson}},
+			request:          controller.Request{},
+			expectedResponse: controller.Response{Data: []model.Person{samplePerson}},
 			expectErr:        false,
 		},
 		{
 			name:             "service list error",
 			personService:    fakePersonService{returnedErr: errors.New("list error")},
-			request:          Request{},
-			expectedResponse: Response{},
+			request:          controller.Request{},
+			expectedResponse: controller.Response{},
 			expectErr:        true,
 		},
 	}
@@ -205,7 +206,7 @@ func TestHandleList(t *testing.T) {
 	// Run tests
 	for _, test := range tests {
 		// Setup
-		controller := NewPersonController(&test.personService)
+		controller := controller.NewPersonController(&test.personService)
 
 		// Execute
 		response := controller.HandleList(test.request)

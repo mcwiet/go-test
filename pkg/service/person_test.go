@@ -1,4 +1,4 @@
-package service
+package service_test
 
 import (
 	"errors"
@@ -6,6 +6,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/mcwiet/go-test/pkg/model"
+	"github.com/mcwiet/go-test/pkg/service"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -71,7 +72,7 @@ func TestCreate(t *testing.T) {
 	// Run tests
 	for _, test := range tests {
 		// Setup
-		service := NewPersonService(test.personDao)
+		service := service.NewPersonService(test.personDao)
 
 		// Execute
 		person, err := service.Create(test.personName, test.personAge)
@@ -119,7 +120,7 @@ func TestGetById(t *testing.T) {
 	// Run tests
 	for _, test := range tests {
 		// Setup
-		service := NewPersonService(test.personDao)
+		service := service.NewPersonService(test.personDao)
 
 		// Execute
 		person, err := service.GetById(test.personId)
@@ -155,7 +156,7 @@ func TestDelete(t *testing.T) {
 	// Run tests
 	for _, test := range tests {
 		// Setup
-		service := NewPersonService(test.personDao)
+		service := service.NewPersonService(test.personDao)
 
 		// Execute
 		err := service.Delete(test.personId)
@@ -191,7 +192,7 @@ func TestList(t *testing.T) {
 	//Run tests
 	for _, test := range tests {
 		// Setup
-		service := NewPersonService(test.personDao)
+		service := service.NewPersonService(test.personDao)
 
 		// Execute
 		people, err := service.List()

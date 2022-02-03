@@ -10,21 +10,28 @@ import (
 	"github.com/mcwiet/go-test/pkg/model"
 )
 
+type DynamoDbClient interface {
+	DeleteItem(*dynamodb.DeleteItemInput) (*dynamodb.DeleteItemOutput, error)
+	GetItem(*dynamodb.GetItemInput) (*dynamodb.GetItemOutput, error)
+	PutItem(*dynamodb.PutItemInput) (*dynamodb.PutItemOutput, error)
+	Query(*dynamodb.QueryInput) (*dynamodb.QueryOutput, error)
+}
+
 // Object containing information needed to access the person data store
 type PersonDao struct {
-	client    *dynamodb.DynamoDB
+	client    DynamoDbClient
 	tableName string
 }
 
 // Creates a person data store access object
-func NewPersonDao(client *dynamodb.DynamoDB, tableName string) PersonDao {
+func NewPersonDao(client DynamoDbClient, tableName string) PersonDao {
 	return PersonDao{
 		client:    client,
 		tableName: tableName,
 	}
 }
 
-// Delets a person from the data store
+// Deletes a person from the data store
 func (p *PersonDao) Delete(id string) error {
 	_, err := p.client.DeleteItem(&dynamodb.DeleteItemInput{
 		TableName: &p.tableName,
@@ -34,8 +41,6 @@ func (p *PersonDao) Delete(id string) error {
 		},
 		ConditionExpression: jsii.String("attribute_exists(Id)"),
 	})
-
-	log.Println(err.Error())
 
 	if err != nil {
 		log.Println(err)
@@ -67,7 +72,7 @@ func (p *PersonDao) GetById(id string) (*model.Person, error) {
 	if err != nil {
 		log.Println(err)
 		return nil, errors.New("error retrieving person")
-	} else if ret.Item == nil {
+	} else if ret == nil || ret.Item == nil {
 		return nil, errors.New("person not found")
 	}
 
@@ -118,7 +123,7 @@ func (p *PersonDao) List() (*[]model.Person, error) {
 		},
 	})
 
-	if err != nil {
+	if ret == nil || err != nil {
 		log.Println(err)
 		return nil, errors.New("error retrieving people")
 	}
