@@ -37,15 +37,3 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          SONAR_PROJECT_KEY: ${{ secrets.SONAR_PROJECT_KEY }}
-          SONAR_ORGANIZATION: ${{ secrets.SONAR_ORGANIZATION }}
-          BRANCH_NAME: ${{ steps.extract_branch.outputs.branch }}
-        with:
-          args: >
-            -Dsonar.organization=${SONAR_ORGANIZATION}
-            -Dsonar.projectKey=${SONAR_PROJECT_KEY}
-            -Dsonar.go.coverage.reportPaths=.coverage/*
-            -Dsonar.sources=cmd/,pkg/
-            -Dsonar.test.exclusions=tests/**
-            -Dsonar.branch.name=${BRANCH_NAME}
-            -Dsonar.verbose=true
