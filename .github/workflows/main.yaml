@@ -34,6 +34,7 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_PROJECT_KEY: ${{ secrets.SONAR_PROJECT_KEY }}
           SONAR_ORGANIZATION: ${{ secrets.SONAR_ORGANIZATION }}
+          BRANCH_NAME: ${{ steps.extract_branch.outputs.branch }}
         with:
           args: >
             -Dsonar.organization=SONAR_ORGANIZATION
@@ -41,4 +42,5 @@ jobs:
             -Dsonar.go.coverage.reportPaths=.coverage/*
             -Dsonar.sources=cmd/,pkg/
             -Dsonar.test.exclusions=tests/**
+            -Dsonare.branch.name=BRANCH_NAME
             -Dsonar.verbose=true
