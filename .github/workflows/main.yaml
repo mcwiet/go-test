@@ -1,5 +1,8 @@
 name: CI
 
+env:
+  SAVE_TEST_COVERAGE: true
+
 on:
   push:
     branches: [main]
