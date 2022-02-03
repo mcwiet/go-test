@@ -2,6 +2,9 @@ package infra
 
 import (
 	"github.com/aws/aws-cdk-go/awscdk/v2"
+	"github.com/aws/aws-cdk-go/awscdk/v2/awsdynamodb"
+	"github.com/aws/aws-cdk-go/awscdk/v2/awsiam"
+	"github.com/aws/aws-cdk-go/awscdk/v2/awslambda"
 	"github.com/aws/aws-cdk-go/awscdkappsyncalpha/v2"
 	"github.com/aws/aws-cdk-go/awscdklambdagoalpha/v2"
 	"github.com/aws/constructs-go/constructs/v10"
@@ -22,6 +25,7 @@ func NewApiStack(scope constructs.Construct, id string, props *awscdk.StackProps
 		Entry:        jsii.String("./cmd/api"),
 		FunctionName: &lambdaName,
 		Timeout:      awscdk.Duration_Seconds(jsii.Number(5)),
+		Tracing:      awslambda.Tracing_ACTIVE,
 	})
 
 	// Schema definition
@@ -51,6 +55,46 @@ func NewApiStack(scope constructs.Construct, id string, props *awscdk.StackProps
 		FieldName:  jsii.String("people"),
 		DataSource: lambdaSource,
 	})
+	api.CreateResolver(&awscdkappsyncalpha.ExtendedResolverProps{
+		TypeName:   jsii.String("Mutation"),
+		FieldName:  jsii.String("createPerson"),
+		DataSource: lambdaSource,
+	})
+
+	// Dynamo DB table
+	tableName := *stackName + "-primary-table"
+	partitionKey := awsdynamodb.Attribute{Name: jsii.String("Id"), Type: awsdynamodb.AttributeType_STRING}
+	sortKey := awsdynamodb.Attribute{Name: jsii.String("Sort"), Type: awsdynamodb.AttributeType_STRING}
+	table := awsdynamodb.NewTable(stack, &tableName, &awsdynamodb.TableProps{
+		TableName:    &tableName,
+		PartitionKey: &partitionKey,
+		SortKey:      &sortKey,
+		BillingMode:  awsdynamodb.BillingMode_PAY_PER_REQUEST,
+	})
+	table.AddGlobalSecondaryIndex(&awsdynamodb.GlobalSecondaryIndexProps{
+		IndexName:      jsii.String("sort-key-gsi"),
+		ProjectionType: awsdynamodb.ProjectionType_ALL,
+		PartitionKey:   &sortKey,
+	})
+
+	// Permission for Lambda to access Dynamo DB table
+	lambda.AddToRolePolicy(awsiam.NewPolicyStatement(&awsiam.PolicyStatementProps{
+		Effect: awsiam.Effect_ALLOW,
+		Actions: jsii.Strings(
+			"dynamodb:BatchGetItem",
+			"dynamodb:DescribeTable",
+			"dynamodb:GetItem",
+			"dynamodb:Query",
+			"dynamodb:Scan",
+			"dynamodb:BatchWriteItem",
+			"dynamodb:DeleteItem",
+			"dynamodb:UpdateItem",
+			"dynamodb:PutItem"),
+		Resources: jsii.Strings(*table.TableArn(), *table.TableArn()+"/*"),
+	}))
+
+	// Add environment variables to Lambda to reference other infra
+	lambda.AddEnvironment(jsii.String("DDB_TABLE_NAME"), &tableName, nil)
 
 	return stack
 }

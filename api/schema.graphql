@@ -1,3 +1,8 @@
+schema {
+  query: Query
+  mutation: Mutation
+}
+
 type Person {
   id: ID!
   name: String!
@@ -9,6 +14,7 @@ type Query {
   person(id: ID!): Person!
 }
 
-schema {
-  query: Query
+type Mutation {
+  createPerson(name: String!, age: Int!): Person!
+  deletePerson(id: ID!): Boolean
 }

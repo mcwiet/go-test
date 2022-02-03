@@ -3,25 +3,60 @@ package main
 import (
 	"context"
 	"errors"
+	"log"
+	"os"
 
 	"github.com/mcwiet/go-test/pkg/controller"
+	"github.com/mcwiet/go-test/pkg/data"
+	"github.com/mcwiet/go-test/pkg/service"
 
 	"github.com/aws/aws-lambda-go/lambda"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/dynamodb"
 )
+
+var (
+	personController controller.PersonController
+)
+
+func init() {
+	sess := session.Must(session.NewSession())
+	ddbClient := dynamodb.New(sess)
+
+	tableName := os.Getenv("DDB_TABLE_NAME")
+	personDao := data.NewPersonDao(ddbClient, tableName)
+	personService := service.NewPersonService(&personDao)
+	personController = controller.NewPersonController(&personService)
+}
 
 func handle(ctx context.Context, rawRequest interface{}) (interface{}, error) {
 	request := controller.NewRequest(rawRequest)
 	var response controller.Response
 
-	switch request.Info.FieldName {
-	case "person":
-		response = controller.GetPerson(request)
-	case "people":
-		response = controller.GetPeople(request)
-	default:
-		response = controller.Response{
-			Error: errors.New("request not recognized"),
+	log.Println(request.Info.ParentTypeName)
+	log.Println(request.Info.FieldName)
+
+	switch request.Info.ParentTypeName {
+	case "Query":
+		switch request.Info.FieldName {
+		case "person":
+			response = personController.HandleGet(request)
+		case "people":
+			response = personController.HandleList(request)
+		default:
+			response = controller.Response{Error: errors.New("query not recognized")}
 		}
+	case "Mutation":
+		switch request.Info.FieldName {
+		case "createPerson":
+			response = personController.HandleCreate(request)
+		case "deletePerson":
+			response = personController.HandleDelete(request)
+		default:
+			response = controller.Response{Error: errors.New("mutation not recognized")}
+		}
+	default:
+		response = controller.Response{Error: errors.New("request type not recognized")}
 	}
 
 	return response.Data, response.Error
