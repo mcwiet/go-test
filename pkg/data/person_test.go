@@ -62,13 +62,13 @@ func TestDelete(t *testing.T) {
 	// Define tests
 	tests := []Test{
 		{
-			name:      "valid inputs",
+			name:      "valid delete",
 			dbClient:  fakeDynamoDbClient{},
 			personId:  samplePerson.Id,
 			expectErr: false,
 		},
 		{
-			name:      "db error",
+			name:      "db delete error",
 			dbClient:  fakeDynamoDbClient{returnedErr: assert.AnError},
 			personId:  samplePerson.Id,
 			expectErr: true,
@@ -111,14 +111,14 @@ func TestGetById(t *testing.T) {
 	// Define tests
 	tests := []Test{
 		{
-			name:           "valid inputs",
+			name:           "valid get by id",
 			dbClient:       fakeDynamoDbClient{returnedValue: &dynamodb.GetItemOutput{Item: samplePersonItem}},
 			personId:       samplePerson.Id,
 			expectedPerson: &samplePerson,
 			expectErr:      false,
 		},
 		{
-			name:      "db error",
+			name:      "db get error",
 			dbClient:  fakeDynamoDbClient{returnedErr: assert.AnError},
 			personId:  samplePerson.Id,
 			expectErr: true,
@@ -154,13 +154,13 @@ func TestInsert(t *testing.T) {
 	// Define tests
 	tests := []Test{
 		{
-			name:      "valid inputs",
+			name:      "valid insert",
 			dbClient:  fakeDynamoDbClient{},
 			person:    samplePerson,
 			expectErr: false,
 		},
 		{
-			name:      "db error",
+			name:      "db put error",
 			dbClient:  fakeDynamoDbClient{returnedErr: assert.AnError},
 			person:    samplePerson,
 			expectErr: true,
@@ -196,7 +196,7 @@ func TestList(t *testing.T) {
 	// Define tests
 	tests := []Test{
 		{
-			name: "valid inputs",
+			name: "valid list",
 			dbClient: fakeDynamoDbClient{returnedValue: &dynamodb.QueryOutput{
 				Items: []map[string]*dynamodb.AttributeValue{samplePersonItem},
 			}},
@@ -204,7 +204,7 @@ func TestList(t *testing.T) {
 			expectErr:      false,
 		},
 		{
-			name:      "db error",
+			name:      "db query error",
 			dbClient:  fakeDynamoDbClient{returnedErr: assert.AnError},
 			expectErr: true,
 		},

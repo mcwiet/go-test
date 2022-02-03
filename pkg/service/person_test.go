@@ -54,7 +54,7 @@ func TestCreate(t *testing.T) {
 	// Define tests
 	tests := []Test{
 		{
-			name:       "valid input",
+			name:       "valid create",
 			personDao:  fakePersonDao{},
 			personName: samplePerson.Name,
 			personAge:  samplePerson.Age,
@@ -102,7 +102,7 @@ func TestGetById(t *testing.T) {
 	// Define tests
 	tests := []Test{
 		{
-			name:           "valid input",
+			name:           "valid get by id",
 			personDao:      fakePersonDao{returnedValue: &samplePerson},
 			personId:       samplePerson.Id,
 			expectedPerson: &samplePerson,
@@ -146,7 +146,7 @@ func TestDelete(t *testing.T) {
 	// Define tests
 	tests := []Test{
 		{
-			name:      "valid input",
+			name:      "valid delete",
 			personDao: fakePersonDao{returnedErr: nil},
 			personId:  samplePerson.Id,
 			expectErr: false,
@@ -182,7 +182,7 @@ func TestList(t *testing.T) {
 	// Define tests
 	tests := []Test{
 		{
-			name:           "valid input",
+			name:           "valid list",
 			personDao:      fakePersonDao{returnedValue: &[]model.Person{samplePerson}},
 			expectedPeople: &[]model.Person{samplePerson},
 			expectErr:      false,

@@ -55,7 +55,7 @@ func TestHandleCreate(t *testing.T) {
 	// Define tests
 	tests := []Test{
 		{
-			name:          "valid input",
+			name:          "valid create",
 			personService: fakePersonService{returnedValue: &samplePerson},
 			request: controller.Request{
 				Arguments: map[string]interface{}{
@@ -100,7 +100,7 @@ func TestHandleDelete(t *testing.T) {
 	// Define tests
 	tests := []Test{
 		{
-			name:          "valid input",
+			name:          "valid delete",
 			personService: fakePersonService{},
 			request: controller.Request{
 				Arguments: map[string]interface{}{
@@ -144,7 +144,7 @@ func TestHandleGet(t *testing.T) {
 	// Define tests
 	tests := []Test{
 		{
-			name:          "valid input",
+			name:          "valid get",
 			personService: fakePersonService{returnedValue: &samplePerson},
 			request: controller.Request{
 				Arguments: map[string]interface{}{
@@ -188,7 +188,7 @@ func TestHandleList(t *testing.T) {
 	// Define tests
 	tests := []Test{
 		{
-			name:             "valid input",
+			name:             "valid list",
 			personService:    fakePersonService{returnedValue: &[]model.Person{samplePerson}},
 			request:          controller.Request{},
 			expectedResponse: controller.Response{Data: []model.Person{samplePerson}},

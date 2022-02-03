@@ -23,6 +23,11 @@ type PersonDao struct {
 	tableName string
 }
 
+var (
+	personIdPrefix = "person-"
+	personSort     = "person"
+)
+
 // Creates a person data store access object
 func NewPersonDao(client DynamoDbClient, tableName string) PersonDao {
 	return PersonDao{
@@ -36,8 +41,8 @@ func (p *PersonDao) Delete(id string) error {
 	_, err := p.client.DeleteItem(&dynamodb.DeleteItemInput{
 		TableName: &p.tableName,
 		Key: map[string]*dynamodb.AttributeValue{
-			"Id":   {S: jsii.String("person-" + id)},
-			"Sort": {S: jsii.String("person")},
+			"Id":   {S: jsii.String(personIdPrefix + id)},
+			"Sort": {S: jsii.String(personSort)},
 		},
 		ConditionExpression: jsii.String("attribute_exists(Id)"),
 	})
@@ -60,8 +65,8 @@ func (p *PersonDao) GetById(id string) (*model.Person, error) {
 	ret, err := p.client.GetItem(&dynamodb.GetItemInput{
 		TableName: &p.tableName,
 		Key: map[string]*dynamodb.AttributeValue{
-			"Id":   {S: jsii.String("person-" + id)},
-			"Sort": {S: jsii.String("person")},
+			"Id":   {S: jsii.String(personIdPrefix + id)},
+			"Sort": {S: jsii.String(personSort)},
 		},
 		ProjectionExpression: jsii.String("#name, Age"),
 		ExpressionAttributeNames: map[string]*string{
@@ -93,8 +98,8 @@ func (p *PersonDao) Insert(person *model.Person) error {
 	_, err := p.client.PutItem(&dynamodb.PutItemInput{
 		TableName: &p.tableName,
 		Item: map[string]*dynamodb.AttributeValue{
-			"Id":   {S: jsii.String("person-" + person.Id)},
-			"Sort": {S: jsii.String("person")},
+			"Id":   {S: jsii.String(personIdPrefix + person.Id)},
+			"Sort": {S: jsii.String(personSort)},
 			"Name": {S: &person.Name},
 			"Age":  {N: &age},
 		},
@@ -119,7 +124,7 @@ func (p *PersonDao) List() (*[]model.Person, error) {
 			"#name": jsii.String("Name"),
 		},
 		ExpressionAttributeValues: map[string]*dynamodb.AttributeValue{
-			":sortVal": {S: jsii.String("person")},
+			":sortVal": {S: jsii.String(personSort)},
 		},
 	})
 
