@@ -10,7 +10,6 @@ import (
 	"github.com/mcwiet/go-test/pkg/model"
 )
 
-<<<<<<< Updated upstream
 type DynamoDbClient interface {
 	DeleteItem(*dynamodb.DeleteItemInput) (*dynamodb.DeleteItemOutput, error)
 	GetItem(*dynamodb.GetItemInput) (*dynamodb.GetItemOutput, error)
@@ -18,15 +17,12 @@ type DynamoDbClient interface {
 	Query(*dynamodb.QueryInput) (*dynamodb.QueryOutput, error)
 }
 
-=======
->>>>>>> Stashed changes
 // Object containing information needed to access the person data store
 type PersonDao struct {
 	client    DynamoDbClient
 	tableName string
 }
 
-<<<<<<< Updated upstream
 var (
 	personIdPrefix = "person-"
 	personSort     = "person"
@@ -34,10 +30,6 @@ var (
 
 // Creates a person data store access object
 func NewPersonDao(client DynamoDbClient, tableName string) PersonDao {
-=======
-// Creates a person data store access object
-func NewPersonDao(client *dynamodb.DynamoDB, tableName string) PersonDao {
->>>>>>> Stashed changes
 	return PersonDao{
 		client:    client,
 		tableName: tableName,
