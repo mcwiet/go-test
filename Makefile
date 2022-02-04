@@ -2,14 +2,16 @@
 # GLOBALS                                                                       #
 #################################################################################
 
+# Load environemt variables from .env file and export them (so they can be used by executed processes)
 -include .env
+export
 
 APP_NAME_API = api
 BUILD_DIR = ./dist
 CDK_DIR = ./cdk.out
 EVENTS_DIR = ./test/_request
-GOOS = linux
-GOARCH = amd64
+GOOS ?= linux
+GOARCH ?= amd64
 TRUE_CONDITIONS = true TRUE 1
 
 #################################################################################
@@ -29,7 +31,8 @@ build-api:
 ## Build the infrastructure
 build-infra:
 	@ echo "⏳ Start building infrastructure..."
-	@ cdk synth
+# CDK errors out if GOOS is set to linux
+	@ GOOS="" && cdk synth 
 	@ echo "✅ Done building infrastructure"
 
 ## Clean all build output
@@ -49,13 +52,11 @@ deploy-api: build-api
 	@ rm -f ${BUILD_DIR}/bootstrap ${BUILD_DIR}/bootstrap.zip
 	@ echo "✅ Done updating API Lambda code"
 
-hello:
-	@ echo ${test}
-
 ## Deploy the infrastructure
 deploy-infra:
 	@ echo "⏳ Start deploying infrastructure..."
-	@ cdk deploy
+# CDK errors out if GOOS is set to linux
+	@ GOOS="" && cdk deploy 
 	@ echo "✅ Done deploying infrastructure"
 
 ## Install dependencies
