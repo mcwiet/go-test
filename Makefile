@@ -2,6 +2,8 @@
 # GLOBALS                                                                       #
 #################################################################################
 
+-include .env
+
 APP_NAME_API = api
 BUILD_DIR = ./dist
 CDK_DIR = ./cdk.out
@@ -47,6 +49,9 @@ deploy-api: build-api
 	@ rm -f ${BUILD_DIR}/bootstrap ${BUILD_DIR}/bootstrap.zip
 	@ echo "✅ Done updating API Lambda code"
 
+hello:
+	@ echo ${test}
+
 ## Deploy the infrastructure
 deploy-infra:
 	@ echo "⏳ Start deploying infrastructure..."
@@ -72,7 +77,6 @@ release: build test-unit
 test-unit: 
 	@ rm -rf .coverage
 ifeq (${SAVE_TEST_COVERAGE},$(filter ${SAVE_TEST_COVERAGE},${TRUE_CONDITIONS}))
-	# akdjalskdadas
 	@ mkdir .coverage
 	@ go test ./pkg/... -coverprofile ".coverage/pkg.out" 
 else
