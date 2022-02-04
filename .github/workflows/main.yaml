@@ -22,30 +22,24 @@ jobs:
         env:
           SAVE_TEST_COVERAGE: true
 
-      - name: SonarCloud Scan
-        uses: sonarsource/sonarcloud-github-action@master
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      - name: Upload unit test data
+        uses: actions/upload-artifact@master
+        with:
+          name: unit-test-results
+          path: .coverage/
 
-  #     - name: Upload unit test data
-  #       uses: actions/upload-artifact@master
-  #       with:
-  #         name: unit-test-results
-  #         path: .coverage/
+  sonar-scan:
+    environment: development
+    runs-on: ubuntu-latest
+    needs: unit-test
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-go@v2
+        with:
+          go-version: "^1.17.6"
 
-  # sonar-scan:
-  #   environment: development
-  #   runs-on: ubuntu-latest
-  #   needs: unit-test
-  #   steps:
-  #     - uses: actions/checkout@v2
-  #     - uses: actions/setup-go@v2
-  #       with:
-  #         go-version: "^1.17.6"
-
-  #     - name: Retrieve unit test data
-  #       uses: actions/download-artifact@master
-  #       with:
-  #         name: unit-test-results
-  #         path: .coverage/
+      - name: Retrieve unit test data
+        uses: actions/download-artifact@master
+        with:
+          name: unit-test-results
+          path: .coverage/
