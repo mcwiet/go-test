@@ -22,12 +22,7 @@ jobs:
       # - uses: actions/setup-python@v2
       #   with:
       #     python-version: "3.9"
-      # - uses: aws-actions/setup-sam@v1
-
-      - name: Extract branch name
-        shell: bash
-        run: echo "##[set-output name=branch;]$(echo ${GITHUB_REF#refs/heads/})"
-        id: extract_branch
+      # - uses: aws-actions/setup-sam@v1=
 
       - name: Run the unit tests
         run: make test-unit
