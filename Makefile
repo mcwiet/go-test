@@ -2,12 +2,13 @@
 # GLOBALS                                                                       #
 #################################################################################
 
-APP_NAME_API = "api"
-BUILD_DIR = "./dist"
-CDK_DIR = "./cdk.out"
-EVENTS_DIR = "./test/_request"
+APP_NAME_API = api
+BUILD_DIR = ./dist
+CDK_DIR = ./cdk.out
+EVENTS_DIR = ./test/_request
 GOOS = linux
 GOARCH = amd64
+TRUE_CONDITIONS = true TRUE 1
 
 #################################################################################
 # COMMANDS                                                                      #
@@ -69,7 +70,14 @@ release: build test-unit
 
 ## Run unit tests on library code (i.e. pkg/ directory)
 test-unit: 
-	@ go test ./pkg/... -cover
+	@ rm -rf .coverage
+ifeq (${SAVE_TEST_COVERAGE},$(filter ${SAVE_TEST_COVERAGE},${TRUE_CONDITIONS}))
+	# akdjalskdadas
+	@ mkdir .coverage
+	@ go test ./pkg/... -coverprofile ".coverage/pkg.out" 
+else
+	@ go test ./pkg/... -cover 
+endif
 
 #################################################################################
 # RESERVED                                                                      #
