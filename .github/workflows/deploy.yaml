@@ -1,0 +1,50 @@
+name: Deploy
+
+on:
+  workflow_call:
+    inputs:
+      GO_VERSION:
+        required: true
+        type: string
+
+concurrency: ${{ inputs.ENV }}
+
+jobs:
+  deploy:
+    environment: staging
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-go@v2
+        with:
+          go-version: ${{ inputs.GO_VERSION }}
+
+      - name: Get Node Package Manager
+        uses: actions/setup-node@v1
+        with:
+          node-version: "16.x"
+
+      - name: Install AWS CDK
+        run: npm install -g aws-cdk
+
+      - name: Build and deploy the infrastructure
+        run: make build-infra deploy-infra
+        env:
+          AWS_TARGET_ACCOUNT: ${{ secrets.AWS_ACCOUNT }}
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          ENV: ${{ inputs.ENV }}
+
+  integration-test:
+    environment: staging
+    needs: deploy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-go@v2
+        with:
+          go-version: ${{ inputs.GO_VERSION }}
+
+      - name: Run the integration tests
+        run: make test-integration
