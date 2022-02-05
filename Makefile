@@ -7,11 +7,11 @@
 export
 
 APP_NAME_API = api
+AWS_LAMBDA_GOOS = linux
+AWS_LAMBDA_GOARCH = amd64
 BUILD_DIR = ./dist
 CDK_DIR = ./cdk.out
 EVENTS_DIR = ./test/_request
-GOOS ?= linux
-GOARCH ?= amd64
 TRUE_CONDITIONS = true TRUE 1
 
 #################################################################################
@@ -25,14 +25,13 @@ build: build-api build-infra
 ## Build the API application
 build-api:
 	@ echo "⏳ Start building API..."
-	@ GOARCH=${GOARCH} GOOS=${GOOS} go build -o ${BUILD_DIR}/${APP_NAME_API} ./cmd/api
+	@ go build -o ${BUILD_DIR}/${APP_NAME_API} ./cmd/api
 	@ echo "✅ Done building API"
 
 ## Build the infrastructure
 build-infra:
 	@ echo "⏳ Start building infrastructure..."
-# CDK errors out if GOOS is set to linux
-	@ GOOS="" && cdk synth 
+	@ cdk synth 
 	@ echo "✅ Done building infrastructure"
 
 ## Clean all build output
@@ -42,21 +41,10 @@ clean:
 	@ rm -rf ${CDK_DIR}
 	@ echo "✅ Done cleaning"
 
-## Build, package, and update the API application Lambda code (expects infrastructure to have been deployed)
-deploy-api: build-api
-	@ echo "⏳ Start updating API Lambda code..."
-	@ rm -f ${BUILD_DIR}/bootstrap ${BUILD_DIR}/bootstrap.zip
-	@ cp ${BUILD_DIR}/${APP_NAME_API} ${BUILD_DIR}/bootstrap
-	@ zip -jr ${BUILD_DIR}/bootstrap.zip ${BUILD_DIR}/bootstrap
-	@ aws lambda update-function-code --function-name go-api-lambda --zip-file fileb://${BUILD_DIR}/bootstrap.zip
-	@ rm -f ${BUILD_DIR}/bootstrap ${BUILD_DIR}/bootstrap.zip
-	@ echo "✅ Done updating API Lambda code"
-
 ## Deploy the infrastructure
 deploy-infra:
 	@ echo "⏳ Start deploying infrastructure..."
-# CDK errors out if GOOS is set to linux
-	@ GOOS="" && cdk deploy 
+	@ cdk deploy 
 	@ echo "✅ Done deploying infrastructure"
 
 ## Install dependencies
@@ -74,8 +62,15 @@ invoke-api: build-infra
 ## Builds all code and runs all tests
 release: build test-unit
 
+## Run integration tests
+test-integration:
+	@ echo "⏳ Start running integration tests..."
+	@ go test ./test/integration/...
+	@ echo "✅ Done running integration tests"
+
 ## Run unit tests on library code (i.e. pkg/ directory)
 test-unit: 
+	@ echo "⏳ Start running unit tests..."
 	@ rm -rf .coverage
 ifeq (${SAVE_TEST_COVERAGE},$(filter ${SAVE_TEST_COVERAGE},${TRUE_CONDITIONS}))
 	@ mkdir .coverage
@@ -83,6 +78,18 @@ ifeq (${SAVE_TEST_COVERAGE},$(filter ${SAVE_TEST_COVERAGE},${TRUE_CONDITIONS}))
 else
 	@ go test ./pkg/... -cover 
 endif
+	@ echo "✅ Done running unit tests"
+
+## Build, package, and update the API application Lambda code (expects infrastructure to have been deployed)
+update-api:
+	@ echo "⏳ Start updating API Lambda code..."
+	@ GOARCH=${AWS_LAMBDA_GOARCH} GOOS=${AWS_LAMBDA_GOOS} go build -o ${BUILD_DIR}/${APP_NAME_API} ./cmd/api
+	@ rm -f ${BUILD_DIR}/bootstrap ${BUILD_DIR}/bootstrap.zip
+	@ cp ${BUILD_DIR}/${APP_NAME_API} ${BUILD_DIR}/bootstrap
+	@ zip -jr ${BUILD_DIR}/bootstrap.zip ${BUILD_DIR}/bootstrap
+	@ aws lambda update-function-code --function-name go-api-lambda --zip-file fileb://${BUILD_DIR}/bootstrap.zip
+	@ rm -f ${BUILD_DIR}/bootstrap ${BUILD_DIR}/bootstrap.zip
+	@ echo "✅ Done updating API Lambda code"
 
 #################################################################################
 # RESERVED                                                                      #
