@@ -11,7 +11,8 @@ AWS_LAMBDA_GOOS = linux
 AWS_LAMBDA_GOARCH = amd64
 BUILD_DIR = ./dist
 CDK_DIR = ./cdk.out
-ENV ?= development
+CMD_USER_POOL_ID = aws ssm get-parameter --name /go/go-${ENV}-auth-user-pool/id | jq '.Parameter.Value'
+CMD_USER_POOL_CLIENT_ID = aws ssm get-parameter --name /go/go-${ENV}-auth-user-pool-programmatic-client/id | jq '.Parameter.Value'
 EVENTS_DIR = ./test/_request
 TRUE_CONDITIONS = true TRUE 1
 
@@ -44,7 +45,7 @@ ifndef USER_PASSWORD
 	@ echo "🚨 Set value for USER_PASSWORD"
 else
 	@ echo "⏳ Start creating ${ENV} user '${USER_EMAIL}'..."
-	@ $(eval POOL_ID=$(shell aws ssm get-parameter --name /go/go-${ENV}-auth-user-pool/id | jq '.Parameter.Value'))
+	@ $(eval POOL_ID=$(shell ${CMD_USER_POOL_ID}))
 	@ aws cognito-idp admin-create-user --user-pool-id ${POOL_ID} --username ${USER_EMAIL}
 	@ aws cognito-idp admin-set-user-password --user-pool-id ${POOL_ID} --username ${USER_EMAIL} --password ${USER_PASSWORD} --permanent
 	@ echo "Updated attributes - password set"
@@ -67,7 +68,7 @@ ifndef USER_EMAIL
 	@ echo "🚨 Set value for USER_EMAIL"
 else
 	@ echo "⏳ Start deleting ${ENV} user '${USER_EMAIL}'..."
-	@ $(eval POOL_ID=$(shell aws ssm get-parameter --name /go/go-${ENV}-auth-user-pool/id | jq '.Parameter.Value'))
+	@ $(eval POOL_ID=$(shell ${CMD_USER_POOL_ID}))
 	@ aws cognito-idp admin-delete-user --user-pool-id ${POOL_ID} --username ${USER_EMAIL}
 	@ echo "✅ Done deleting ${ENV} user '${USER_EMAIL}'..."
 endif
@@ -77,6 +78,14 @@ deploy-infra:
 	@ echo "⏳ Start deploying ${ENV} infrastructure..."
 	@ cdk deploy --all
 	@ echo "✅ Done deploying ${ENV} infrastructure"
+
+## Get the secret for the programmatic app client
+get-app-client-info:
+	@ echo "⏳ Getting programmatic app client secret for ${ENV}..."
+	@ $(eval POOL_ID=$(shell ${CMD_USER_POOL_ID}))
+	@ $(eval CLIENT_ID=$(shell ${CMD_USER_POOL_CLIENT_ID}))
+	@ aws cognito-idp describe-user-pool-client --user-pool-id ${POOL_ID} --client-id ${CLIENT_ID} | jq '.UserPoolClient'
+	@ echo "✅ Done programmatic app client secret for ${ENV}..."
 
 ## Install dependencies
 install:

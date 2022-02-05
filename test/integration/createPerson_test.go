@@ -1,5 +1,39 @@
 package integration_test
 
+import (
+	"os"
+	"testing"
+
+	"github.com/aws/aws-sdk-go/aws/session"
+	cognito "github.com/aws/aws-sdk-go/service/cognitoidentityprovider"
+	"github.com/mcwiet/go-test/pkg/auth"
+	"github.com/stretchr/testify/assert"
+)
+
+func TestAuth(t *testing.T) {
+	poolId := os.Getenv("USER_POOL_ID")
+	clientId := os.Getenv("USER_POOL_APP_CLIENT_ID")
+	clientSecret := os.Getenv("USER_POOL_APP_CLIENT_SECRET")
+
+	session, _ := session.NewSession()
+	cognitoClient := cognito.New(session)
+
+	app := auth.App{
+		UserPoolID:      poolId,
+		AppClientID:     clientId,
+		AppClientSecret: clientSecret,
+		CognitoClient:   cognitoClient,
+	}
+
+	email := os.Getenv("USER_EMAIL")
+	password := os.Getenv("USER_PASSWORD")
+
+	token, err := app.Login(email, password)
+
+	assert.Nil(t, err)
+	assert.NotNil(t, token)
+}
+
 // // import "context"
 
 // // // create a client (safe to share across requests)
