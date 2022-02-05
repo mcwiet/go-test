@@ -91,7 +91,7 @@ jobs:
 
   integration-test:
     environment: production
-    needs: deploy
+    needs: deploy-production
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2

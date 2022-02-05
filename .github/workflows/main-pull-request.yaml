@@ -91,7 +91,7 @@ jobs:
 
   integration-test:
     environment: staging
-    needs: deploy
+    needs: deploy-staging
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
