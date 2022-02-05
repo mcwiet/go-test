@@ -31,5 +31,22 @@ func NewAuthStack(scope constructs.Construct, id string, props *AuthStackProps) 
 	})
 	NewInfraParameter(stack, userPoolName, "id", *userPool.UserPoolId())
 
+	// Programmatic Access App Client
+	apiAppClientName := userPoolName + "-programmatic-client"
+	userPool.AddClient(&apiAppClientName, &awscognito.UserPoolClientOptions{
+		UserPoolClientName: &apiAppClientName,
+		GenerateSecret:     jsii.Bool(true),
+		OAuth: &awscognito.OAuthSettings{
+			Flows: &awscognito.OAuthFlows{
+				AuthorizationCodeGrant: jsii.Bool(true),
+			},
+			Scopes: &[]awscognito.OAuthScope{
+				awscognito.OAuthScope_PROFILE(),
+				awscognito.OAuthScope_EMAIL(),
+			},
+		},
+	})
+	NewInfraParameter(stack, apiAppClientName, "id", *userPool.UserPoolId())
+
 	return stack
 }
