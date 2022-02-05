@@ -1,7 +1,7 @@
 name: Main Pull Request
 
 on:
-  push:
+  pull_request:
     branches: [main]
 
 # ----- THIS HAS BEEN COMMENTED OUT DUE TO THE FOLLOWING KNOWN BUG:
@@ -12,17 +12,17 @@ on:
 #   sonarcloud-scan:
 #     uses: ./.github/workflows/sonarcloud.yaml
 #     with:
-#       ENV: production
+#       ENV: staging
 #       GO_VERSION: ^1.17.6
 
 env:
   GO_VERSION: ^1.17.6
 
-concurrency: production
+concurrency: staging
 
 jobs:
   unit-test:
-    environment: production
+    environment: staging
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -42,7 +42,7 @@ jobs:
           path: .coverage/
 
   sonar-scan:
-    environment: production
+    environment: staging
     needs: unit-test
     runs-on: ubuntu-latest
     steps:
@@ -63,8 +63,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
-  deploy-production:
-    environment: production
+  deploy-staging:
+    environment: staging
     needs: unit-test
     runs-on: ubuntu-latest
     steps:
@@ -91,8 +91,8 @@ jobs:
           ENV: ${{ inputs.ENV }}
 
   integration-test:
-    environment: production
-    needs: deploy-production
+    environment: staging
+    needs: deploy-staging
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2

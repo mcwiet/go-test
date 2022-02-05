@@ -1,0 +1,51 @@
+name: SonarCloud Scan
+
+on:
+  workflow_call:
+    inputs:
+      GO_VERSION:
+        required: true
+        type: string
+
+jobs:
+  unit-test:
+    environment: ${{ inputs.ENV }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-go@v2
+        with:
+          go-version: ${{ inputs.GO_VERSION }}
+
+      - name: Run the unit tests
+        run: make test-unit
+        env:
+          SAVE_TEST_COVERAGE: true
+
+      - name: Upload unit test data
+        uses: actions/upload-artifact@master
+        with:
+          name: unit-test-results
+          path: .coverage/
+
+  sonar-scan:
+    environment: ${{ inputs.ENV }}
+    needs: unit-test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-go@v2
+        with:
+          go-version: ${{ inputs.GO_VERSION }}
+
+      - name: Retrieve unit test data
+        uses: actions/download-artifact@master
+        with:
+          name: unit-test-results
+          path: .coverage/
+
+      - name: SonarCloud Scan
+        uses: sonarsource/sonarcloud-github-action@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
