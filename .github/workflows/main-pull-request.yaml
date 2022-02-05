@@ -17,14 +17,13 @@ on:
 #       GO_VERSION: ^1.17.6
 
 env:
-  ENVIRONMENT: staging
   GO_VERSION: ^1.17.6
 
 concurrency: staging
 
 jobs:
   unit-test:
-    environment: ${{ env.ENVIRONMENT }}
+    environment: staging
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -44,7 +43,7 @@ jobs:
           path: .coverage/
 
   sonar-scan:
-    environment: ${{ env.ENVIRONMENT }}
+    environment: staging
     needs: unit-test
     runs-on: ubuntu-latest
     steps:
@@ -66,7 +65,7 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
   deploy:
-    environment: ${{ env.ENVIRONMENT }}
+    environment: staging
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -92,7 +91,7 @@ jobs:
           ENV: ${{ inputs.ENV }}
 
   integration-test:
-    environment: ${{ env.ENVIRONMENT }}
+    environment: staging
     needs: deploy
     runs-on: ubuntu-latest
     steps:
