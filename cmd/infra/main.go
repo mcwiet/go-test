@@ -15,8 +15,10 @@ func main() {
 		env = "development"
 	}
 
+	stackNamePrefix := "go-" + env
+
 	// Auth
-	authStackName := "go-auth-" + env
+	authStackName := stackNamePrefix + "-auth"
 	infra.NewAuthStack(app, authStackName, &infra.AuthStackProps{
 		StackProps: awscdk.StackProps{
 			StackName: &authStackName,
@@ -25,7 +27,7 @@ func main() {
 	})
 
 	// API
-	apiStackName := "go-api-" + env
+	apiStackName := stackNamePrefix + "-api"
 	infra.NewApiStack(app, apiStackName, &infra.ApiStackProps{
 		StackProps: awscdk.StackProps{
 			StackName: &apiStackName,

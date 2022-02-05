@@ -44,7 +44,7 @@ ifndef USER_PASSWORD
 	@ echo "🚨 Set value for USER_PASSWORD"
 else
 	@ echo "⏳ Start creating ${ENV} user '${USER_EMAIL}'..."
-	@ $(eval POOL_ID=$(shell aws ssm get-parameter --name /go/go-auth-development-user-pool/id | jq '.Parameter.Value'))
+	@ $(eval POOL_ID=$(shell aws ssm get-parameter --name /go/go-${ENV}-auth-user-pool/id | jq '.Parameter.Value'))
 	@ aws cognito-idp admin-create-user --user-pool-id ${POOL_ID} --username ${USER_EMAIL}
 	@ aws cognito-idp admin-set-user-password --user-pool-id ${POOL_ID} --username ${USER_EMAIL} --password ${USER_PASSWORD} --permanent
 	@ echo "Updated attributes - password set"
@@ -67,7 +67,7 @@ ifndef USER_EMAIL
 	@ echo "🚨 Set value for USER_EMAIL"
 else
 	@ echo "⏳ Start deleting ${ENV} user '${USER_EMAIL}'..."
-	@ $(eval POOL_ID=$(shell aws ssm get-parameter --name /go/go-auth-development-user-pool/id | jq '.Parameter.Value'))
+	@ $(eval POOL_ID=$(shell aws ssm get-parameter --name /go/go-${ENV}-auth-user-pool/id | jq '.Parameter.Value'))
 	@ aws cognito-idp admin-delete-user --user-pool-id ${POOL_ID} --username ${USER_EMAIL}
 	@ echo "✅ Done deleting ${ENV} user '${USER_EMAIL}'..."
 endif
