@@ -6,13 +6,10 @@ on:
       GO_VERSION:
         required: true
         type: string
-    secrets:
-      SONAR_TOKEN:
-        required: true
-        type: string
 
 jobs:
   unit-test:
+    environment: ${{ inputs.ENV }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -32,6 +29,7 @@ jobs:
           path: .coverage/
 
   sonar-scan:
+    environment: ${{ inputs.ENV }}
     needs: unit-test
     runs-on: ubuntu-latest
     steps:
