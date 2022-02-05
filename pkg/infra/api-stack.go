@@ -15,8 +15,8 @@ type ApiStackProps struct {
 	awscdk.StackProps
 }
 
-func NewApiStack(scope constructs.Construct, id string, props *awscdk.StackProps) awscdk.Stack {
-	stack := awscdk.NewStack(scope, &id, props)
+func NewApiStack(scope constructs.Construct, id string, props *ApiStackProps) awscdk.Stack {
+	stack := awscdk.NewStack(scope, &id, &props.StackProps)
 	stackName := props.StackName
 
 	// Lambda resolver
@@ -36,7 +36,13 @@ func NewApiStack(scope constructs.Construct, id string, props *awscdk.StackProps
 	api := awscdkappsyncalpha.NewGraphqlApi(stack, &apiName, &awscdkappsyncalpha.GraphqlApiProps{
 		Name:   &apiName,
 		Schema: schema,
+		AuthorizationConfig: &awscdkappsyncalpha.AuthorizationConfig{
+			DefaultAuthorization: &awscdkappsyncalpha.AuthorizationMode{
+				AuthorizationType: awscdkappsyncalpha.AuthorizationType_IAM,
+			},
+		},
 	})
+	NewInfraParameter(stack, apiName, "url", *api.GraphqlUrl())
 
 	// Data source(s)
 	apiSourceName := "lambda_source" // Can't use '-' in data source name

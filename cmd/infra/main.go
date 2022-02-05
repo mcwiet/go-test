@@ -15,10 +15,22 @@ func main() {
 		env = "development"
 	}
 
+	// Auth
+	authStackName := "go-auth-" + env
+	infra.NewAuthStack(app, authStackName, &infra.AuthStackProps{
+		StackProps: awscdk.StackProps{
+			StackName: &authStackName,
+			Env:       newCdkEnvironment(),
+		},
+	})
+
+	// API
 	apiStackName := "go-api-" + env
-	infra.NewApiStack(app, apiStackName, &awscdk.StackProps{
-		StackName: &apiStackName,
-		Env:       newCdkEnvironment(),
+	infra.NewApiStack(app, apiStackName, &infra.ApiStackProps{
+		StackProps: awscdk.StackProps{
+			StackName: &apiStackName,
+			Env:       newCdkEnvironment(),
+		},
 	})
 
 	app.Synth(nil)

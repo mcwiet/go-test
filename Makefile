@@ -11,6 +11,7 @@ AWS_LAMBDA_GOOS = linux
 AWS_LAMBDA_GOARCH = amd64
 BUILD_DIR = ./dist
 CDK_DIR = ./cdk.out
+ENV ?= development
 EVENTS_DIR = ./test/_request
 TRUE_CONDITIONS = true TRUE 1
 
@@ -30,9 +31,28 @@ build-api:
 
 ## Build the infrastructure
 build-infra:
-	@ echo "⏳ Start building infrastructure..."
+	@ echo "⏳ Start building ${ENV} infrastructure..."
 	@ cdk synth 
-	@ echo "✅ Done building infrastructure"
+	@ echo "✅ Done building ${ENV} infrastructure"
+
+## Create a user in the user pool for the current environment
+create-user:
+ifndef USER_EMAIL
+	@ echo "🚨 Set value for USER_EMAIL"
+else
+ifndef USER_PASSWORD
+	@ echo "🚨 Set value for USER_PASSWORD"
+else
+	@ echo "⏳ Start creating ${ENV} user '${USER_EMAIL}'..."
+	@ $(eval POOL_ID=$(shell aws ssm get-parameter --name /go/go-auth-development-user-pool/id | jq '.Parameter.Value'))
+	@ aws cognito-idp admin-create-user --user-pool-id ${POOL_ID} --username ${USER_EMAIL}
+	@ aws cognito-idp admin-set-user-password --user-pool-id ${POOL_ID} --username ${USER_EMAIL} --password ${USER_PASSWORD} --permanent
+	@ echo "Updated attributes - password set"
+	@ aws cognito-idp admin-update-user-attributes --user-pool-id ${POOL_ID} --username ${USER_EMAIL} --user-attributes Name=email_verified,Value=true
+	@ echo "Updated attributes - email verified"
+	@ echo "✅ Done creating ${ENV} user '${USER_EMAIL}'..."
+endif
+endif
 
 ## Clean all build output
 clean:
@@ -41,11 +61,22 @@ clean:
 	@ rm -rf ${CDK_DIR}
 	@ echo "✅ Done cleaning"
 
+## Delete a user in the user pool for the current environment
+delete-user:
+ifndef USER_EMAIL
+	@ echo "🚨 Set value for USER_EMAIL"
+else
+	@ echo "⏳ Start deleting ${ENV} user '${USER_EMAIL}'..."
+	@ $(eval POOL_ID=$(shell aws ssm get-parameter --name /go/go-auth-development-user-pool/id | jq '.Parameter.Value'))
+	@ aws cognito-idp admin-delete-user --user-pool-id ${POOL_ID} --username ${USER_EMAIL}
+	@ echo "✅ Done deleting ${ENV} user '${USER_EMAIL}'..."
+endif
+
 ## Deploy the infrastructure
 deploy-infra:
-	@ echo "⏳ Start deploying infrastructure..."
-	@ cdk deploy 
-	@ echo "✅ Done deploying infrastructure"
+	@ echo "⏳ Start deploying ${ENV} infrastructure..."
+	@ cdk deploy --all
+	@ echo "✅ Done deploying ${ENV} infrastructure"
 
 ## Install dependencies
 install:
@@ -59,14 +90,11 @@ invoke-api: build-infra
 	@ sam local invoke go-api-lambda -e ${EVENTS_DIR}/${API_REQUEST}.json  -t ${CDK_DIR}/go-api.template.json
 	@ echo "\n✅ Done invoking API"
 
-## Builds all code and runs all tests
-release: build test-unit
-
 ## Run integration tests
 test-integration:
-	@ echo "⏳ Start running integration tests..."
+	@ echo "⏳ Start running ${ENV} integration tests..."
 	@ go test ./test/integration/...
-	@ echo "✅ Done running integration tests"
+	@ echo "✅ Done running ${ENV} integration tests"
 
 ## Run unit tests on library code (i.e. pkg/ directory)
 test-unit: 
