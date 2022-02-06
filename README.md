@@ -4,16 +4,21 @@
 
 This is a test project for getting famliar with Go. On top of learning simple things like language syntax and directory structure, the intent is to focus on working with GraphQL and AWS CDK with Go. Clean architecture principles are followed as well, separating code into layers and fequently using dependency injection.
 
+Code is setup to allow easy
+
 ## Getting Started
 
-### Prerequisites
+### Required Prerequisites
 
-1. [Go](https://go.dev/doc/install)
-1. [AWS CDK](https://docs.aws.amazon.com/cdk/v2/guide/cli.html)
-1. [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html)
-1. [AWS SAM](https://aws.amazon.com/serverless/sam/)
-1. [Docker](https://www.docker.com/products/docker-desktop)
-1. Optional - ability to run makefile commands
+1. [Go](https://go.dev/doc/install): Language SDK
+1. [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html): Preferably executing with a role that has admin privileges to the AWS account
+1. [AWS CDK](https://docs.aws.amazon.com/cdk/v2/guide/cli.html): AWS infrastructure management
+
+### Suggested Prerequisites
+
+1. Ability to run makefile commands
+1. [AWS SAM](https://aws.amazon.com/serverless/sam/) + [Docker](https://www.docker.com/products/docker-desktop): Locally invoking / testing Lambda functions
+1. [jq](https://stedolan.github.io/jq/): Parsing JSON responses (used in Makefile commands)
 
 This document will assume you have the ability to run commands from the Makefile.
 

@@ -30,8 +30,8 @@ func init() {
 	session, _ := session.NewSession()
 	cognitoClient := cognito.New(session)
 	auth := authentication.NewCognitoAuthenticator(cognitoClient, clientId)
-	email := integration.GetRequiredEnv("USER_EMAIL")
-	password := integration.GetRequiredEnv("USER_PASSWORD")
+	email := integration.GetRequiredEnv("INTEGRATION_TEST_USER_EMAIL")
+	password := integration.GetRequiredEnv("INTEGRATION_TEST_USER_PASSWORD")
 	token, _ = auth.Login(email, password)
 }
 
