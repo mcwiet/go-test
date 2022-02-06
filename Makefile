@@ -72,13 +72,13 @@ ifndef INTEGRATION_TEST_USER_PASSWORD
 	@ echo "🚨 MANUAL ACTION: Set value for INTEGRATION_TEST_USER_PASSWORD"
 else
 	@ echo "⏳ Start creating ${ENV} user '${INTEGRATION_TEST_USER_EMAIL}'..."
-	@ aws cognito-idp admin-create-user --user-pool-id ${USER_POOL_ID} --username ${INTEGRATION_TEST_USER_EMAIL}
+	@ aws cognito-idp admin-create-user --user-pool-id ${USER_POOL_ID} --username ${INTEGRATION_TEST_USER_EMAIL} --message-action SUPPRESS
 	@ aws cognito-idp admin-set-user-password --user-pool-id ${USER_POOL_ID} --username ${INTEGRATION_TEST_USER_EMAIL} --password ${INTEGRATION_TEST_USER_PASSWORD} --permanent
 	@ echo "Updated attributes - password set"
 	@ aws cognito-idp admin-update-user-attributes --user-pool-id ${USER_POOL_ID} --username ${INTEGRATION_TEST_USER_EMAIL} --user-attributes Name=email_verified,Value=true
 	@ echo "Updated attributes - email verified"
 	@ echo "✅ Done creating ${ENV} user '${INTEGRATION_TEST_USER_EMAIL}'..."
-	@ echo "🚨 MANUAL ACTION: Update ${ENV_FILE} file with user credentials (if needed)!"
+	@ echo "🚨 MANUAL ACTION: Update ${ENV_FILE} file with user credentials (if needed)"
 endif
 endif
 

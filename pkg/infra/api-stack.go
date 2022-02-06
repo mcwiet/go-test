@@ -35,7 +35,7 @@ func NewApiStack(scope constructs.Construct, id string, props *ApiStackProps) aw
 
 	// AppSync API
 	apiName := *stackName + "-appsync"
-	userPoolId := GetInfraParameter(props.EnvName, ParamUserPoolId)
+	userPoolId := GetInfraParameter(stack, props.EnvName, ParamUserPoolId)
 	userPool := awscognito.UserPool_FromUserPoolId(stack, &userPoolId, &userPoolId)
 	api := awscdkappsyncalpha.NewGraphqlApi(stack, &apiName, &awscdkappsyncalpha.GraphqlApiProps{
 		Name:   &apiName,

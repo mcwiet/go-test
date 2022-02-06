@@ -33,13 +33,8 @@ func NewInfraParameter(scope constructs.Construct, envName string, paramDescript
 }
 
 // Gets the value of an existing parameter
-func GetInfraParameter(envName string, paramDescriptor string) string {
+func GetInfraParameter(scope constructs.Construct, envName string, paramDescriptor string) string {
 	paramName := "/go/" + envName + "/" + paramDescriptor
-	output, err := ssmClient.GetParameter(&ssm.GetParameterInput{
-		Name: &paramName,
-	})
-	if err != nil {
-		panic("Could not retrieve parameter: " + paramName)
-	}
-	return *output.Parameter.Value
+	paramToken := awsssm.StringParameter_ValueForStringParameter(scope, &paramName, nil)
+	return *paramToken
 }
