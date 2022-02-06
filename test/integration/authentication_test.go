@@ -16,8 +16,8 @@ func TestLogin(t *testing.T) {
 	session, _ := session.NewSession()
 	cognitoClient := cognito.New(session)
 	auth := authentication.NewCognitoAuthenticator(cognitoClient, clientId)
-	email := integration.GetRequiredEnv("INTEGRATION_TEST_USER_EMAIL")
-	password := integration.GetRequiredEnv("INTEGRATION_TEST_USER_PASSWORD")
+	email := integration.GetRequiredEnv("TEST_USER_EMAIL")
+	password := integration.GetRequiredEnv("TEST_USER_PASSWORD")
 
 	// Test
 	token, err := auth.Login(email, password)
