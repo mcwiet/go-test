@@ -1,4 +1,4 @@
-name: Main Pull Request
+name: Staging (Pull Request to Main)
 
 on:
   pull_request:
