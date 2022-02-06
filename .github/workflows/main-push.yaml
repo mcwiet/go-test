@@ -104,9 +104,6 @@ jobs:
 
       - name: Build the .env file
         run: make build-env-file
-
-      - name: Run the integration tests
-        run: make test-integration
         env:
           AWS_ACCOUNT: ${{ secrets.AWS_ACCOUNT }}
           AWS_REGION: ${{ secrets.AWS_REGION }}
