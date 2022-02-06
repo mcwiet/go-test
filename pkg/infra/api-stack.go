@@ -58,26 +58,10 @@ func NewApiStack(scope constructs.Construct, id string, props *ApiStackProps) aw
 	})
 
 	// Resolvers
-	api.CreateResolver(&awscdkappsyncalpha.ExtendedResolverProps{
-		TypeName:   jsii.String("Query"),
-		FieldName:  jsii.String("person"),
-		DataSource: lambdaSource,
-	})
-	api.CreateResolver(&awscdkappsyncalpha.ExtendedResolverProps{
-		TypeName:   jsii.String("Query"),
-		FieldName:  jsii.String("people"),
-		DataSource: lambdaSource,
-	})
-	api.CreateResolver(&awscdkappsyncalpha.ExtendedResolverProps{
-		TypeName:   jsii.String("Mutation"),
-		FieldName:  jsii.String("createPerson"),
-		DataSource: lambdaSource,
-	})
-	api.CreateResolver(&awscdkappsyncalpha.ExtendedResolverProps{
-		TypeName:   jsii.String("Mutation"),
-		FieldName:  jsii.String("deletePerson"),
-		DataSource: lambdaSource,
-	})
+	createResolver(api, "Query", "person", lambdaSource)
+	createResolver(api, "Query", "people", lambdaSource)
+	createResolver(api, "Mutation", "createPerson", lambdaSource)
+	createResolver(api, "Mutation", "deletePerson", lambdaSource)
 
 	// Dynamo DB table
 	tableName := *stackName + "-primary-table"
@@ -115,4 +99,12 @@ func NewApiStack(scope constructs.Construct, id string, props *ApiStackProps) aw
 	lambda.AddEnvironment(jsii.String("DDB_TABLE_NAME"), &tableName, nil)
 
 	return stack
+}
+
+func createResolver(api awscdkappsyncalpha.GraphqlApi, typeName string, fieldName string, source awscdkappsyncalpha.BaseDataSource) {
+	api.CreateResolver(&awscdkappsyncalpha.ExtendedResolverProps{
+		TypeName:   &typeName,
+		FieldName:  &fieldName,
+		DataSource: source,
+	})
 }

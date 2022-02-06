@@ -2,13 +2,7 @@ package infra
 
 import (
 	"github.com/aws/aws-cdk-go/awscdk/v2/awsssm"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/ssm"
 	"github.com/aws/constructs-go/constructs/v10"
-)
-
-var (
-	ssmClient = new(ssm.SSM)
 )
 
 // Defining all parameter names here - helps prevent typos and keep parameters organized
@@ -17,11 +11,6 @@ const (
 	ParamUserPoolId          = "user-pool-id"
 	ParamUserPoolApiClientId = "user-pool-api-client-id"
 )
-
-func init() {
-	session, _ := session.NewSession()
-	ssmClient = ssm.New(session)
-}
 
 // Returns the name for an SSM parameter
 func NewInfraParameter(scope constructs.Construct, envName string, paramDescriptor string, value string) awsssm.StringParameter {
