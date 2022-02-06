@@ -16,6 +16,7 @@ on:
 #       GO_VERSION: ^1.17.6
 
 env:
+  ENV: production
   GO_VERSION: ^1.17.6
 
 concurrency: production

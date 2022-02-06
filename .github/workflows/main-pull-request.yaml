@@ -16,6 +16,7 @@ on:
 #       GO_VERSION: ^1.17.6
 
 env:
+  ENV: staging
   GO_VERSION: ^1.17.6
 
 concurrency: staging
