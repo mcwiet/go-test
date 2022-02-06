@@ -16,7 +16,7 @@ type fakePersonService struct {
 	returnedErr   error
 }
 
-// Define mock / stub functionality
+// Define mock / stub behavior
 func (s *fakePersonService) Create(name string, age int) (*model.Person, error) {
 	ret, _ := s.returnedValue.(*model.Person)
 	return ret, s.returnedErr

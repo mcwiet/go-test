@@ -16,7 +16,7 @@ type fakePersonDao struct {
 	returnedErr   error
 }
 
-// Define mock / stub functionality
+// Define mock / stub behavior
 func (m fakePersonDao) Delete(string) error {
 	return m.returnedErr
 }

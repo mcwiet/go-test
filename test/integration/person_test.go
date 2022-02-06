@@ -2,7 +2,6 @@ package integration_test
 
 import (
 	"context"
-	"os"
 	"testing"
 
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -10,6 +9,7 @@ import (
 	"github.com/machinebox/graphql"
 	"github.com/mcwiet/go-test/pkg/authentication"
 	"github.com/mcwiet/go-test/pkg/model"
+	"github.com/mcwiet/go-test/test/integration"
 	"github.com/mitchellh/mapstructure"
 	"github.com/stretchr/testify/assert"
 )
@@ -22,29 +22,17 @@ var (
 
 func init() {
 	// Setup the GraphQL client
-	apiUrl = GetRequiredEnv("API_URL")
+	apiUrl = integration.GetRequiredEnv("API_URL")
 	client = graphql.NewClient(apiUrl)
 
 	// Get an access token for making API calls
-	clientId := GetRequiredEnv("USER_POOL_APP_CLIENT_ID")
+	clientId := integration.GetRequiredEnv("USER_POOL_APP_CLIENT_ID")
 	session, _ := session.NewSession()
 	cognitoClient := cognito.New(session)
-	app := authentication.CognitoAuthenticator{
-		AppClientId: clientId,
-		Provider:    cognitoClient,
-	}
-	email := GetRequiredEnv("USER_EMAIL")
-	password := GetRequiredEnv("USER_PASSWORD")
-	token, _ = app.Login(email, password)
-}
-
-// Attempt to load environment variable; panic if not found (fail fast)
-func GetRequiredEnv(name string) string {
-	val, exists := os.LookupEnv(name)
-	if exists == false {
-		panic("Could not load environment variable: " + name)
-	}
-	return val
+	auth := authentication.NewCognitoAuthenticator(cognitoClient, clientId)
+	email := integration.GetRequiredEnv("USER_EMAIL")
+	password := integration.GetRequiredEnv("USER_PASSWORD")
+	token, _ = auth.Login(email, password)
 }
 
 // Sequentially run functions involved for testing person API operations
