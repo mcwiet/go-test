@@ -9,6 +9,7 @@ import (
 
 type AuthStackProps struct {
 	awscdk.StackProps
+	EnvName string
 }
 
 func NewAuthStack(scope constructs.Construct, id string, props *AuthStackProps) awscdk.Stack {
@@ -29,24 +30,33 @@ func NewAuthStack(scope constructs.Construct, id string, props *AuthStackProps) 
 			},
 		},
 	})
-	NewInfraParameter(stack, userPoolName, "id", *userPool.UserPoolId())
+	// userPool := awscognito.NewCfnUserPool(stack, &userPoolName, &awscognito.CfnUserPoolProps{
+	// 	UserPoolName:       &userPoolName,
+	// 	AliasAttributes:    jsii.Strings("email"),
+	// 	UsernameAttributes: jsii.Strings("email"),
+	// })
+	NewInfraParameter(stack, props.EnvName, ParamUserPoolId, *userPool.UserPoolId())
 
-	// Programmatic Access App Client
-	appClientName := userPoolName + "-programmatic-client"
+	// API App Client
+	appClientName := userPoolName + "-api-client"
 	appClient := userPool.AddClient(&appClientName, &awscognito.UserPoolClientOptions{
 		UserPoolClientName: &appClientName,
-		GenerateSecret:     jsii.Bool(true),
+		GenerateSecret:     jsii.Bool(false),
 		OAuth: &awscognito.OAuthSettings{
 			Flows: &awscognito.OAuthFlows{
-				AuthorizationCodeGrant: jsii.Bool(true),
+				ImplicitCodeGrant: jsii.Bool(true),
 			},
 			Scopes: &[]awscognito.OAuthScope{
 				awscognito.OAuthScope_PROFILE(),
 				awscognito.OAuthScope_EMAIL(),
 			},
 		},
+		AuthFlows: &awscognito.AuthFlow{
+			UserPassword: jsii.Bool(true),
+			UserSrp:      jsii.Bool(true),
+		},
 	})
-	NewInfraParameter(stack, appClientName, "id", *appClient.UserPoolClientId())
+	NewInfraParameter(stack, props.EnvName, ParamUserPoolApiClientId, *appClient.UserPoolClientId())
 
 	return stack
 }

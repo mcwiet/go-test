@@ -11,8 +11,8 @@ AWS_LAMBDA_GOOS = linux
 AWS_LAMBDA_GOARCH = amd64
 BUILD_DIR = ./dist
 CDK_DIR = ./cdk.out
-CMD_USER_POOL_ID = aws ssm get-parameter --name /go/go-${ENV}-auth-user-pool/id | jq '.Parameter.Value'
-CMD_USER_POOL_CLIENT_ID = aws ssm get-parameter --name /go/go-${ENV}-auth-user-pool-programmatic-client/id | jq '.Parameter.Value'
+CMD_USER_POOL_ID = aws ssm get-parameter --name /go/${ENV}/user-pool-id | jq '.Parameter.Value'
+CMD_USER_POOL_CLIENT_ID = aws ssm get-parameter --name /go/${ENV}/user-pool-api-client-id | jq '.Parameter.Value'
 EVENTS_DIR = ./test/_request
 TRUE_CONDITIONS = true TRUE 1
 
@@ -79,13 +79,19 @@ deploy-infra:
 	@ cdk deploy --all
 	@ echo "✅ Done deploying ${ENV} infrastructure"
 
-## Get the secret for the programmatic app client
+## Get the URL for the API
+get-api-url:
+	@ echo "⏳ Getting ${ENV} API URL..."
+	@ aws ssm get-parameter --name /go/${ENV}/appsync-url | jq '.Parameter.Value'
+	@ echo "✅ Done getting ${ENV} API URL"
+
+## Get the secret for the API app client
 get-app-client-info:
-	@ echo "⏳ Getting programmatic app client secret for ${ENV}..."
+	@ echo "⏳ Getting API app client secret for ${ENV}..."
 	@ $(eval POOL_ID=$(shell ${CMD_USER_POOL_ID}))
 	@ $(eval CLIENT_ID=$(shell ${CMD_USER_POOL_CLIENT_ID}))
 	@ aws cognito-idp describe-user-pool-client --user-pool-id ${POOL_ID} --client-id ${CLIENT_ID} | jq '.UserPoolClient'
-	@ echo "✅ Done programmatic app client secret for ${ENV}..."
+	@ echo "✅ Done getting API app client secret for ${ENV}"
 
 ## Install dependencies
 install:

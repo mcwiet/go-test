@@ -4,6 +4,7 @@ import (
 	"os"
 
 	"github.com/aws/aws-cdk-go/awscdk/v2"
+	"github.com/aws/jsii-runtime-go"
 	"github.com/mcwiet/go-test/pkg/infra"
 )
 
@@ -19,21 +20,26 @@ func main() {
 
 	// Auth
 	authStackName := stackNamePrefix + "-auth"
-	infra.NewAuthStack(app, authStackName, &infra.AuthStackProps{
+	authStack := infra.NewAuthStack(app, authStackName, &infra.AuthStackProps{
 		StackProps: awscdk.StackProps{
 			StackName: &authStackName,
 			Env:       newCdkEnvironment(),
 		},
+		EnvName: env,
 	})
 
 	// API
 	apiStackName := stackNamePrefix + "-api"
-	infra.NewApiStack(app, apiStackName, &infra.ApiStackProps{
+	apiStack := infra.NewApiStack(app, apiStackName, &infra.ApiStackProps{
 		StackProps: awscdk.StackProps{
 			StackName: &apiStackName,
 			Env:       newCdkEnvironment(),
 		},
+		EnvName: env,
 	})
+
+	// Define dependencies (from parameters)
+	apiStack.AddDependency(authStack, jsii.String("AppSync API needs reference to Cognito User Pool"))
 
 	app.Synth(nil)
 }

@@ -2,6 +2,7 @@ package infra
 
 import (
 	"github.com/aws/aws-cdk-go/awscdk/v2"
+	"github.com/aws/aws-cdk-go/awscdk/v2/awscognito"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awsdynamodb"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awsiam"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awslambda"
@@ -13,6 +14,7 @@ import (
 
 type ApiStackProps struct {
 	awscdk.StackProps
+	EnvName string
 }
 
 func NewApiStack(scope constructs.Construct, id string, props *ApiStackProps) awscdk.Stack {
@@ -33,16 +35,21 @@ func NewApiStack(scope constructs.Construct, id string, props *ApiStackProps) aw
 
 	// AppSync API
 	apiName := *stackName + "-appsync"
+	userPoolId := GetInfraParameter(props.EnvName, ParamUserPoolId)
+	userPool := awscognito.UserPool_FromUserPoolId(stack, &userPoolId, &userPoolId)
 	api := awscdkappsyncalpha.NewGraphqlApi(stack, &apiName, &awscdkappsyncalpha.GraphqlApiProps{
 		Name:   &apiName,
 		Schema: schema,
 		AuthorizationConfig: &awscdkappsyncalpha.AuthorizationConfig{
 			DefaultAuthorization: &awscdkappsyncalpha.AuthorizationMode{
-				AuthorizationType: awscdkappsyncalpha.AuthorizationType_IAM,
+				AuthorizationType: awscdkappsyncalpha.AuthorizationType_USER_POOL,
+				UserPoolConfig: &awscdkappsyncalpha.UserPoolConfig{
+					UserPool: userPool,
+				},
 			},
 		},
 	})
-	NewInfraParameter(stack, apiName, "url", *api.GraphqlUrl())
+	NewInfraParameter(stack, props.EnvName, ParamAppSyncUrl, *api.GraphqlUrl())
 
 	// Data source(s)
 	apiSourceName := "lambda_source" // Can't use '-' in data source name
