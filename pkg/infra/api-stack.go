@@ -2,6 +2,7 @@ package infra
 
 import (
 	"github.com/aws/aws-cdk-go/awscdk/v2"
+	"github.com/aws/aws-cdk-go/awscdk/v2/awscognito"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awsdynamodb"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awsiam"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awslambda"
@@ -13,10 +14,11 @@ import (
 
 type ApiStackProps struct {
 	awscdk.StackProps
+	EnvName string
 }
 
-func NewApiStack(scope constructs.Construct, id string, props *awscdk.StackProps) awscdk.Stack {
-	stack := awscdk.NewStack(scope, &id, props)
+func NewApiStack(scope constructs.Construct, id string, props *ApiStackProps) awscdk.Stack {
+	stack := awscdk.NewStack(scope, &id, &props.StackProps)
 	stackName := props.StackName
 
 	// Lambda resolver
@@ -33,10 +35,21 @@ func NewApiStack(scope constructs.Construct, id string, props *awscdk.StackProps
 
 	// AppSync API
 	apiName := *stackName + "-appsync"
+	userPoolId := GetInfraParameter(stack, props.EnvName, ParamUserPoolId)
+	userPool := awscognito.UserPool_FromUserPoolId(stack, &userPoolId, &userPoolId)
 	api := awscdkappsyncalpha.NewGraphqlApi(stack, &apiName, &awscdkappsyncalpha.GraphqlApiProps{
 		Name:   &apiName,
 		Schema: schema,
+		AuthorizationConfig: &awscdkappsyncalpha.AuthorizationConfig{
+			DefaultAuthorization: &awscdkappsyncalpha.AuthorizationMode{
+				AuthorizationType: awscdkappsyncalpha.AuthorizationType_USER_POOL,
+				UserPoolConfig: &awscdkappsyncalpha.UserPoolConfig{
+					UserPool: userPool,
+				},
+			},
+		},
 	})
+	NewInfraParameter(stack, props.EnvName, ParamAppSyncUrl, *api.GraphqlUrl())
 
 	// Data source(s)
 	apiSourceName := "lambda_source" // Can't use '-' in data source name
@@ -45,21 +58,10 @@ func NewApiStack(scope constructs.Construct, id string, props *awscdk.StackProps
 	})
 
 	// Resolvers
-	api.CreateResolver(&awscdkappsyncalpha.ExtendedResolverProps{
-		TypeName:   jsii.String("Query"),
-		FieldName:  jsii.String("person"),
-		DataSource: lambdaSource,
-	})
-	api.CreateResolver(&awscdkappsyncalpha.ExtendedResolverProps{
-		TypeName:   jsii.String("Query"),
-		FieldName:  jsii.String("people"),
-		DataSource: lambdaSource,
-	})
-	api.CreateResolver(&awscdkappsyncalpha.ExtendedResolverProps{
-		TypeName:   jsii.String("Mutation"),
-		FieldName:  jsii.String("createPerson"),
-		DataSource: lambdaSource,
-	})
+	createResolver(api, "Query", "person", lambdaSource)
+	createResolver(api, "Query", "people", lambdaSource)
+	createResolver(api, "Mutation", "createPerson", lambdaSource)
+	createResolver(api, "Mutation", "deletePerson", lambdaSource)
 
 	// Dynamo DB table
 	tableName := *stackName + "-primary-table"
@@ -97,4 +99,12 @@ func NewApiStack(scope constructs.Construct, id string, props *awscdk.StackProps
 	lambda.AddEnvironment(jsii.String("DDB_TABLE_NAME"), &tableName, nil)
 
 	return stack
+}
+
+func createResolver(api awscdkappsyncalpha.GraphqlApi, typeName string, fieldName string, source awscdkappsyncalpha.BaseDataSource) {
+	api.CreateResolver(&awscdkappsyncalpha.ExtendedResolverProps{
+		TypeName:   &typeName,
+		FieldName:  &fieldName,
+		DataSource: source,
+	})
 }

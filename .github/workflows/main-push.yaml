@@ -16,6 +16,7 @@ on:
 #       GO_VERSION: ^1.17.6
 
 env:
+  ENV: production
   GO_VERSION: ^1.17.6
 
 concurrency: production
@@ -84,11 +85,10 @@ jobs:
       - name: Build and deploy the infrastructure
         run: make build-infra deploy-infra
         env:
-          AWS_TARGET_ACCOUNT: ${{ secrets.AWS_ACCOUNT }}
+          AWS_ACCOUNT: ${{ secrets.AWS_ACCOUNT }}
           AWS_REGION: ${{ secrets.AWS_REGION }}
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          ENV: ${{ inputs.ENV }}
 
   integration-test:
     environment: production
@@ -99,6 +99,16 @@ jobs:
       - uses: actions/setup-go@v2
         with:
           go-version: ${{ env.GO_VERSION }}
+
+      - name: Build the .env file
+        run: make build-env-file
+        env:
+          AWS_ACCOUNT: ${{ secrets.AWS_ACCOUNT }}
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          INTEGRATION_TEST_USER_EMAIL: ${{ secrets.INTEGRATION_TEST_USER_EMAIL }}
+          INTEGRATION_TEST_USER_PASSWORD: ${{ secrets.INTEGRATION_TEST_USER_PASSWORD }}
 
       - name: Run the integration tests
         run: make test-integration

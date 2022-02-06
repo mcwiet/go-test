@@ -17,7 +17,7 @@ type fakeDynamoDbClient struct {
 	returnedErr   error
 }
 
-// Define mock / sub functionality
+// Define mock / sub behavior
 func (c *fakeDynamoDbClient) DeleteItem(*dynamodb.DeleteItemInput) (*dynamodb.DeleteItemOutput, error) {
 	ret, _ := c.returnedValue.(*dynamodb.DeleteItemOutput)
 	return ret, c.returnedErr
