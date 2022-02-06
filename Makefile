@@ -60,26 +60,26 @@ build-env-file:
 	@ echo "API_URL=${API_URL}" >> ${ENV_FILE}
 	@ echo "" >> ${ENV_FILE}
 	@ echo "# MANUAL VALUES" >> ${ENV_FILE}
-	@ echo "INTEGRATION_TEST_USER_EMAIL=${INTEGRATION_TEST_USER_EMAIL}" >> ${ENV_FILE}
-	@ echo "INTEGRATION_TEST_USER_PASSWORD=${INTEGRATION_TEST_USER_PASSWORD}" >> ${ENV_FILE}
+	@ echo "TEST_USER_EMAIL=${TEST_USER_EMAIL}" >> ${ENV_FILE}
+	@ echo "TEST_USER_PASSWORD=${TEST_USER_PASSWORD}" >> ${ENV_FILE}
 	@ echo "✅ Done building ${ENV_FILE} file for ${ENV}"
 
 ## Create a user in the user pool for the current environment
-create-user:
+create-test-user:
 	@ $(eval USER_POOL_ID=$(shell ${CMD_USER_POOL_ID}))
-ifndef INTEGRATION_TEST_USER_EMAIL
-	@ echo "🚨 MANUAL ACTION: Set value for INTEGRATION_TEST_USER_EMAIL"
+ifndef TEST_USER_EMAIL
+	@ echo "🚨 MANUAL ACTION: Set value for TEST_USER_EMAIL"
 else
-ifndef INTEGRATION_TEST_USER_PASSWORD
-	@ echo "🚨 MANUAL ACTION: Set value for INTEGRATION_TEST_USER_PASSWORD"
+ifndef TEST_USER_PASSWORD
+	@ echo "🚨 MANUAL ACTION: Set value for TEST_USER_PASSWORD"
 else
-	@ echo "⏳ Start creating ${ENV} user '${INTEGRATION_TEST_USER_EMAIL}'..."
-	@ aws cognito-idp admin-create-user --user-pool-id ${USER_POOL_ID} --username ${INTEGRATION_TEST_USER_EMAIL} --message-action SUPPRESS
-	@ aws cognito-idp admin-set-user-password --user-pool-id ${USER_POOL_ID} --username ${INTEGRATION_TEST_USER_EMAIL} --password ${INTEGRATION_TEST_USER_PASSWORD} --permanent
+	@ echo "⏳ Start creating ${ENV} user '${TEST_USER_EMAIL}'..."
+	@ aws cognito-idp admin-create-user --user-pool-id ${USER_POOL_ID} --username ${TEST_USER_EMAIL} --message-action SUPPRESS
+	@ aws cognito-idp admin-set-user-password --user-pool-id ${USER_POOL_ID} --username ${TEST_USER_EMAIL} --password ${TEST_USER_PASSWORD} --permanent
 	@ echo "Updated attributes - password set"
-	@ aws cognito-idp admin-update-user-attributes --user-pool-id ${USER_POOL_ID} --username ${INTEGRATION_TEST_USER_EMAIL} --user-attributes Name=email_verified,Value=true
+	@ aws cognito-idp admin-update-user-attributes --user-pool-id ${USER_POOL_ID} --username ${TEST_USER_EMAIL} --user-attributes Name=email_verified,Value=true
 	@ echo "Updated attributes - email verified"
-	@ echo "✅ Done creating ${ENV} user '${INTEGRATION_TEST_USER_EMAIL}'..."
+	@ echo "✅ Done creating ${ENV} user '${TEST_USER_EMAIL}'..."
 	@ echo "🚨 MANUAL ACTION: Update ${ENV_FILE} file with user credentials (if needed)"
 endif
 endif
@@ -92,14 +92,14 @@ clean:
 	@ echo "✅ Done cleaning"
 
 ## Delete a user in the user pool for the current environment
-delete-user:
+delete-test-user:
 	@ $(eval USER_POOL_ID=$(shell ${CMD_USER_POOL_ID}))
-ifndef INTEGRATION_TEST_USER_EMAIL
-	@ echo "🚨 MANUAL ACTION: Set value for INTEGRATION_TEST_USER_EMAIL"
+ifndef TEST_USER_EMAIL
+	@ echo "🚨 MANUAL ACTION: Set value for TEST_USER_EMAIL"
 else
-	@ echo "⏳ Start deleting ${ENV} user '${INTEGRATION_TEST_USER_EMAIL}'..."
-	@ aws cognito-idp admin-delete-user --user-pool-id ${USER_POOL_ID} --username ${INTEGRATION_TEST_USER_EMAIL}
-	@ echo "✅ Done deleting ${ENV} user '${INTEGRATION_TEST_USER_EMAIL}'..."
+	@ echo "⏳ Start deleting ${ENV} user '${TEST_USER_EMAIL}'..."
+	@ aws cognito-idp admin-delete-user --user-pool-id ${USER_POOL_ID} --username ${TEST_USER_EMAIL}
+	@ echo "✅ Done deleting ${ENV} user '${TEST_USER_EMAIL}'..."
 endif
 
 ## Deploy the infrastructure
@@ -117,7 +117,7 @@ install:
 ## Invoke the API; set API_REQUEST=[name of request] (e.g. use 'person' for ./test/_request/person.json)
 invoke-api: build-infra
 	@ echo "⏳ Invoking API with event '${EVENTS_DIR}/${API_REQUEST}.json'..."
-	@ sam local invoke go-api-lambda -e ${EVENTS_DIR}/${API_REQUEST}.json -t ${CDK_DIR}/go-api.template.json
+	@ sam local invoke go-${ENV}-api-lambda -e ${EVENTS_DIR}/${API_REQUEST}.json -t ${CDK_DIR}/go-${ENV}-api.template.json
 	@ echo "\n✅ Done invoking API"
 
 ## Run integration tests

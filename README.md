@@ -2,52 +2,56 @@
 
 ## About
 
-This is a test project for getting famliar with Go. On top of learning simple things like language syntax and directory structure, the intent is to focus on working with GraphQL and AWS CDK with Go. Clean architecture principles are followed as well, separating code into layers and fequently using dependency injection.
+This is a test project for getting famliar with Go. On top of learning simple things like language syntax and directory structure, the intent is to focus on working with GraphQL and AWS CDK with Go. Clean architecture principles are followed, separating code into layers and fequently using dependency injection.
 
-Code is setup to allow easy
+The application is a simple API for interacting with `person` objects with create, read, update, and delete operations. The infrastructure is powered by AWS services such as AppSync, Lambda, DynamoDB, and Cognito. GitHub Actions power the CI/CD pipeline which use a `staging` environment for pull requests and a `production` environment for code released to the main branch. SonarCloud scans the code for potential bugs, security issues, unmaintainable code, and test coverage reporting.
 
 ## Getting Started
 
-### Required Prerequisites
+### Prerequisites
 
 1. [Go](https://go.dev/doc/install): Language SDK
+1. [AWS CDK](https://docs.aws.amazon.com/cdk/v2/guide/cli.html): AWS infrastructure management (be sure to [bootstrap](https://docs.aws.amazon.com/cdk/v2/guide/bootstrapping.html) the account/region)
 1. [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html): Preferably executing with a role that has admin privileges to the AWS account
-1. [AWS CDK](https://docs.aws.amazon.com/cdk/v2/guide/cli.html): AWS infrastructure management
-
-### Suggested Prerequisites
-
-1. Ability to run makefile commands
 1. [AWS SAM](https://aws.amazon.com/serverless/sam/) + [Docker](https://www.docker.com/products/docker-desktop): Locally invoking / testing Lambda functions
 1. [jq](https://stedolan.github.io/jq/): Parsing JSON responses (used in Makefile commands)
+1. [Make](https://www.gnu.org/software/make/): Running common, preset commands
 
 This document will assume you have the ability to run commands from the Makefile.
 
-### Installation
-
-1. Clone repo
-1. Install project dependencies - `make install`
-
 ## Usage
 
-See instructions below for running the application locally or in an AWS account. For a full list of supported Makefile commands, use either `make` or `make help`.
+The instructions below provide steps for setting up an environment both locally and in AWS. For a full list of supported Makefile commands, use either run `make` or `make help` to list all commands and a brief description.
 
-### Local
+1. Run `make build-infra deploy-infra` to build and deploy a development environment to an AWS account
+1. Run `make build-env` to create the `.env` environment file (pulls values from the freshly deployed infrastructure)
+1. Update the `.env` file with credentials for a test user (for activities such as automated integration testing), then run `make create-test-user` to add that user to the Cognito User Pool
+1. Run `make test-unit` to run unit tests locally
+1. Run `make test-integration` to run integration tests against the deployed environment in AWS
+1. Run `make invoke-api-sam API_REQUEST=person` to invoke the API Lambda locally in Docker, using requests stored in `test/_request/`
 
-The API can be run locally using SAM and Docker. Requests are expected in the format of a standard AppSync request - reusable examples can be placed in the `test/_data/_request` folder.
+## Developer Notes
 
-1. Build everything - `make build`
-1. Invoke the API - `make invoke-api API_REQUEST=person`
+### Design Comments
 
-Note that the invoke command does not automatically rebuild the API package. When rapidly testing changes with the same request, it can be helpful to use a command such as `make build-api invoke-api API_REQUEST=person`. Note that SAM uses the infrastructure build output as well so be mindful of rebuilding the infrastructure package as well.
+- Each API request has 3 layers: controller (parse the HTTP request and call services), services (run business logic) and data (interact with the data store)
+- Dependency injection is used as much as possible to make unit testing easier (enable use of stubs and mocks)
+- Initial unit tests are simple and generally test a "working path" and an "error path"
+- Dependencies between CDK stacks are implemented as SSM parameters (rather than stack outputs / exports); this leads to reduced coupling and allows stacks to be deleted without first deleting their dependenent stacks ([see here for more context](https://tusharsharma.dev/posts/aws-cfn-with-ssm-parameters))
+- To delete an environemt, delete the CloudFormation stacks and manually delete any resources where the status was marked as **DELETE_SKIPPED** (such as a DynamoDB Table or Cognito User Pool)
 
-### AWS Cloud
+### Adding a New API
 
-1. Build everything - `make build`
-1. Deploy the infrastructure - `make deploy-infra`
+These are the recommended high level steps to adding functionality to the API:
 
-Once the infrastructure has been deployed, changes to code can be quickly uploaded directly to the Lambda resolver using `make deploy-api` (saves time by not updating the entire CloudFormation infrastructure stack).
+1. Update the schema (`api/schema.graphql`)
+1. Update the CDK
+1. Create a controller and update the API entrypoint (`cmd/api/main.go`)
+1. Create the service
+1. Create the data access object
+1. Add tests (if not already done)
 
-## References
+### References
 
 1. [Directory structure recommendations](https://github.com/golang-standards/project-layout)
 1. [GraphQL knowledge base](https://graphql.org/learn/)
