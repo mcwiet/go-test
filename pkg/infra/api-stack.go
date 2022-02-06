@@ -73,6 +73,11 @@ func NewApiStack(scope constructs.Construct, id string, props *ApiStackProps) aw
 		FieldName:  jsii.String("createPerson"),
 		DataSource: lambdaSource,
 	})
+	api.CreateResolver(&awscdkappsyncalpha.ExtendedResolverProps{
+		TypeName:   jsii.String("Mutation"),
+		FieldName:  jsii.String("deletePerson"),
+		DataSource: lambdaSource,
+	})
 
 	// Dynamo DB table
 	tableName := *stackName + "-primary-table"

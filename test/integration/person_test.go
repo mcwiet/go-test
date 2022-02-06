@@ -47,7 +47,22 @@ func GetRequiredEnv(name string) string {
 	return val
 }
 
-func TestCreatePerson(t *testing.T) {
+// Sequentially run functions involved for testing person API operations
+func TestPersonApi(t *testing.T) {
+	// Create the person
+	person := createPerson(t)
+
+	// Get the person
+	getPerson(t, person.Id, &person)
+
+	// Delete the person
+	deletePerson(t, &person)
+
+	// Attempt to get person again
+	getPerson(t, person.Id, nil)
+}
+
+func createPerson(t *testing.T) model.Person {
 	// Setup
 	personName := "Integration Test"
 	personAge := 10
@@ -71,8 +86,61 @@ func TestCreatePerson(t *testing.T) {
 	mapstructure.Decode(response["createPerson"], &person)
 
 	// Verify
-	assert.Nil(t, err, "should not error")
-	assert.NotNil(t, person.Id, "id should exist")
-	assert.Equal(t, personName, person.Name, "name should match")
-	assert.Equal(t, personAge, person.Age, "age should match")
+	stepName := "createPerson: "
+	assert.Nil(t, err, stepName+"should not error")
+	assert.NotNil(t, person.Id, stepName+"id should exist")
+	assert.Equal(t, personName, person.Name, stepName+"name should match")
+	assert.Equal(t, personAge, person.Age, stepName+"age should match")
+
+	return person
+}
+
+func deletePerson(t *testing.T, person *model.Person) {
+	// Setup
+	request := graphql.NewRequest(`
+		mutation ($id: ID!) {
+			deletePerson (id: $id)
+		}
+	`)
+	request.Var("id", person.Id)
+	request.Header.Set("Authorization", token)
+
+	// Execute
+	var response map[string]interface{}
+	err := client.Run(context.Background(), request, &response)
+
+	// Verify
+	stepName := "deletePerson: "
+	assert.Nil(t, err, stepName+"should not error")
+}
+
+func getPerson(t *testing.T, id string, expectedPerson *model.Person) {
+	// Setup
+	request := graphql.NewRequest(`
+		query ($id: ID!) {
+			person (id: $id) {
+				id
+				name
+				age
+			}
+		}
+	`)
+	request.Var("id", id)
+	request.Header.Set("Authorization", token)
+
+	// Execute
+	var response map[string]interface{}
+	err := client.Run(context.Background(), request, &response)
+	var person model.Person
+	mapstructure.Decode(response["person"], &person)
+
+	// Verify
+	stepName := "getPerson: "
+	if expectedPerson != nil {
+		assert.Nil(t, err, stepName+"should not error")
+		assert.Equal(t, *expectedPerson, person, stepName+"should find the correct person")
+	} else {
+		assert.NotNil(t, err, stepName+"should not find person with id "+id)
+		assert.Equal(t, "", person.Id, stepName+"should not find person with id "+id)
+	}
 }

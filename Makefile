@@ -130,7 +130,7 @@ update-api:
 	@ rm -f ${BUILD_DIR}/bootstrap ${BUILD_DIR}/bootstrap.zip
 	@ cp ${BUILD_DIR}/${APP_NAME_API} ${BUILD_DIR}/bootstrap
 	@ zip -jr ${BUILD_DIR}/bootstrap.zip ${BUILD_DIR}/bootstrap
-	@ aws lambda update-function-code --function-name go-api-lambda --zip-file fileb://${BUILD_DIR}/bootstrap.zip
+	@ aws lambda update-function-code --function-name go-${ENV}-api-lambda --zip-file fileb://${BUILD_DIR}/bootstrap.zip
 	@ rm -f ${BUILD_DIR}/bootstrap ${BUILD_DIR}/bootstrap.zip
 	@ echo "✅ Done updating API Lambda code"
 
