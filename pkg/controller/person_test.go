@@ -28,8 +28,8 @@ func (s *fakePersonService) GetById(id string) (*model.Person, error) {
 	ret, _ := s.returnedValue.(*model.Person)
 	return ret, s.returnedErr
 }
-func (s *fakePersonService) List() (*[]model.Person, error) {
-	ret, _ := s.returnedValue.(*[]model.Person)
+func (s *fakePersonService) List() (model.PersonConnection, error) {
+	ret, _ := s.returnedValue.(model.PersonConnection)
 	return ret, s.returnedErr
 }
 
@@ -39,6 +39,11 @@ var (
 		Id:   uuid.NewString(),
 		Name: "dummy",
 		Age:  1,
+	}
+	sampleConnection = model.PersonConnection{
+		TotalCount: 1,
+		Edges:      []model.PersonEdge{{Node: samplePerson, Cursor: "cursor"}},
+		PageInfo:   model.PageInfo{EndCursor: "cursor", HasNextPage: false},
 	}
 )
 
@@ -189,9 +194,9 @@ func TestHandleList(t *testing.T) {
 	tests := []Test{
 		{
 			name:             "valid list",
-			personService:    fakePersonService{returnedValue: &[]model.Person{samplePerson}},
+			personService:    fakePersonService{returnedValue: sampleConnection},
 			request:          controller.Request{},
-			expectedResponse: controller.Response{Data: []model.Person{samplePerson}},
+			expectedResponse: controller.Response{Data: sampleConnection},
 			expectErr:        false,
 		},
 		{

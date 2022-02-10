@@ -2,7 +2,7 @@
 
 ## About
 
-This is a test project for getting famliar with Go. On top of learning simple things like language syntax and directory structure, the intent is to focus on working with GraphQL and AWS CDK with Go. Clean architecture principles are followed, separating code into layers and fequently using dependency injection.
+This is a test project for getting familiar with Go. On top of learning simple things like language syntax and directory structure, the intent is to focus on working with GraphQL and AWS CDK with Go. Clean architecture principles are followed, separating code into layers and frequently using dependency injection.
 
 The application is a simple API for interacting with `person` objects with create, read, update, and delete operations. The infrastructure is powered by AWS services such as AppSync, Lambda, DynamoDB, and Cognito. GitHub Actions power the CI/CD pipeline which use a `staging` environment for pull requests and a `production` environment for code released to the main branch. SonarCloud scans the code for potential bugs, security issues, unmaintainable code, and test coverage reporting.
 
@@ -38,7 +38,7 @@ The instructions below provide steps for setting up an environment both locally 
 - Dependency injection is used as much as possible to make unit testing easier (enable use of stubs and mocks)
 - Initial unit tests are simple and generally test a "working path" and an "error path"
 - Dependencies between CDK stacks are implemented as SSM parameters (rather than stack outputs / exports); this leads to reduced coupling and allows stacks to be deleted without first deleting their dependenent stacks ([see here for more context](https://tusharsharma.dev/posts/aws-cfn-with-ssm-parameters))
-- To delete an environemt, delete the CloudFormation stacks and manually delete any resources where the status was marked as **DELETE_SKIPPED** (such as a DynamoDB Table or Cognito User Pool)
+- To delete an environment, delete the CloudFormation stacks and manually delete any resources where the status was marked as **DELETE_SKIPPED** (such as a DynamoDB Table or Cognito User Pool)
 
 ### Adding a New API
 

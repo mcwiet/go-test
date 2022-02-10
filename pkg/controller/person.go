@@ -8,7 +8,7 @@ type PersonService interface {
 	Create(name string, age int) (*model.Person, error)
 	Delete(id string) error
 	GetById(id string) (*model.Person, error)
-	List() (*[]model.Person, error)
+	List() (model.PersonConnection, error)
 }
 
 // Object containing data needed for the Person controller
@@ -57,9 +57,9 @@ func (c *PersonController) HandleGet(request Request) Response {
 
 // Handles request for listing people
 func (c *PersonController) HandleList(request Request) Response {
-	people, err := c.personService.List()
+	connection, err := c.personService.List()
 	if err == nil {
-		return Response{Data: *people}
+		return Response{Data: connection}
 	} else {
 		return Response{Error: err}
 	}

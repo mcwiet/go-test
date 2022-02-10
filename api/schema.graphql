@@ -3,14 +3,30 @@ schema {
   mutation: Mutation
 }
 
+type PageInfo {
+  endCursor: String!
+  hasNextPage: Boolean!
+}
+
 type Person {
   id: ID!
   name: String!
   age: Int!
 }
 
+type PersonEdge {
+  node: Person!
+  cursor: String!
+}
+
+type PersonConnection {
+  totalCount: Int!
+  edges: [PersonEdge!]
+  pageInfo: PageInfo!
+}
+
 type Query {
-  people: [Person!]!
+  people: PersonConnection!
   person(id: ID!): Person!
 }
 

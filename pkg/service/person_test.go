@@ -27,8 +27,8 @@ func (m fakePersonDao) GetById(string) (*model.Person, error) {
 func (m fakePersonDao) Insert(*model.Person) error {
 	return m.returnedErr
 }
-func (m fakePersonDao) List() (*[]model.Person, error) {
-	ret, _ := m.returnedValue.(*[]model.Person)
+func (m fakePersonDao) List() (model.PersonConnection, error) {
+	ret, _ := m.returnedValue.(model.PersonConnection)
 	return ret, m.returnedErr
 }
 
@@ -38,6 +38,11 @@ var (
 		Id:   uuid.NewString(),
 		Name: "dummy",
 		Age:  12,
+	}
+	sampleConnection = model.PersonConnection{
+		TotalCount: 1,
+		Edges:      []model.PersonEdge{{Node: samplePerson, Cursor: "cursor"}},
+		PageInfo:   model.PageInfo{EndCursor: "cursor", HasNextPage: false},
 	}
 )
 
@@ -173,19 +178,19 @@ func TestDelete(t *testing.T) {
 func TestList(t *testing.T) {
 	// Define test struct
 	type Test struct {
-		name           string
-		personDao      fakePersonDao
-		expectedPeople *[]model.Person
-		expectErr      bool
+		name               string
+		personDao          fakePersonDao
+		expectedConnection model.PersonConnection
+		expectErr          bool
 	}
 
 	// Define tests
 	tests := []Test{
 		{
-			name:           "valid list",
-			personDao:      fakePersonDao{returnedValue: &[]model.Person{samplePerson}},
-			expectedPeople: &[]model.Person{samplePerson},
-			expectErr:      false,
+			name:               "valid list",
+			personDao:          fakePersonDao{returnedValue: sampleConnection},
+			expectedConnection: sampleConnection,
+			expectErr:          false,
 		},
 	}
 
@@ -199,7 +204,7 @@ func TestList(t *testing.T) {
 
 		// Verify
 		if !test.expectErr {
-			assert.Equal(t, test.expectedPeople, people, test.name)
+			assert.Equal(t, test.expectedConnection, people, test.name)
 		} else {
 			assert.NotNil(t, err, test.name)
 		}

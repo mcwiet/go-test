@@ -187,10 +187,10 @@ func TestInsert(t *testing.T) {
 func TestList(t *testing.T) {
 	// Define test struct
 	type Test struct {
-		name           string
-		dbClient       fakeDynamoDbClient
-		expectedPeople *[]model.Person
-		expectErr      bool
+		name               string
+		dbClient           fakeDynamoDbClient
+		expectedConnection model.PersonConnection
+		expectErr          bool
 	}
 
 	// Define tests
@@ -198,10 +198,23 @@ func TestList(t *testing.T) {
 		{
 			name: "valid list",
 			dbClient: fakeDynamoDbClient{returnedValue: &dynamodb.QueryOutput{
-				Items: []map[string]*dynamodb.AttributeValue{samplePersonItem},
+				Count:            newInt64(1),
+				Items:            []map[string]*dynamodb.AttributeValue{samplePersonItem},
+				LastEvaluatedKey: map[string]*dynamodb.AttributeValue{},
 			}},
-			expectedPeople: &[]model.Person{samplePerson},
-			expectErr:      false,
+			expectedConnection: model.PersonConnection{
+				TotalCount: 1,
+				Edges: []model.PersonEdge{
+					{
+						Node:   samplePerson,
+						Cursor: samplePerson.Id,
+					}},
+				PageInfo: model.PageInfo{
+					EndCursor:   samplePerson.Id,
+					HasNextPage: false,
+				},
+			},
+			expectErr: false,
 		},
 		{
 			name:      "db query error",
@@ -216,13 +229,17 @@ func TestList(t *testing.T) {
 		dao := data.NewPersonDao(&test.dbClient, tableName)
 
 		// Execute
-		people, err := dao.List()
+		connection, err := dao.List()
 
 		// Verify
 		if !test.expectErr {
-			assert.Equal(t, test.expectedPeople, people, test.name)
+			assert.Equal(t, test.expectedConnection, connection, test.name)
 		} else {
 			assert.NotNil(t, err, test.name)
 		}
 	}
+}
+
+func newInt64(val int64) *int64 {
+	return &val
 }

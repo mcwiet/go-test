@@ -113,7 +113,7 @@ func (p *PersonDao) Insert(person *model.Person) error {
 }
 
 // Lists persons from the data store
-func (p *PersonDao) List() (*[]model.Person, error) {
+func (p *PersonDao) List() (model.PersonConnection, error) {
 	ret, err := p.client.Query(&dynamodb.QueryInput{
 		TableName:              &p.tableName,
 		IndexName:              jsii.String("sort-key-gsi"),
@@ -129,18 +129,31 @@ func (p *PersonDao) List() (*[]model.Person, error) {
 
 	if ret == nil || err != nil {
 		log.Println(err)
-		return nil, errors.New("error retrieving people")
+		return model.PersonConnection{}, errors.New("error retrieving people")
 	}
 
 	items := ret.Items
-	arr := []model.Person{}
+	connection := model.PersonConnection{
+		TotalCount: int(*ret.Count),
+		Edges:      []model.PersonEdge{},
+	}
+
 	for _, item := range items {
 		age, _ := strconv.Atoi(*item["Age"].N)
-		arr = append(arr, model.Person{
-			Id:   *item["Id"].S,
-			Name: *item["Name"].S,
-			Age:  age,
+		connection.Edges = append(connection.Edges, model.PersonEdge{
+			Node: model.Person{
+				Id:   *item["Id"].S,
+				Name: *item["Name"].S,
+				Age:  age,
+			},
+			Cursor: *item["Id"].S,
 		})
 	}
-	return &arr, nil
+
+	connection.PageInfo = model.PageInfo{
+		EndCursor:   *ret.Items[len(ret.Items)-1]["Id"].S,
+		HasNextPage: len(ret.LastEvaluatedKey) != 0,
+	}
+
+	return connection, nil
 }
