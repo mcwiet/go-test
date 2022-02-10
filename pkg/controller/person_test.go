@@ -28,7 +28,7 @@ func (s *fakePersonService) GetById(id string) (*model.Person, error) {
 	ret, _ := s.returnedValue.(*model.Person)
 	return ret, s.returnedErr
 }
-func (s *fakePersonService) List() (model.PersonConnection, error) {
+func (s *fakePersonService) List(first int, after string) (model.PersonConnection, error) {
 	ret, _ := s.returnedValue.(model.PersonConnection)
 	return ret, s.returnedErr
 }
@@ -193,16 +193,20 @@ func TestHandleList(t *testing.T) {
 	// Define tests
 	tests := []Test{
 		{
-			name:             "valid list",
-			personService:    fakePersonService{returnedValue: sampleConnection},
-			request:          controller.Request{},
+			name:          "valid list",
+			personService: fakePersonService{returnedValue: sampleConnection},
+			request: controller.Request{
+				Arguments: map[string]interface{}{},
+			},
 			expectedResponse: controller.Response{Data: sampleConnection},
 			expectErr:        false,
 		},
 		{
-			name:             "service list error",
-			personService:    fakePersonService{returnedErr: errors.New("list error")},
-			request:          controller.Request{},
+			name:          "service list error",
+			personService: fakePersonService{returnedErr: errors.New("list error")},
+			request: controller.Request{
+				Arguments: map[string]interface{}{},
+			},
 			expectedResponse: controller.Response{},
 			expectErr:        true,
 		},

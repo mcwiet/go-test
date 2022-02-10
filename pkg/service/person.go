@@ -9,7 +9,7 @@ type PersonDao interface {
 	Delete(string) error
 	GetById(string) (*model.Person, error)
 	Insert(*model.Person) error
-	List() (model.PersonConnection, error)
+	List(first int, after string) (model.PersonConnection, error)
 }
 
 // Object containing data needed to use the Person service
@@ -48,7 +48,7 @@ func (s *PersonService) GetById(id string) (*model.Person, error) {
 }
 
 // Lists people
-func (s *PersonService) List() (model.PersonConnection, error) {
-	connection, err := s.personDao.List()
+func (s *PersonService) List(first int, after string) (model.PersonConnection, error) {
+	connection, err := s.personDao.List(first, after)
 	return connection, err
 }

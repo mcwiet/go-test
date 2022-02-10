@@ -27,7 +27,7 @@ func (m fakePersonDao) GetById(string) (*model.Person, error) {
 func (m fakePersonDao) Insert(*model.Person) error {
 	return m.returnedErr
 }
-func (m fakePersonDao) List() (model.PersonConnection, error) {
+func (m fakePersonDao) List(int, string) (model.PersonConnection, error) {
 	ret, _ := m.returnedValue.(model.PersonConnection)
 	return ret, m.returnedErr
 }
@@ -180,6 +180,8 @@ func TestList(t *testing.T) {
 	type Test struct {
 		name               string
 		personDao          fakePersonDao
+		first              int
+		after              string
 		expectedConnection model.PersonConnection
 		expectErr          bool
 	}
@@ -189,6 +191,8 @@ func TestList(t *testing.T) {
 		{
 			name:               "valid list",
 			personDao:          fakePersonDao{returnedValue: sampleConnection},
+			first:              2,
+			after:              "cursor",
 			expectedConnection: sampleConnection,
 			expectErr:          false,
 		},
@@ -200,7 +204,7 @@ func TestList(t *testing.T) {
 		service := service.NewPersonService(test.personDao)
 
 		// Execute
-		people, err := service.List()
+		people, err := service.List(test.first, test.after)
 
 		// Verify
 		if !test.expectErr {

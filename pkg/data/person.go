@@ -112,33 +112,28 @@ func (p *PersonDao) Insert(person *model.Person) error {
 	return nil
 }
 
-// Lists persons from the data store
-func (p *PersonDao) List() (model.PersonConnection, error) {
-	ret, err := p.client.Query(&dynamodb.QueryInput{
-		TableName:              &p.tableName,
-		IndexName:              jsii.String("sort-key-gsi"),
-		KeyConditionExpression: jsii.String("Sort = :sortVal"),
-		ProjectionExpression:   jsii.String("Id, #name, Age"),
-		ExpressionAttributeNames: map[string]*string{
-			"#name": jsii.String("Name"),
-		},
-		ExpressionAttributeValues: map[string]*dynamodb.AttributeValue{
-			":sortVal": {S: jsii.String(personSortLabel)},
-		},
-	})
+// Lists people from the data store
+func (p *PersonDao) List(first int, after string) (model.PersonConnection, error) {
+	queryRet, err := p.queryPeople(first, after)
 
-	if ret == nil || err != nil {
+	if err != nil {
 		log.Println(err)
 		return model.PersonConnection{}, errors.New("error retrieving people")
 	}
 
-	items := ret.Items
+	totalCount, err := p.getTotalCount()
+
+	if err != nil {
+		log.Println(err)
+		return model.PersonConnection{}, errors.New("error getting total people count")
+	}
+
 	connection := model.PersonConnection{
-		TotalCount: int(*ret.Count),
+		TotalCount: totalCount,
 		Edges:      []model.PersonEdge{},
 	}
 
-	for _, item := range items {
+	for _, item := range queryRet.Items {
 		age, _ := strconv.Atoi(*item["Age"].N)
 		connection.Edges = append(connection.Edges, model.PersonEdge{
 			Node: model.Person{
@@ -150,10 +145,62 @@ func (p *PersonDao) List() (model.PersonConnection, error) {
 		})
 	}
 
+	endCursor := ""
+	if len(queryRet.Items) > 0 {
+		endCursor = *queryRet.Items[len(queryRet.Items)-1]["Id"].S
+	}
+
 	connection.PageInfo = model.PageInfo{
-		EndCursor:   *ret.Items[len(ret.Items)-1]["Id"].S,
-		HasNextPage: len(ret.LastEvaluatedKey) != 0,
+		EndCursor:   endCursor,
+		HasNextPage: len(queryRet.LastEvaluatedKey) != 0,
 	}
 
 	return connection, nil
+}
+
+// Get the total count of people
+func (p *PersonDao) getTotalCount() (int, error) {
+	ret, err := p.client.Query(&dynamodb.QueryInput{
+		TableName:              &p.tableName,
+		IndexName:              jsii.String("sort-key-gsi"),
+		KeyConditionExpression: jsii.String("Sort = :sortVal"),
+		ExpressionAttributeValues: map[string]*dynamodb.AttributeValue{
+			":sortVal": {S: jsii.String(personSortLabel)},
+		},
+	})
+
+	return int(*ret.Count), err
+}
+
+// Query for a set of people (first n people after the exclusive start value)
+func (p *PersonDao) queryPeople(count int, exclusiveStartId string) (dynamodb.QueryOutput, error) {
+	if count < 1 {
+		return dynamodb.QueryOutput{}, nil
+	}
+
+	limit := int64(count)
+	exclusiveStartKey := map[string]*dynamodb.AttributeValue{
+		"Id":   {S: &exclusiveStartId},
+		"Sort": {S: jsii.String(personSortLabel)},
+	}
+	if exclusiveStartId == "" {
+		exclusiveStartKey = nil
+	}
+
+	ret, err := p.client.Query(&dynamodb.QueryInput{
+		TableName:              &p.tableName,
+		IndexName:              jsii.String("sort-key-gsi"),
+		KeyConditionExpression: jsii.String("Sort = :sortVal"),
+		ProjectionExpression:   jsii.String("Id, #name, Age"),
+		ExpressionAttributeNames: map[string]*string{
+			"#name": jsii.String("Name"),
+		},
+		ExpressionAttributeValues: map[string]*dynamodb.AttributeValue{
+			":sortVal": {S: jsii.String(personSortLabel)},
+		},
+		ExclusiveStartKey: exclusiveStartKey,
+		Limit:             &limit,
+	})
+
+	return *ret, err
 }

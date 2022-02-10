@@ -1,6 +1,8 @@
 package controller
 
-import "encoding/json"
+import (
+	"encoding/json"
+)
 
 // Standard request format
 type Request struct {

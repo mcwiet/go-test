@@ -12,7 +12,7 @@ type PersonEdge struct {
 }
 
 type PersonConnection struct {
-	TotalCount int          `json:"TotalCount"`
-	Edges      []PersonEdge `json:"Edges"`
+	TotalCount int          `json:"totalCount"`
+	Edges      []PersonEdge `json:"edges"`
 	PageInfo   PageInfo     `json:"pageInfo"`
 }

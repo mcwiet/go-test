@@ -229,7 +229,7 @@ func TestList(t *testing.T) {
 		dao := data.NewPersonDao(&test.dbClient, tableName)
 
 		// Execute
-		connection, err := dao.List()
+		connection, err := dao.List(test.expectedConnection.TotalCount, "")
 
 		// Verify
 		if !test.expectErr {
