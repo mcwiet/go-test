@@ -123,7 +123,7 @@ invoke-api: build-infra
 ## Run integration tests
 test-integration:
 	@ echo "⏳ Start running ${ENV} integration tests..."
-	@ go test ./test/integration/...
+	@ go test ./test/integration/... -v
 	@ echo "✅ Done running ${ENV} integration tests"
 
 ## Run unit tests on library code (i.e. pkg/ directory)

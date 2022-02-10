@@ -26,7 +26,7 @@ type PersonConnection {
 }
 
 type Query {
-  people(first Int, after String): PersonConnection!
+  people(first: Int, after: String): PersonConnection!
   person(id: ID!): Person!
 }
 

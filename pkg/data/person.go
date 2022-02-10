@@ -169,7 +169,12 @@ func (p *PersonDao) getTotalCount() (int, error) {
 		},
 	})
 
-	return int(*ret.Count), err
+	count := 0
+	if ret != nil {
+		count = int(*ret.Count)
+	}
+
+	return count, err
 }
 
 // Query for a set of people (first n people after the exclusive start value)

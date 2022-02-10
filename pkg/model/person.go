@@ -7,8 +7,8 @@ type Person struct {
 }
 
 type PersonEdge struct {
-	Node   Person `json:"Node"`
-	Cursor string `json:"Cursor"`
+	Node   Person `json:"node"`
+	Cursor string `json:"cursor"`
 }
 
 type PersonConnection struct {
