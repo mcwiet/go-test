@@ -193,10 +193,22 @@ func TestHandleList(t *testing.T) {
 	// Define tests
 	tests := []Test{
 		{
-			name:          "valid list",
+			name:          "list without input",
 			personService: fakePersonService{returnedValue: sampleConnection},
 			request: controller.Request{
 				Arguments: map[string]interface{}{},
+			},
+			expectedResponse: controller.Response{Data: sampleConnection},
+			expectErr:        false,
+		},
+		{
+			name:          "list with input",
+			personService: fakePersonService{returnedValue: sampleConnection},
+			request: controller.Request{
+				Arguments: map[string]interface{}{
+					"first": float64(10),
+					"after": "some cursor value",
+				},
 			},
 			expectedResponse: controller.Response{Data: sampleConnection},
 			expectErr:        false,

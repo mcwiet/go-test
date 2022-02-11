@@ -132,11 +132,17 @@ func TestGetById(t *testing.T) {
 	// Define tests
 	tests := []Test{
 		{
-			name:           "valid get by id",
+			name:           "person found",
 			dbClient:       fakeDynamoDbClient{returnedValue: &dynamodb.GetItemOutput{Item: samplePersonItem1}},
 			personId:       samplePerson1.Id,
 			expectedPerson: samplePerson1,
 			expectErr:      false,
+		},
+		{
+			name:      "person not found",
+			dbClient:  fakeDynamoDbClient{returnedValue: &dynamodb.GetItemOutput{Item: nil}},
+			personId:  samplePerson1.Id,
+			expectErr: true,
 		},
 		{
 			name:      "db get error",
