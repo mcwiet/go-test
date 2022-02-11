@@ -76,7 +76,7 @@ func (p *PersonDao) GetById(id string) (model.Person, error) {
 			"Id":   {S: jsii.String(id)},
 			"Sort": {S: jsii.String(personSortLabel)},
 		},
-		ProjectionExpression: jsii.String("#name, Age"),
+		ProjectionExpression: jsii.String("Id, #name, Age"),
 		ExpressionAttributeNames: map[string]*string{
 			"#name": jsii.String("Name"),
 		},
