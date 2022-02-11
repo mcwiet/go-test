@@ -3,5 +3,8 @@
     "parentTypeName": "Query",
     "fieldName": "people"
   },
-  "arguments": {}
+  "arguments": {
+    "first": 5,
+    "after": ""
+  }
 }

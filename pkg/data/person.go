@@ -10,6 +10,8 @@ import (
 	"github.com/mcwiet/go-test/pkg/model"
 )
 
+type DynamoItem = map[string]*dynamodb.AttributeValue
+
 type DynamoDbClient interface {
 	DeleteItem(*dynamodb.DeleteItemInput) (*dynamodb.DeleteItemOutput, error)
 	GetItem(*dynamodb.GetItemInput) (*dynamodb.GetItemOutput, error)
@@ -17,9 +19,15 @@ type DynamoDbClient interface {
 	Query(*dynamodb.QueryInput) (*dynamodb.QueryOutput, error)
 }
 
+type CursorEncoder interface {
+	Encode(string) string
+	Decode(string) (string, error)
+}
+
 // Object containing information needed to access the person data store
 type PersonDao struct {
 	client    DynamoDbClient
+	encoder   CursorEncoder
 	tableName string
 }
 
@@ -28,9 +36,10 @@ var (
 )
 
 // Creates a person data store access object
-func NewPersonDao(client DynamoDbClient, tableName string) PersonDao {
+func NewPersonDao(client DynamoDbClient, cursorEncoder CursorEncoder, tableName string) PersonDao {
 	return PersonDao{
 		client:    client,
+		encoder:   cursorEncoder,
 		tableName: tableName,
 	}
 }
@@ -39,7 +48,7 @@ func NewPersonDao(client DynamoDbClient, tableName string) PersonDao {
 func (p *PersonDao) Delete(id string) error {
 	_, err := p.client.DeleteItem(&dynamodb.DeleteItemInput{
 		TableName: &p.tableName,
-		Key: map[string]*dynamodb.AttributeValue{
+		Key: DynamoItem{
 			"Id":   {S: jsii.String(id)},
 			"Sort": {S: jsii.String(personSortLabel)},
 		},
@@ -60,14 +69,14 @@ func (p *PersonDao) Delete(id string) error {
 }
 
 // Gets a person from the data store using the ID
-func (p *PersonDao) GetById(id string) (*model.Person, error) {
+func (p *PersonDao) GetById(id string) (model.Person, error) {
 	ret, err := p.client.GetItem(&dynamodb.GetItemInput{
 		TableName: &p.tableName,
-		Key: map[string]*dynamodb.AttributeValue{
+		Key: DynamoItem{
 			"Id":   {S: jsii.String(id)},
 			"Sort": {S: jsii.String(personSortLabel)},
 		},
-		ProjectionExpression: jsii.String("#name, Age"),
+		ProjectionExpression: jsii.String("Id, #name, Age"),
 		ExpressionAttributeNames: map[string]*string{
 			"#name": jsii.String("Name"),
 		},
@@ -75,28 +84,22 @@ func (p *PersonDao) GetById(id string) (*model.Person, error) {
 
 	if err != nil {
 		log.Println(err)
-		return nil, errors.New("error retrieving person")
+		return model.Person{}, errors.New("error retrieving person")
 	} else if ret == nil || ret.Item == nil {
-		return nil, errors.New("person not found")
+		return model.Person{}, errors.New("person not found")
 	}
 
-	item := ret.Item
-	age, err := strconv.Atoi(*item["Age"].N)
-	person := model.Person{
-		Id:   id,
-		Name: *item["Name"].S,
-		Age:  age,
-	}
+	person := convertItemToPerson(ret.Item)
 
-	return &person, err
+	return person, err
 }
 
 // Inserts a person to the data store
-func (p *PersonDao) Insert(person *model.Person) error {
+func (p *PersonDao) Insert(person model.Person) error {
 	age := strconv.Itoa(person.Age)
 	_, err := p.client.PutItem(&dynamodb.PutItemInput{
 		TableName: &p.tableName,
-		Item: map[string]*dynamodb.AttributeValue{
+		Item: DynamoItem{
 			"Id":   {S: jsii.String(person.Id)},
 			"Sort": {S: jsii.String(personSortLabel)},
 			"Name": {S: &person.Name},
@@ -112,8 +115,80 @@ func (p *PersonDao) Insert(person *model.Person) error {
 	return nil
 }
 
-// Lists persons from the data store
-func (p *PersonDao) List() (*[]model.Person, error) {
+// Lists people from the data store
+func (p *PersonDao) List(first int, after string) (model.PersonConnection, error) {
+	exclusiveStartId, _ := p.encoder.Decode(after)
+	queryRet, err := p.queryPeople(first, exclusiveStartId)
+	if err != nil {
+		log.Println(err)
+		return model.PersonConnection{}, errors.New("error retrieving people")
+	}
+
+	totalCount, err := p.getTotalCount()
+	if err != nil {
+		log.Println(err)
+		return model.PersonConnection{}, errors.New("error getting total people count")
+	}
+
+	connection := model.PersonConnection{
+		TotalCount: totalCount,
+		Edges:      []model.PersonEdge{},
+	}
+	for _, item := range queryRet.Items {
+		connection.Edges = append(connection.Edges, model.PersonEdge{
+			Node:   convertItemToPerson(item),
+			Cursor: p.encoder.Encode(*item["Id"].S),
+		})
+	}
+
+	endCursor := ""
+	if len(queryRet.Items) > 0 {
+		lastId := *queryRet.Items[len(queryRet.Items)-1]["Id"].S
+		endCursor = p.encoder.Encode(lastId)
+	}
+
+	connection.PageInfo = model.PageInfo{
+		EndCursor:   endCursor,
+		HasNextPage: len(queryRet.LastEvaluatedKey) != 0,
+	}
+
+	return connection, nil
+}
+
+// Get the total count of people
+func (p *PersonDao) getTotalCount() (int, error) {
+	ret, err := p.client.Query(&dynamodb.QueryInput{
+		TableName:              &p.tableName,
+		IndexName:              jsii.String("sort-key-gsi"),
+		KeyConditionExpression: jsii.String("Sort = :sortVal"),
+		ExpressionAttributeValues: DynamoItem{
+			":sortVal": {S: jsii.String(personSortLabel)},
+		},
+	})
+
+	count := 0
+	if ret != nil {
+		count = int(*ret.Count)
+	}
+
+	return count, err
+}
+
+// Query for a set of people (first n people after the exclusive start value)
+func (p *PersonDao) queryPeople(count int, exclusiveStartId string) (dynamodb.QueryOutput, error) {
+	limit := int64(count)
+	if count == 0 {
+		// Dynamo minimum limit is 1
+		limit = 1
+	}
+	exclusiveStartKey := DynamoItem{
+		"Id":   {S: &exclusiveStartId},
+		"Sort": {S: jsii.String(personSortLabel)},
+	}
+	if exclusiveStartId == "" {
+		exclusiveStartKey = nil
+	}
+
 	ret, err := p.client.Query(&dynamodb.QueryInput{
 		TableName:              &p.tableName,
 		IndexName:              jsii.String("sort-key-gsi"),
@@ -122,25 +197,32 @@ func (p *PersonDao) List() (*[]model.Person, error) {
 		ExpressionAttributeNames: map[string]*string{
 			"#name": jsii.String("Name"),
 		},
-		ExpressionAttributeValues: map[string]*dynamodb.AttributeValue{
+		ExpressionAttributeValues: DynamoItem{
 			":sortVal": {S: jsii.String(personSortLabel)},
 		},
+		ExclusiveStartKey: exclusiveStartKey,
+		Limit:             &limit,
 	})
 
-	if ret == nil || err != nil {
-		log.Println(err)
-		return nil, errors.New("error retrieving people")
+	// If count is zero, make sure undesired item is not returned
+	if count == 0 && ret != nil {
+		ret.Items = []DynamoItem{}
+		// If last evaluated key is not empty and count is zero, there are more results and need to make sure
+		// to not return the key of the 1 result which was returned
+		if len(ret.LastEvaluatedKey) != 0 {
+			ret.LastEvaluatedKey["Id"] = &dynamodb.AttributeValue{S: &exclusiveStartId}
+		}
 	}
 
-	items := ret.Items
-	arr := []model.Person{}
-	for _, item := range items {
-		age, _ := strconv.Atoi(*item["Age"].N)
-		arr = append(arr, model.Person{
-			Id:   *item["Id"].S,
-			Name: *item["Name"].S,
-			Age:  age,
-		})
+	return *ret, err
+}
+
+// Convert a DynamoDB item to a person
+func convertItemToPerson(item DynamoItem) model.Person {
+	age, _ := strconv.Atoi(*item["Age"].N)
+	return model.Person{
+		Id:   *item["Id"].S,
+		Name: *item["Name"].S,
+		Age:  age,
 	}
-	return &arr, nil
 }

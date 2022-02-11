@@ -22,6 +22,7 @@ TRUE_CONDITIONS = true TRUE 1
 
 # Conditional constants
 ENV ?= development
+SAVE_TEST_COVERAGE ?= false
 
 #################################################################################
 # COMMANDS                                                                      #
@@ -120,10 +121,10 @@ invoke-api: build-infra
 	@ sam local invoke go-${ENV}-api-lambda -e ${EVENTS_DIR}/${API_REQUEST}.json -t ${CDK_DIR}/go-${ENV}-api.template.json
 	@ echo "\n✅ Done invoking API"
 
-## Run integration tests
+## Run integration tests (does not cache results)
 test-integration:
 	@ echo "⏳ Start running ${ENV} integration tests..."
-	@ go test ./test/integration/...
+	@ go test ./test/integration/... -count=1
 	@ echo "✅ Done running ${ENV} integration tests"
 
 ## Run unit tests on library code (i.e. pkg/ directory)
@@ -134,7 +135,7 @@ ifeq (${SAVE_TEST_COVERAGE},$(filter ${SAVE_TEST_COVERAGE},${TRUE_CONDITIONS}))
 	@ mkdir .coverage
 	@ go test ./pkg/... -coverprofile ".coverage/pkg.out" 
 else
-	@ go test ./pkg/... -cover 
+	@ go test ./pkg/... -cover
 endif
 	@ echo "✅ Done running unit tests"
 

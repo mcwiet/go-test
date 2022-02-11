@@ -37,17 +37,23 @@ func init() {
 
 // Sequentially run functions involved for testing person API operations
 func TestPersonApi(t *testing.T) {
-	// Create the person
-	person := createPerson(t)
 
-	// Get the person
-	getPerson(t, person.Id, &person)
+	// Create some people
+	person1 := createPerson(t)
+	person2 := createPerson(t)
 
-	// Delete the person
-	deletePerson(t, &person)
+	// List the people
+	listPeople(t)
 
-	// Attempt to get person again
-	getPerson(t, person.Id, nil)
+	// Get a person
+	getPerson(t, person1.Id, &person1)
+
+	// Delete the people
+	deletePerson(t, &person1)
+	deletePerson(t, &person2)
+
+	// Attempt to get a person again
+	getPerson(t, person1.Id, nil)
 }
 
 func createPerson(t *testing.T) model.Person {
@@ -74,8 +80,11 @@ func createPerson(t *testing.T) model.Person {
 	mapstructure.Decode(response["createPerson"], &person)
 
 	// Verify
-	stepName := "createPerson: "
-	assert.Nil(t, err, stepName+"should not error")
+	stepName := "createPerson"
+	assert.Nil(t, err, stepName+": should not error")
+	if err != nil {
+		return model.Person{}
+	}
 	assert.NotNil(t, person.Id, stepName+"id should exist")
 	assert.Equal(t, personName, person.Name, stepName+"name should match")
 	assert.Equal(t, personAge, person.Age, stepName+"age should match")
@@ -98,8 +107,8 @@ func deletePerson(t *testing.T, person *model.Person) {
 	err := client.Run(context.Background(), request, &response)
 
 	// Verify
-	stepName := "deletePerson: "
-	assert.Nil(t, err, stepName+"should not error")
+	stepName := "deletePerson"
+	assert.Nil(t, err, stepName+": should not error")
 }
 
 func getPerson(t *testing.T, id string, expectedPerson *model.Person) {
@@ -123,12 +132,52 @@ func getPerson(t *testing.T, id string, expectedPerson *model.Person) {
 	mapstructure.Decode(response["person"], &person)
 
 	// Verify
-	stepName := "getPerson: "
+	stepName := "getPerson"
 	if expectedPerson != nil {
-		assert.Nil(t, err, stepName+"should not error")
-		assert.Equal(t, *expectedPerson, person, stepName+"should find the correct person")
+		assert.Nil(t, err, stepName+": should not error")
+		assert.Equal(t, *expectedPerson, person, stepName+": should find the correct person")
 	} else {
-		assert.NotNil(t, err, stepName+"should not find person with id "+id)
-		assert.Equal(t, "", person.Id, stepName+"should not find person with id "+id)
+		assert.NotNil(t, err, stepName+": should not find person with id "+id)
+		assert.Equal(t, "", person.Id, stepName+": should not find person with id "+id)
 	}
+}
+
+func listPeople(t *testing.T) {
+	// Setup
+	request := graphql.NewRequest(`
+		query {
+			people (first: 1, after: "") {
+				totalCount
+				edges {
+					node {
+						id
+					}
+					cursor
+				}
+				pageInfo {
+					endCursor
+					hasNextPage
+				}
+			}
+		}
+	`)
+	request.Header.Set("Authorization", token)
+
+	// Execute
+	var response map[string]interface{}
+	err := client.Run(context.Background(), request, &response)
+	var connection model.PersonConnection
+	mapstructure.Decode(response["people"], &connection)
+
+	// Verify
+	stepName := "listPeople"
+	assert.Nil(t, err, stepName+": should not error")
+	if err != nil {
+		return
+	}
+	assert.Equal(t, 1, len(connection.Edges), stepName+": should return 1 person")
+	assert.GreaterOrEqual(t, connection.TotalCount, 2, stepName+": should have total count of at least 2")
+	lastEdge := connection.Edges[len(connection.Edges)-1]
+	assert.Equal(t, lastEdge.Cursor, connection.PageInfo.EndCursor, stepName+": should have correct end cursor")
+	assert.Equal(t, true, connection.PageInfo.HasNextPage, connection.PageInfo.EndCursor, stepName+": should have next page")
 }
