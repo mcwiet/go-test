@@ -143,7 +143,8 @@ func (p *PersonDao) List(first int, after string) (model.PersonConnection, error
 
 	endCursor := ""
 	if len(queryRet.Items) > 0 {
-		endCursor = *queryRet.Items[len(queryRet.Items)-1]["Id"].S
+		lastId := *queryRet.Items[len(queryRet.Items)-1]["Id"].S
+		endCursor = p.encoder.Encode(lastId)
 	}
 
 	connection.PageInfo = model.PageInfo{

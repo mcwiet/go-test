@@ -1,6 +1,7 @@
 package data_test
 
 import (
+	"encoding/base64"
 	"testing"
 
 	"github.com/aws/aws-sdk-go/service/dynamodb"
@@ -39,10 +40,11 @@ func (c *fakeDynamoDbClient) Query(*dynamodb.QueryInput) (*dynamodb.QueryOutput,
 }
 
 func (e *fakeEncoder) Encode(input string) string {
-	return input
+	return base64.StdEncoding.EncodeToString([]byte(input))
 }
 func (e *fakeEncoder) Decode(input string) (string, error) {
-	return input, nil
+	valBytes, _ := base64.StdEncoding.DecodeString(input)
+	return string(valBytes), nil
 }
 
 // Define common data
@@ -238,22 +240,22 @@ func TestList(t *testing.T) {
 				Edges: []model.PersonEdge{
 					{
 						Node:   samplePerson1,
-						Cursor: samplePerson1.Id,
+						Cursor: encoder.Encode(samplePerson1.Id),
 					},
 					{
 						Node:   samplePerson2,
-						Cursor: samplePerson2.Id,
+						Cursor: encoder.Encode(samplePerson2.Id),
 					},
 				},
 				PageInfo: model.PageInfo{
-					EndCursor:   samplePerson2.Id,
+					EndCursor:   encoder.Encode(samplePerson2.Id),
 					HasNextPage: false,
 				},
 			},
 			expectErr: false,
 		},
 		{
-			name: "request less items than in DB, beginning of list",
+			name: "request less items than in DB (start at beginning of list)",
 			dbClient: fakeDynamoDbClient{returnedValue: &dynamodb.QueryOutput{
 				Count: newInt64(2),
 				Items: []DynamoItem{samplePersonItem1},
@@ -268,35 +270,35 @@ func TestList(t *testing.T) {
 				Edges: []model.PersonEdge{
 					{
 						Node:   samplePerson1,
-						Cursor: samplePerson1.Id,
+						Cursor: encoder.Encode(samplePerson1.Id),
 					},
 				},
 				PageInfo: model.PageInfo{
-					EndCursor:   samplePerson1.Id,
+					EndCursor:   encoder.Encode(samplePerson1.Id),
 					HasNextPage: true,
 				},
 			},
 			expectErr: false,
 		},
 		{
-			name: "request less items than in DB, end of list",
+			name: "request less items than in DB (reach end of list)",
 			dbClient: fakeDynamoDbClient{returnedValue: &dynamodb.QueryOutput{
 				Count:            newInt64(2),
 				Items:            []DynamoItem{samplePersonItem2},
 				LastEvaluatedKey: DynamoItem{},
 			}},
 			first: 1,
-			after: samplePerson1.Id,
+			after: encoder.Encode(samplePerson1.Id),
 			expectedConnection: model.PersonConnection{
 				TotalCount: 2,
 				Edges: []model.PersonEdge{
 					{
 						Node:   samplePerson2,
-						Cursor: samplePerson2.Id,
+						Cursor: encoder.Encode(samplePerson2.Id),
 					},
 				},
 				PageInfo: model.PageInfo{
-					EndCursor:   samplePerson2.Id,
+					EndCursor:   encoder.Encode(samplePerson2.Id),
 					HasNextPage: false,
 				},
 			},
@@ -312,7 +314,7 @@ func TestList(t *testing.T) {
 				},
 			}},
 			first: 0,
-			after: samplePerson1.Id,
+			after: encoder.Encode(samplePerson1.Id),
 			expectedConnection: model.PersonConnection{
 				TotalCount: 2,
 				Edges:      []model.PersonEdge{},
@@ -330,7 +332,7 @@ func TestList(t *testing.T) {
 				LastEvaluatedKey: DynamoItem{},
 			}},
 			first: 0,
-			after: samplePerson2.Id,
+			after: encoder.Encode(samplePerson2.Id),
 			expectedConnection: model.PersonConnection{
 				TotalCount: 2,
 				Edges:      []model.PersonEdge{},
