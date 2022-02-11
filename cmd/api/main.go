@@ -8,6 +8,7 @@ import (
 
 	"github.com/mcwiet/go-test/pkg/controller"
 	"github.com/mcwiet/go-test/pkg/data"
+	"github.com/mcwiet/go-test/pkg/encoding"
 	"github.com/mcwiet/go-test/pkg/service"
 
 	"github.com/aws/aws-lambda-go/lambda"
@@ -22,9 +23,10 @@ var (
 func init() {
 	sess := session.Must(session.NewSession())
 	ddbClient := dynamodb.New(sess)
+	cursorEncoder := encoding.NewCursorEncoder()
 
 	tableName := os.Getenv("DDB_TABLE_NAME")
-	personDao := data.NewPersonDao(ddbClient, tableName)
+	personDao := data.NewPersonDao(ddbClient, &cursorEncoder, tableName)
 	personService := service.NewPersonService(&personDao)
 	personController = controller.NewPersonController(&personService)
 }

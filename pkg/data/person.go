@@ -19,9 +19,15 @@ type DynamoDbClient interface {
 	Query(*dynamodb.QueryInput) (*dynamodb.QueryOutput, error)
 }
 
+type CursorEncoder interface {
+	Encode(string) string
+	Decode(string) (string, error)
+}
+
 // Object containing information needed to access the person data store
 type PersonDao struct {
 	client    DynamoDbClient
+	encoder   CursorEncoder
 	tableName string
 }
 
@@ -30,9 +36,10 @@ var (
 )
 
 // Creates a person data store access object
-func NewPersonDao(client DynamoDbClient, tableName string) PersonDao {
+func NewPersonDao(client DynamoDbClient, cursorEncoder CursorEncoder, tableName string) PersonDao {
 	return PersonDao{
 		client:    client,
+		encoder:   cursorEncoder,
 		tableName: tableName,
 	}
 }
@@ -110,7 +117,7 @@ func (p *PersonDao) Insert(person *model.Person) error {
 
 // Lists people from the data store
 func (p *PersonDao) List(first int, after string) (model.PersonConnection, error) {
-	exclusiveStartId := convertCursorToId(after)
+	exclusiveStartId, _ := p.encoder.Decode(after)
 	queryRet, err := p.queryPeople(first, exclusiveStartId)
 	if err != nil {
 		log.Println(err)
@@ -130,7 +137,7 @@ func (p *PersonDao) List(first int, after string) (model.PersonConnection, error
 	for _, item := range queryRet.Items {
 		connection.Edges = append(connection.Edges, model.PersonEdge{
 			Node:   convertItemToPerson(item),
-			Cursor: convertItemToCursor(item),
+			Cursor: p.encoder.Encode(*item["Id"].S),
 		})
 	}
 
@@ -217,14 +224,4 @@ func convertItemToPerson(item DynamoItem) model.Person {
 		Name: *item["Name"].S,
 		Age:  age,
 	}
-}
-
-// Convert a DynamoDB item to a cursor
-func convertItemToCursor(item DynamoItem) string {
-	return *item["Id"].S
-}
-
-// Convert a person ID to a cursor
-func convertCursorToId(cursor string) string {
-	return cursor
 }
