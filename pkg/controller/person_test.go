@@ -17,15 +17,15 @@ type fakePersonService struct {
 }
 
 // Define mock / stub behavior
-func (s *fakePersonService) Create(name string, age int) (*model.Person, error) {
-	ret, _ := s.returnedValue.(*model.Person)
+func (s *fakePersonService) Create(name string, age int) (model.Person, error) {
+	ret, _ := s.returnedValue.(model.Person)
 	return ret, s.returnedErr
 }
 func (s *fakePersonService) Delete(id string) error {
 	return s.returnedErr
 }
-func (s *fakePersonService) GetById(id string) (*model.Person, error) {
-	ret, _ := s.returnedValue.(*model.Person)
+func (s *fakePersonService) GetById(id string) (model.Person, error) {
+	ret, _ := s.returnedValue.(model.Person)
 	return ret, s.returnedErr
 }
 func (s *fakePersonService) List(first int, after string) (model.PersonConnection, error) {
@@ -61,7 +61,7 @@ func TestHandleCreate(t *testing.T) {
 	tests := []Test{
 		{
 			name:          "valid create",
-			personService: fakePersonService{returnedValue: &samplePerson},
+			personService: fakePersonService{returnedValue: samplePerson},
 			request: controller.Request{
 				Arguments: map[string]interface{}{
 					"name": samplePerson.Name,
@@ -150,7 +150,7 @@ func TestHandleGet(t *testing.T) {
 	tests := []Test{
 		{
 			name:          "valid get",
-			personService: fakePersonService{returnedValue: &samplePerson},
+			personService: fakePersonService{returnedValue: samplePerson},
 			request: controller.Request{
 				Arguments: map[string]interface{}{
 					"id": samplePerson.Id,

@@ -5,9 +5,9 @@ import (
 )
 
 type PersonService interface {
-	Create(name string, age int) (*model.Person, error)
+	Create(name string, age int) (model.Person, error)
 	Delete(id string) error
-	GetById(id string) (*model.Person, error)
+	GetById(id string) (model.Person, error)
 	List(first int, after string) (model.PersonConnection, error)
 }
 
@@ -29,7 +29,7 @@ func (c *PersonController) HandleCreate(request Request) Response {
 	age := int(request.Arguments["age"].(float64))
 	person, err := c.personService.Create(name, age)
 	if err == nil {
-		return Response{Data: *person}
+		return Response{Data: person}
 	} else {
 		return Response{Error: err}
 	}
@@ -51,7 +51,7 @@ func (c *PersonController) HandleGet(request Request) Response {
 	id := request.Arguments["id"].(string)
 	person, err := c.personService.GetById(id)
 	if err == nil {
-		return Response{Data: *person}
+		return Response{Data: person}
 	} else {
 		return Response{Error: err}
 	}

@@ -7,8 +7,8 @@ import (
 
 type PersonDao interface {
 	Delete(string) error
-	GetById(string) (*model.Person, error)
-	Insert(*model.Person) error
+	GetById(string) (model.Person, error)
+	Insert(model.Person) error
 	List(first int, after string) (model.PersonConnection, error)
 }
 
@@ -25,14 +25,14 @@ func NewPersonService(personDao PersonDao) PersonService {
 }
 
 // Create a new person
-func (s *PersonService) Create(name string, age int) (*model.Person, error) {
+func (s *PersonService) Create(name string, age int) (model.Person, error) {
 	person := model.Person{
 		Id:   uuid.NewString(),
 		Name: name,
 		Age:  age,
 	}
-	err := s.personDao.Insert(&person)
-	return &person, err
+	err := s.personDao.Insert(person)
+	return person, err
 }
 
 // Deletes a person
@@ -42,7 +42,7 @@ func (s *PersonService) Delete(id string) error {
 }
 
 // Gets a single person
-func (s *PersonService) GetById(id string) (*model.Person, error) {
+func (s *PersonService) GetById(id string) (model.Person, error) {
 	person, err := s.personDao.GetById(id)
 	return person, err
 }

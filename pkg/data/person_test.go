@@ -125,7 +125,7 @@ func TestGetById(t *testing.T) {
 		name           string
 		dbClient       fakeDynamoDbClient
 		personId       string
-		expectedPerson *model.Person
+		expectedPerson model.Person
 		expectErr      bool
 	}
 
@@ -135,7 +135,7 @@ func TestGetById(t *testing.T) {
 			name:           "valid get by id",
 			dbClient:       fakeDynamoDbClient{returnedValue: &dynamodb.GetItemOutput{Item: samplePersonItem1}},
 			personId:       samplePerson1.Id,
-			expectedPerson: &samplePerson1,
+			expectedPerson: samplePerson1,
 			expectErr:      false,
 		},
 		{
@@ -194,7 +194,7 @@ func TestInsert(t *testing.T) {
 		dao := data.NewPersonDao(&test.dbClient, &encoder, tableName)
 
 		// Execute
-		err := dao.Insert(&test.person)
+		err := dao.Insert(test.person)
 
 		// Verify
 		if !test.expectErr {

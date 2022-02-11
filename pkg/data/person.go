@@ -69,7 +69,7 @@ func (p *PersonDao) Delete(id string) error {
 }
 
 // Gets a person from the data store using the ID
-func (p *PersonDao) GetById(id string) (*model.Person, error) {
+func (p *PersonDao) GetById(id string) (model.Person, error) {
 	ret, err := p.client.GetItem(&dynamodb.GetItemInput{
 		TableName: &p.tableName,
 		Key: DynamoItem{
@@ -84,18 +84,18 @@ func (p *PersonDao) GetById(id string) (*model.Person, error) {
 
 	if err != nil {
 		log.Println(err)
-		return nil, errors.New("error retrieving person")
+		return model.Person{}, errors.New("error retrieving person")
 	} else if ret == nil || ret.Item == nil {
-		return nil, errors.New("person not found")
+		return model.Person{}, errors.New("person not found")
 	}
 
 	person := convertItemToPerson(ret.Item)
 
-	return &person, err
+	return person, err
 }
 
 // Inserts a person to the data store
-func (p *PersonDao) Insert(person *model.Person) error {
+func (p *PersonDao) Insert(person model.Person) error {
 	age := strconv.Itoa(person.Age)
 	_, err := p.client.PutItem(&dynamodb.PutItemInput{
 		TableName: &p.tableName,
