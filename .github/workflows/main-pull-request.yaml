@@ -8,107 +8,15 @@ on:
 # https://github.com/github/feedback/discussions/10679
 # ----- TEMPORARY WORKAROUND IS TO DUPLICATE WORKFLOW CODE
 
-# jobs:
-#   sonarcloud-scan:
-#     uses: ./.github/workflows/sonarcloud.yaml
-#     with:
-#       ENV: staging
-#       GO_VERSION: ^1.17.6
-
-env:
-  ENV: staging
-  GO_VERSION: ^1.17.6
-
-concurrency: staging
-
 jobs:
-  unit-test:
-    environment: staging
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-go@v2
-        with:
-          go-version: ${{ env.GO_VERSION }}
+  sonarcloud-scan:
+    uses: ./.github/workflows/sonarcloud.yaml
+    with:
+      ENV: staging
+      GO_VERSION: ^1.17.6
 
-      - name: Run the unit tests
-        run: make test-unit
-        env:
-          SAVE_TEST_COVERAGE: true
-
-      - name: Upload unit test data
-        uses: actions/upload-artifact@master
-        with:
-          name: unit-test-results
-          path: .coverage/
-
-  sonar-scan:
-    environment: staging
-    needs: unit-test
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-go@v2
-        with:
-          go-version: ${{ env.GO_VERSION }}
-
-      - name: Retrieve unit test data
-        uses: actions/download-artifact@master
-        with:
-          name: unit-test-results
-          path: .coverage/
-
-      - name: SonarCloud Scan
-        uses: sonarsource/sonarcloud-github-action@master
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-
-  deploy-staging:
-    environment: staging
-    needs: unit-test
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-go@v2
-        with:
-          go-version: ${{ env.GO_VERSION }}
-
-      - name: Get Node Package Manager
-        uses: actions/setup-node@v1
-        with:
-          node-version: "16.x"
-
-      - name: Install AWS CDK
-        run: npm install -g aws-cdk
-
-      - name: Build and deploy the infrastructure
-        run: make build-infra deploy-infra
-        env:
-          AWS_ACCOUNT: ${{ secrets.AWS_ACCOUNT }}
-          AWS_REGION: ${{ secrets.AWS_REGION }}
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-
-  integration-test:
-    environment: staging
-    needs: deploy-staging
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-go@v2
-        with:
-          go-version: ${{ env.GO_VERSION }}
-
-      - name: Build the .env file
-        run: make build-env-file
-        env:
-          AWS_ACCOUNT: ${{ secrets.AWS_ACCOUNT }}
-          AWS_REGION: ${{ secrets.AWS_REGION }}
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          TEST_USER_EMAIL: ${{ secrets.TEST_USER_EMAIL }}
-          TEST_USER_PASSWORD: ${{ secrets.TEST_USER_PASSWORD }}
-
-      - name: Run the integration tests
-        run: make test-integration
+  deploy:
+    uses: ./.github/workflows/deploy.yaml
+    with:
+      ENV: staging
+      GO_VERSION: ^1.17.6
