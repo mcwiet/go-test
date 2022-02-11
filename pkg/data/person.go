@@ -10,6 +10,8 @@ import (
 	"github.com/mcwiet/go-test/pkg/model"
 )
 
+type DynamoItem = map[string]*dynamodb.AttributeValue
+
 type DynamoDbClient interface {
 	DeleteItem(*dynamodb.DeleteItemInput) (*dynamodb.DeleteItemOutput, error)
 	GetItem(*dynamodb.GetItemInput) (*dynamodb.GetItemOutput, error)
@@ -39,7 +41,7 @@ func NewPersonDao(client DynamoDbClient, tableName string) PersonDao {
 func (p *PersonDao) Delete(id string) error {
 	_, err := p.client.DeleteItem(&dynamodb.DeleteItemInput{
 		TableName: &p.tableName,
-		Key: map[string]*dynamodb.AttributeValue{
+		Key: DynamoItem{
 			"Id":   {S: jsii.String(id)},
 			"Sort": {S: jsii.String(personSortLabel)},
 		},
@@ -63,7 +65,7 @@ func (p *PersonDao) Delete(id string) error {
 func (p *PersonDao) GetById(id string) (*model.Person, error) {
 	ret, err := p.client.GetItem(&dynamodb.GetItemInput{
 		TableName: &p.tableName,
-		Key: map[string]*dynamodb.AttributeValue{
+		Key: DynamoItem{
 			"Id":   {S: jsii.String(id)},
 			"Sort": {S: jsii.String(personSortLabel)},
 		},
@@ -80,13 +82,7 @@ func (p *PersonDao) GetById(id string) (*model.Person, error) {
 		return nil, errors.New("person not found")
 	}
 
-	item := ret.Item
-	age, err := strconv.Atoi(*item["Age"].N)
-	person := model.Person{
-		Id:   id,
-		Name: *item["Name"].S,
-		Age:  age,
-	}
+	person := convertItemToPerson(ret.Item)
 
 	return &person, err
 }
@@ -96,7 +92,7 @@ func (p *PersonDao) Insert(person *model.Person) error {
 	age := strconv.Itoa(person.Age)
 	_, err := p.client.PutItem(&dynamodb.PutItemInput{
 		TableName: &p.tableName,
-		Item: map[string]*dynamodb.AttributeValue{
+		Item: DynamoItem{
 			"Id":   {S: jsii.String(person.Id)},
 			"Sort": {S: jsii.String(personSortLabel)},
 			"Name": {S: &person.Name},
@@ -114,15 +110,14 @@ func (p *PersonDao) Insert(person *model.Person) error {
 
 // Lists people from the data store
 func (p *PersonDao) List(first int, after string) (model.PersonConnection, error) {
-	queryRet, err := p.queryPeople(first, after)
-
+	exclusiveStartId := convertCursorToId(after)
+	queryRet, err := p.queryPeople(first, exclusiveStartId)
 	if err != nil {
 		log.Println(err)
 		return model.PersonConnection{}, errors.New("error retrieving people")
 	}
 
 	totalCount, err := p.getTotalCount()
-
 	if err != nil {
 		log.Println(err)
 		return model.PersonConnection{}, errors.New("error getting total people count")
@@ -132,16 +127,10 @@ func (p *PersonDao) List(first int, after string) (model.PersonConnection, error
 		TotalCount: totalCount,
 		Edges:      []model.PersonEdge{},
 	}
-
 	for _, item := range queryRet.Items {
-		age, _ := strconv.Atoi(*item["Age"].N)
 		connection.Edges = append(connection.Edges, model.PersonEdge{
-			Node: model.Person{
-				Id:   *item["Id"].S,
-				Name: *item["Name"].S,
-				Age:  age,
-			},
-			Cursor: *item["Id"].S,
+			Node:   convertItemToPerson(item),
+			Cursor: convertItemToCursor(item),
 		})
 	}
 
@@ -164,7 +153,7 @@ func (p *PersonDao) getTotalCount() (int, error) {
 		TableName:              &p.tableName,
 		IndexName:              jsii.String("sort-key-gsi"),
 		KeyConditionExpression: jsii.String("Sort = :sortVal"),
-		ExpressionAttributeValues: map[string]*dynamodb.AttributeValue{
+		ExpressionAttributeValues: DynamoItem{
 			":sortVal": {S: jsii.String(personSortLabel)},
 		},
 	})
@@ -179,12 +168,12 @@ func (p *PersonDao) getTotalCount() (int, error) {
 
 // Query for a set of people (first n people after the exclusive start value)
 func (p *PersonDao) queryPeople(count int, exclusiveStartId string) (dynamodb.QueryOutput, error) {
-	if count < 1 {
-		return dynamodb.QueryOutput{}, nil
-	}
-
 	limit := int64(count)
-	exclusiveStartKey := map[string]*dynamodb.AttributeValue{
+	if count == 0 {
+		// Dynamo minimum limit is 1
+		limit = 1
+	}
+	exclusiveStartKey := DynamoItem{
 		"Id":   {S: &exclusiveStartId},
 		"Sort": {S: jsii.String(personSortLabel)},
 	}
@@ -200,12 +189,42 @@ func (p *PersonDao) queryPeople(count int, exclusiveStartId string) (dynamodb.Qu
 		ExpressionAttributeNames: map[string]*string{
 			"#name": jsii.String("Name"),
 		},
-		ExpressionAttributeValues: map[string]*dynamodb.AttributeValue{
+		ExpressionAttributeValues: DynamoItem{
 			":sortVal": {S: jsii.String(personSortLabel)},
 		},
 		ExclusiveStartKey: exclusiveStartKey,
 		Limit:             &limit,
 	})
 
+	// If count is zero, make sure undesired item is not returned
+	if count == 0 && ret != nil {
+		ret.Items = []DynamoItem{}
+		// If last evaluated key is not empty and count is zero, there are more results and need to make sure
+		// to not return the key of the 1 result which was returned
+		if len(ret.LastEvaluatedKey) != 0 {
+			ret.LastEvaluatedKey["Id"] = &dynamodb.AttributeValue{S: &exclusiveStartId}
+		}
+	}
+
 	return *ret, err
+}
+
+// Convert a DynamoDB item to a person
+func convertItemToPerson(item DynamoItem) model.Person {
+	age, _ := strconv.Atoi(*item["Age"].N)
+	return model.Person{
+		Id:   *item["Id"].S,
+		Name: *item["Name"].S,
+		Age:  age,
+	}
+}
+
+// Convert a DynamoDB item to a cursor
+func convertItemToCursor(item DynamoItem) string {
+	return *item["Id"].S
+}
+
+// Convert a person ID to a cursor
+func convertCursorToId(cursor string) string {
+	return cursor
 }
