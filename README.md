@@ -4,7 +4,7 @@
 
 This is a test project for getting familiar with Go. On top of learning simple things like language syntax and directory structure, the intent is to focus on working with GraphQL and AWS CDK with Go. Clean architecture principles are followed, separating code into layers and frequently using dependency injection.
 
-The application is a simple API for interacting with `person` objects with create, read, update, and delete operations. The infrastructure is powered by AWS services such as AppSync, Lambda, DynamoDB, and Cognito. GitHub Actions power the CI/CD pipeline which use a `staging` environment for pull requests and a `production` environment for code released to the main branch. SonarCloud scans the code for potential bugs, security issues, unmaintainable code, and test coverage reporting.
+The application is a simple API for interacting with `pet` objects with create, read, update, and delete operations. The infrastructure is powered by AWS services such as AppSync, Lambda, DynamoDB, and Cognito. GitHub Actions power the CI/CD pipeline which use a `staging` environment for pull requests and a `production` environment for code released to the main branch. SonarCloud scans the code for potential bugs, security issues, unmaintainable code, and test coverage reporting.
 
 ## Getting Started
 
@@ -28,7 +28,7 @@ The instructions below provide steps for setting up an environment both locally 
 1. Update the `.env` file with credentials for a test user (for activities such as automated integration testing), then run `make create-test-user` to add that user to the Cognito User Pool
 1. Run `make test-unit` to run unit tests locally
 1. Run `make test-integration` to run integration tests against the deployed environment in AWS
-1. Run `make invoke-api-sam API_REQUEST=person` to invoke the API Lambda locally in Docker, using requests stored in `test/_request/`
+1. Run `make invoke-api-sam API_REQUEST=pet` to invoke the API Lambda locally in Docker, using requests stored in `test/_request/`
 
 ## Developer Notes
 

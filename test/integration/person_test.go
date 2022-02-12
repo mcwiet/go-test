@@ -35,71 +35,71 @@ func init() {
 	token, _ = auth.Login(email, password)
 }
 
-// Sequentially run functions involved for testing person API operations
-func TestPersonApi(t *testing.T) {
+// Sequentially run functions involved for testing pet API operations
+func TestPetApi(t *testing.T) {
 
-	// Create some people
-	person1 := createPerson(t)
-	person2 := createPerson(t)
+	// Create some pets
+	pet1 := createPet(t)
+	pet2 := createPet(t)
 
-	// List the people
-	listPeople(t)
+	// List the pets
+	listPets(t)
 
-	// Get a person
-	getPerson(t, person1.Id, &person1)
+	// Get a pet
+	getPet(t, pet1.Id, &pet1)
 
-	// Delete the people
-	deletePerson(t, &person1)
-	deletePerson(t, &person2)
+	// Delete the pets
+	deletePet(t, &pet1)
+	deletePet(t, &pet2)
 
-	// Attempt to get a person again
-	getPerson(t, person1.Id, nil)
+	// Attempt to get a pet again
+	getPet(t, pet1.Id, nil)
 }
 
-func createPerson(t *testing.T) model.Person {
+func createPet(t *testing.T) model.Pet {
 	// Setup
-	personName := "Integration Test"
-	personAge := 10
+	petName := "Integration Test"
+	petAge := 10
 	request := graphql.NewRequest(`
 		mutation ($name: String!, $age: Int!) {
-			createPerson (name: $name, age: $age) {
+			createPet (name: $name, age: $age) {
 				id
 				name
 				age
 			}
 		}
 	`)
-	request.Var("name", personName)
-	request.Var("age", personAge)
+	request.Var("name", petName)
+	request.Var("age", petAge)
 	request.Header.Set("Authorization", token)
 
 	// Execute
 	var response map[string]interface{}
 	err := client.Run(context.Background(), request, &response)
-	var person model.Person
-	mapstructure.Decode(response["createPerson"], &person)
+	var pet model.Pet
+	mapstructure.Decode(response["createPet"], &pet)
 
 	// Verify
-	stepName := "createPerson"
+	stepName := "createPet"
 	assert.Nil(t, err, stepName+": should not error")
 	if err != nil {
-		return model.Person{}
+		return model.Pet{}
 	}
-	assert.NotNil(t, person.Id, stepName+"id should exist")
-	assert.Equal(t, personName, person.Name, stepName+"name should match")
-	assert.Equal(t, personAge, person.Age, stepName+"age should match")
+	assert.NotNil(t, pet.Id, stepName+"id should exist")
+	assert.Equal(t, petName, pet.Name, stepName+"name should match")
+	assert.Equal(t, petAge, pet.Age, stepName+"age should match")
 
-	return person
+	return pet
 }
 
-func deletePerson(t *testing.T, person *model.Person) {
+func deletePet(t *testing.T, pet *model.Pet) {
 	// Setup
 	request := graphql.NewRequest(`
 		mutation ($id: ID!) {
-			deletePerson (id: $id)
+			deletePet (id: $id)
 		}
 	`)
-	request.Var("id", person.Id)
+	request.Var("id", pet.Id)
 	request.Header.Set("Authorization", token)
 
 	// Execute
@@ -107,15 +107,15 @@ func deletePerson(t *testing.T, person *model.Person) {
 	err := client.Run(context.Background(), request, &response)
 
 	// Verify
-	stepName := "deletePerson"
+	stepName := "deletePet"
 	assert.Nil(t, err, stepName+": should not error")
 }
 
-func getPerson(t *testing.T, id string, expectedPerson *model.Person) {
+func getPet(t *testing.T, id string, expectedPet *model.Pet) {
 	// Setup
 	request := graphql.NewRequest(`
 		query ($id: ID!) {
-			person (id: $id) {
+			pet (id: $id) {
 				id
 				name
 				age
@@ -128,25 +128,25 @@ func getPerson(t *testing.T, id string, expectedPerson *model.Person) {
 	// Execute
 	var response map[string]interface{}
 	err := client.Run(context.Background(), request, &response)
-	var person model.Person
-	mapstructure.Decode(response["person"], &person)
+	var pet model.Pet
+	mapstructure.Decode(response["pet"], &pet)
 
 	// Verify
-	stepName := "getPerson"
-	if expectedPerson != nil {
+	stepName := "getPet"
+	if expectedPet != nil {
 		assert.Nil(t, err, stepName+": should not error")
-		assert.Equal(t, *expectedPerson, person, stepName+": should find the correct person")
+		assert.Equal(t, *expectedPet, pet, stepName+": should find the correct pet")
 	} else {
-		assert.NotNil(t, err, stepName+": should not find person with id "+id)
-		assert.Equal(t, "", person.Id, stepName+": should not find person with id "+id)
+		assert.NotNil(t, err, stepName+": should not find pet with id "+id)
+		assert.Equal(t, "", pet.Id, stepName+": should not find pet with id "+id)
 	}
 }
 
-func listPeople(t *testing.T) {
+func listPets(t *testing.T) {
 	// Setup
 	request := graphql.NewRequest(`
 		query {
-			people (first: 1, after: "") {
+			pets (first: 1, after: "") {
 				totalCount
 				edges {
 					node {
@@ -166,16 +166,16 @@ func listPeople(t *testing.T) {
 	// Execute
 	var response map[string]interface{}
 	err := client.Run(context.Background(), request, &response)
-	var connection model.PersonConnection
-	mapstructure.Decode(response["people"], &connection)
+	var connection model.PetConnection
+	mapstructure.Decode(response["pets"], &connection)
 
 	// Verify
-	stepName := "listPeople"
+	stepName := "listPets"
 	assert.Nil(t, err, stepName+": should not error")
 	if err != nil {
 		return
 	}
-	assert.Equal(t, 1, len(connection.Edges), stepName+": should return 1 person")
+	assert.Equal(t, 1, len(connection.Edges), stepName+": should return 1 pet")
 	assert.GreaterOrEqual(t, connection.TotalCount, 2, stepName+": should have total count of at least 2")
 	lastEdge := connection.Edges[len(connection.Edges)-1]
 	assert.Equal(t, lastEdge.Cursor, connection.PageInfo.EndCursor, stepName+": should have correct end cursor")

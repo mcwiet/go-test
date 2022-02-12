@@ -1,10 +1,10 @@
 {
   "info": {
     "parentTypeName": "Mutation",
-    "fieldName": "createPerson"
+    "fieldName": "createPet"
   },
   "arguments": {
-    "name": "DUMMY",
+    "name": "Levi",
     "age": 3
   }
 }

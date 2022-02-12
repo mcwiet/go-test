@@ -19,31 +19,31 @@ type DynamoDbClient interface {
 	Query(*dynamodb.QueryInput) (*dynamodb.QueryOutput, error)
 }
 
-// Object containing information needed to access the person data store
-type PersonDao struct {
+// Object containing information needed to access the pet data store
+type PetDao struct {
 	client    DynamoDbClient
 	tableName string
 }
 
 var (
-	personSortLabel = "person"
+	petSortLabel = "pet"
 )
 
-// Creates a person data store access object
-func NewPersonDao(client DynamoDbClient, tableName string) PersonDao {
-	return PersonDao{
+// Creates a pet data store access object
+func NewPetDao(client DynamoDbClient, tableName string) PetDao {
+	return PetDao{
 		client:    client,
 		tableName: tableName,
 	}
 }
 
-// Deletes a person from the data store
-func (p *PersonDao) Delete(id string) error {
+// Deletes a pet from the data store
+func (p *PetDao) Delete(id string) error {
 	_, err := p.client.DeleteItem(&dynamodb.DeleteItemInput{
 		TableName: &p.tableName,
 		Key: DynamoItem{
 			"Id":   {S: jsii.String(id)},
-			"Sort": {S: jsii.String(personSortLabel)},
+			"Sort": {S: jsii.String(petSortLabel)},
 		},
 		ConditionExpression: jsii.String("attribute_exists(Id)"),
 	})
@@ -52,22 +52,22 @@ func (p *PersonDao) Delete(id string) error {
 		log.Println(err)
 		var notFoundError *dynamodb.ConditionalCheckFailedException
 		if errors.As(err, &notFoundError) {
-			return errors.New("could not delete person; person not found")
+			return errors.New("could not delete pet; pet not found")
 		} else {
-			return errors.New("error deleting person")
+			return errors.New("error deleting pet")
 		}
 	}
 
 	return nil
 }
 
-// Gets a person from the data store using the ID
-func (p *PersonDao) GetById(id string) (model.Person, error) {
+// Gets a pet from the data store using the ID
+func (p *PetDao) GetById(id string) (model.Pet, error) {
 	ret, err := p.client.GetItem(&dynamodb.GetItemInput{
 		TableName: &p.tableName,
 		Key: DynamoItem{
 			"Id":   {S: jsii.String(id)},
-			"Sort": {S: jsii.String(personSortLabel)},
+			"Sort": {S: jsii.String(petSortLabel)},
 		},
 		ProjectionExpression: jsii.String("Id, #name, Age"),
 		ExpressionAttributeNames: map[string]*string{
@@ -77,46 +77,46 @@ func (p *PersonDao) GetById(id string) (model.Person, error) {
 
 	if err != nil {
 		log.Println(err)
-		return model.Person{}, errors.New("error retrieving person")
+		return model.Pet{}, errors.New("error retrieving pet")
 	} else if ret == nil || ret.Item == nil {
-		return model.Person{}, errors.New("person not found")
+		return model.Pet{}, errors.New("pet not found")
 	}
 
-	person := convertItemToPerson(ret.Item)
+	pet := convertItemToPet(ret.Item)
 
-	return person, err
+	return pet, err
 }
 
-// Inserts a person to the data store
-func (p *PersonDao) Insert(person model.Person) error {
-	age := strconv.Itoa(person.Age)
+// Inserts a pet to the data store
+func (p *PetDao) Insert(pet model.Pet) error {
+	age := strconv.Itoa(pet.Age)
 	_, err := p.client.PutItem(&dynamodb.PutItemInput{
 		TableName: &p.tableName,
 		Item: DynamoItem{
-			"Id":   {S: jsii.String(person.Id)},
-			"Sort": {S: jsii.String(personSortLabel)},
-			"Name": {S: &person.Name},
+			"Id":   {S: jsii.String(pet.Id)},
+			"Sort": {S: jsii.String(petSortLabel)},
+			"Name": {S: &pet.Name},
 			"Age":  {N: &age},
 		},
 	})
 
 	if err != nil {
 		log.Println(err)
-		return errors.New("error adding person")
+		return errors.New("error adding pet")
 	}
 
 	return nil
 }
 
-// Query for a set of people (first n people after the exclusive start value)
-func (p *PersonDao) Query(count int, exclusiveStartId string) ([]model.Person, bool, error) {
+// Query for a set of pets (first n pets after the exclusive start value)
+func (p *PetDao) Query(count int, exclusiveStartId string) ([]model.Pet, bool, error) {
 	queryInput := buildQueryInput(p.tableName, count, exclusiveStartId)
 
 	ret, err := p.client.Query(&queryInput)
 
 	if err != nil {
 		log.Println(err)
-		return []model.Person{}, false, errors.New("error retrieving people")
+		return []model.Pet{}, false, errors.New("error retrieving pets")
 	}
 
 	hasNextPage := len(ret.LastEvaluatedKey) != 0
@@ -129,29 +129,29 @@ func (p *PersonDao) Query(count int, exclusiveStartId string) ([]model.Person, b
 		ret.Items = []DynamoItem{}
 	}
 
-	// Convert items to people
-	people := []model.Person{}
+	// Convert items to pets
+	pets := []model.Pet{}
 	for _, item := range ret.Items {
-		people = append(people, convertItemToPerson(item))
+		pets = append(pets, convertItemToPet(item))
 	}
 
-	return people, hasNextPage, err
+	return pets, hasNextPage, err
 }
 
-// Get the total count of people
-func (p *PersonDao) GetTotalCount() (int, error) {
+// Get the total count of pets
+func (p *PetDao) GetTotalCount() (int, error) {
 	ret, err := p.client.Query(&dynamodb.QueryInput{
 		TableName:              &p.tableName,
 		IndexName:              jsii.String("sort-key-gsi"),
 		KeyConditionExpression: jsii.String("Sort = :sortVal"),
 		ExpressionAttributeValues: DynamoItem{
-			":sortVal": {S: jsii.String(personSortLabel)},
+			":sortVal": {S: jsii.String(petSortLabel)},
 		},
 	})
 
 	if err != nil {
 		log.Println(err)
-		return 0, errors.New("error getting total people count")
+		return 0, errors.New("error getting total pets count")
 	}
 
 	count := int(*ret.Count)
@@ -159,17 +159,17 @@ func (p *PersonDao) GetTotalCount() (int, error) {
 	return count, err
 }
 
-// Convert a DynamoDB item to a person
-func convertItemToPerson(item DynamoItem) model.Person {
+// Convert a DynamoDB item to a pet
+func convertItemToPet(item DynamoItem) model.Pet {
 	age, _ := strconv.Atoi(*item["Age"].N)
-	return model.Person{
+	return model.Pet{
 		Id:   *item["Id"].S,
 		Name: *item["Name"].S,
 		Age:  age,
 	}
 }
 
-// Build input to query for people
+// Build input to query for pets
 func buildQueryInput(tableName string, count int, exclusiveStartId string) dynamodb.QueryInput {
 	limit := int64(count)
 	if count == 0 {
@@ -178,7 +178,7 @@ func buildQueryInput(tableName string, count int, exclusiveStartId string) dynam
 	}
 	exclusiveStartKey := DynamoItem{
 		"Id":   {S: &exclusiveStartId},
-		"Sort": {S: jsii.String(personSortLabel)},
+		"Sort": {S: jsii.String(petSortLabel)},
 	}
 	if exclusiveStartId == "" {
 		exclusiveStartKey = nil
@@ -193,7 +193,7 @@ func buildQueryInput(tableName string, count int, exclusiveStartId string) dynam
 			"#name": jsii.String("Name"),
 		},
 		ExpressionAttributeValues: DynamoItem{
-			":sortVal": {S: jsii.String(personSortLabel)},
+			":sortVal": {S: jsii.String(petSortLabel)},
 		},
 		ExclusiveStartKey: exclusiveStartKey,
 		Limit:             &limit,

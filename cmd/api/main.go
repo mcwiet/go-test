@@ -17,7 +17,7 @@ import (
 )
 
 var (
-	personController controller.PersonController
+	petController controller.PetController
 )
 
 func init() {
@@ -26,9 +26,9 @@ func init() {
 	cursorEncoder := encoding.NewCursorEncoder()
 
 	tableName := os.Getenv("DDB_TABLE_NAME")
-	personDao := data.NewPersonDao(ddbClient, tableName)
-	personService := service.NewPersonService(&personDao, &cursorEncoder)
-	personController = controller.NewPersonController(&personService)
+	petDao := data.NewPetDao(ddbClient, tableName)
+	petService := service.NewPetService(&petDao, &cursorEncoder)
+	petController = controller.NewPetController(&petService)
 }
 
 func handle(ctx context.Context, rawRequest interface{}) (interface{}, error) {
@@ -41,19 +41,19 @@ func handle(ctx context.Context, rawRequest interface{}) (interface{}, error) {
 	switch request.Info.ParentTypeName {
 	case "Query":
 		switch request.Info.FieldName {
-		case "person":
-			response = personController.HandleGet(request)
-		case "people":
-			response = personController.HandleList(request)
+		case "pet":
+			response = petController.HandleGet(request)
+		case "pets":
+			response = petController.HandleList(request)
 		default:
 			response = controller.Response{Error: errors.New("query not recognized")}
 		}
 	case "Mutation":
 		switch request.Info.FieldName {
-		case "createPerson":
-			response = personController.HandleCreate(request)
-		case "deletePerson":
-			response = personController.HandleDelete(request)
+		case "createPet":
+			response = petController.HandleCreate(request)
+		case "deletePet":
+			response = petController.HandleDelete(request)
 		default:
 			response = controller.Response{Error: errors.New("mutation not recognized")}
 		}

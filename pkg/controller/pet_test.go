@@ -11,38 +11,38 @@ import (
 )
 
 // Define mocks / stubs
-type fakePersonService struct {
+type fakePetService struct {
 	returnedValue interface{}
 	returnedErr   error
 }
 
 // Define mock / stub behavior
-func (s *fakePersonService) Create(name string, age int) (model.Person, error) {
-	ret, _ := s.returnedValue.(model.Person)
+func (s *fakePetService) Create(name string, age int) (model.Pet, error) {
+	ret, _ := s.returnedValue.(model.Pet)
 	return ret, s.returnedErr
 }
-func (s *fakePersonService) Delete(id string) error {
+func (s *fakePetService) Delete(id string) error {
 	return s.returnedErr
 }
-func (s *fakePersonService) GetById(id string) (model.Person, error) {
-	ret, _ := s.returnedValue.(model.Person)
+func (s *fakePetService) GetById(id string) (model.Pet, error) {
+	ret, _ := s.returnedValue.(model.Pet)
 	return ret, s.returnedErr
 }
-func (s *fakePersonService) List(first int, after string) (model.PersonConnection, error) {
-	ret, _ := s.returnedValue.(model.PersonConnection)
+func (s *fakePetService) List(first int, after string) (model.PetConnection, error) {
+	ret, _ := s.returnedValue.(model.PetConnection)
 	return ret, s.returnedErr
 }
 
 // Define common data
 var (
-	samplePerson = model.Person{
+	samplePet = model.Pet{
 		Id:   uuid.NewString(),
 		Name: "dummy",
 		Age:  1,
 	}
-	sampleConnection = model.PersonConnection{
+	sampleConnection = model.PetConnection{
 		TotalCount: 1,
-		Edges:      []model.PersonEdge{{Node: samplePerson, Cursor: "cursor"}},
+		Edges:      []model.PetEdge{{Node: samplePet, Cursor: "cursor"}},
 		PageInfo:   model.PageInfo{EndCursor: "cursor", HasNextPage: false},
 	}
 )
@@ -50,7 +50,7 @@ var (
 // Define test struct
 type Test struct {
 	name             string
-	personService    fakePersonService
+	petService       fakePetService
 	request          controller.Request
 	expectedResponse controller.Response
 	expectErr        bool
@@ -60,24 +60,24 @@ func TestHandleCreate(t *testing.T) {
 	// Define tests
 	tests := []Test{
 		{
-			name:          "valid create",
-			personService: fakePersonService{returnedValue: samplePerson},
+			name:       "valid create",
+			petService: fakePetService{returnedValue: samplePet},
 			request: controller.Request{
 				Arguments: map[string]interface{}{
-					"name": samplePerson.Name,
-					"age":  float64(samplePerson.Age),
+					"name": samplePet.Name,
+					"age":  float64(samplePet.Age),
 				},
 			},
-			expectedResponse: controller.Response{Data: samplePerson},
+			expectedResponse: controller.Response{Data: samplePet},
 			expectErr:        false,
 		},
 		{
-			name:          "service create error",
-			personService: fakePersonService{returnedErr: errors.New("create error")},
+			name:       "service create error",
+			petService: fakePetService{returnedErr: errors.New("create error")},
 			request: controller.Request{
 				Arguments: map[string]interface{}{
-					"name": samplePerson.Name,
-					"age":  float64(samplePerson.Age),
+					"name": samplePet.Name,
+					"age":  float64(samplePet.Age),
 				},
 			},
 			expectErr: true,
@@ -87,7 +87,7 @@ func TestHandleCreate(t *testing.T) {
 	// Run tests
 	for _, test := range tests {
 		// Setup
-		controller := controller.NewPersonController(&test.personService)
+		controller := controller.NewPetController(&test.petService)
 
 		// Execute
 		response := controller.HandleCreate(test.request)
@@ -105,22 +105,22 @@ func TestHandleDelete(t *testing.T) {
 	// Define tests
 	tests := []Test{
 		{
-			name:          "valid delete",
-			personService: fakePersonService{},
+			name:       "valid delete",
+			petService: fakePetService{},
 			request: controller.Request{
 				Arguments: map[string]interface{}{
-					"id": samplePerson.Id,
+					"id": samplePet.Id,
 				},
 			},
 			expectedResponse: controller.Response{},
 			expectErr:        false,
 		},
 		{
-			name:          "service delete error",
-			personService: fakePersonService{returnedErr: errors.New("delete error")},
+			name:       "service delete error",
+			petService: fakePetService{returnedErr: errors.New("delete error")},
 			request: controller.Request{
 				Arguments: map[string]interface{}{
-					"id": samplePerson.Id,
+					"id": samplePet.Id,
 				},
 			},
 			expectedResponse: controller.Response{},
@@ -131,7 +131,7 @@ func TestHandleDelete(t *testing.T) {
 	// Run tests
 	for _, test := range tests {
 		// Setup
-		controller := controller.NewPersonController(&test.personService)
+		controller := controller.NewPetController(&test.petService)
 
 		// Execute
 		response := controller.HandleDelete(test.request)
@@ -149,22 +149,22 @@ func TestHandleGet(t *testing.T) {
 	// Define tests
 	tests := []Test{
 		{
-			name:          "valid get",
-			personService: fakePersonService{returnedValue: samplePerson},
+			name:       "valid get",
+			petService: fakePetService{returnedValue: samplePet},
 			request: controller.Request{
 				Arguments: map[string]interface{}{
-					"id": samplePerson.Id,
+					"id": samplePet.Id,
 				},
 			},
-			expectedResponse: controller.Response{Data: samplePerson},
+			expectedResponse: controller.Response{Data: samplePet},
 			expectErr:        false,
 		},
 		{
-			name:          "service get error",
-			personService: fakePersonService{returnedErr: errors.New("get error")},
+			name:       "service get error",
+			petService: fakePetService{returnedErr: errors.New("get error")},
 			request: controller.Request{
 				Arguments: map[string]interface{}{
-					"id": samplePerson.Id,
+					"id": samplePet.Id,
 				},
 			},
 			expectedResponse: controller.Response{},
@@ -175,7 +175,7 @@ func TestHandleGet(t *testing.T) {
 	// Run tests
 	for _, test := range tests {
 		// Setup
-		controller := controller.NewPersonController(&test.personService)
+		controller := controller.NewPetController(&test.petService)
 
 		// Execute
 		response := controller.HandleGet(test.request)
@@ -193,8 +193,8 @@ func TestHandleList(t *testing.T) {
 	// Define tests
 	tests := []Test{
 		{
-			name:          "list without input",
-			personService: fakePersonService{returnedValue: sampleConnection},
+			name:       "list without input",
+			petService: fakePetService{returnedValue: sampleConnection},
 			request: controller.Request{
 				Arguments: map[string]interface{}{},
 			},
@@ -202,8 +202,8 @@ func TestHandleList(t *testing.T) {
 			expectErr:        false,
 		},
 		{
-			name:          "list with input",
-			personService: fakePersonService{returnedValue: sampleConnection},
+			name:       "list with input",
+			petService: fakePetService{returnedValue: sampleConnection},
 			request: controller.Request{
 				Arguments: map[string]interface{}{
 					"first": float64(10),
@@ -214,8 +214,8 @@ func TestHandleList(t *testing.T) {
 			expectErr:        false,
 		},
 		{
-			name:          "service list error",
-			personService: fakePersonService{returnedErr: errors.New("list error")},
+			name:       "service list error",
+			petService: fakePetService{returnedErr: errors.New("list error")},
 			request: controller.Request{
 				Arguments: map[string]interface{}{},
 			},
@@ -227,7 +227,7 @@ func TestHandleList(t *testing.T) {
 	// Run tests
 	for _, test := range tests {
 		// Setup
-		controller := controller.NewPersonController(&test.personService)
+		controller := controller.NewPetController(&test.petService)
 
 		// Execute
 		response := controller.HandleList(test.request)

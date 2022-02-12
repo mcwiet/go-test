@@ -1,0 +1,9 @@
+{
+  "info": {
+    "parentTypeName": "Mutation",
+    "fieldName": "deletePet"
+  },
+  "arguments": {
+    "id": ""
+  }
+}

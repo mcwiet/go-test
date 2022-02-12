@@ -1,9 +1,0 @@
-{
-  "info": {
-    "parentTypeName": "Mutation",
-    "fieldName": "deletePerson"
-  },
-  "arguments": {
-    "id": "8dc0c931-185a-4152-baab-ab6728d792e4"
-  }
-}

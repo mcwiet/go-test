@@ -8,29 +8,29 @@ type PageInfo {
   hasNextPage: Boolean!
 }
 
-type Person {
+type Pet {
   id: ID!
   name: String!
   age: Int!
 }
 
-type PersonEdge {
-  node: Person!
+type PetEdge {
+  node: Pet!
   cursor: String!
 }
 
-type PersonConnection {
+type PetConnection {
   totalCount: Int!
-  edges: [PersonEdge!]
+  edges: [PetEdge!]
   pageInfo: PageInfo!
 }
 
 type Query {
-  people(first: Int, after: String): PersonConnection!
-  person(id: ID!): Person!
+  pets(first: Int, after: String): PetConnection!
+  pet(id: ID!): Pet!
 }
 
 type Mutation {
-  createPerson(name: String!, age: Int!): Person!
-  deletePerson(id: ID!): Boolean
+  createPet(name: String!, age: Int!): Pet!
+  deletePet(id: ID!): Boolean
 }
