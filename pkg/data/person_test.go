@@ -1,7 +1,6 @@
 package data_test
 
 import (
-	"encoding/base64"
 	"testing"
 
 	"github.com/aws/aws-sdk-go/service/dynamodb"
@@ -15,41 +14,33 @@ import (
 type DynamoItem = map[string]*dynamodb.AttributeValue
 
 // Define mocks / stubs
-type fakeDynamoDbClient struct {
-	returnedValue interface{}
-	returnedErr   error
+type fakeDbClient struct {
+	deleteItemOutput *dynamodb.DeleteItemOutput
+	deleteItemErr    error
+	getItemOutput    *dynamodb.GetItemOutput
+	getItemErr       error
+	putItemOutput    *dynamodb.PutItemOutput
+	putItemErr       error
+	queryOutput      *dynamodb.QueryOutput
+	queryErr         error
 }
-type fakeEncoder struct{}
 
 // Define mock / stub behavior
-func (c *fakeDynamoDbClient) DeleteItem(*dynamodb.DeleteItemInput) (*dynamodb.DeleteItemOutput, error) {
-	ret, _ := c.returnedValue.(*dynamodb.DeleteItemOutput)
-	return ret, c.returnedErr
+func (f *fakeDbClient) DeleteItem(*dynamodb.DeleteItemInput) (*dynamodb.DeleteItemOutput, error) {
+	return f.deleteItemOutput, f.deleteItemErr
 }
-func (c *fakeDynamoDbClient) GetItem(*dynamodb.GetItemInput) (*dynamodb.GetItemOutput, error) {
-	ret, _ := c.returnedValue.(*dynamodb.GetItemOutput)
-	return ret, c.returnedErr
+func (f *fakeDbClient) GetItem(*dynamodb.GetItemInput) (*dynamodb.GetItemOutput, error) {
+	return f.getItemOutput, f.getItemErr
 }
-func (c *fakeDynamoDbClient) PutItem(*dynamodb.PutItemInput) (*dynamodb.PutItemOutput, error) {
-	ret, _ := c.returnedValue.(*dynamodb.PutItemOutput)
-	return ret, c.returnedErr
+func (f *fakeDbClient) PutItem(*dynamodb.PutItemInput) (*dynamodb.PutItemOutput, error) {
+	return f.putItemOutput, f.putItemErr
 }
-func (c *fakeDynamoDbClient) Query(*dynamodb.QueryInput) (*dynamodb.QueryOutput, error) {
-	ret, _ := c.returnedValue.(*dynamodb.QueryOutput)
-	return ret, c.returnedErr
-}
-
-func (e *fakeEncoder) Encode(input string) string {
-	return base64.StdEncoding.EncodeToString([]byte(input))
-}
-func (e *fakeEncoder) Decode(input string) (string, error) {
-	valBytes, _ := base64.StdEncoding.DecodeString(input)
-	return string(valBytes), nil
+func (f *fakeDbClient) Query(*dynamodb.QueryInput) (*dynamodb.QueryOutput, error) {
+	return f.queryOutput, f.queryErr
 }
 
 // Define common data
 var (
-	encoder       = fakeEncoder{}
 	tableName     = "table"
 	samplePerson1 = model.Person{
 		Id:   uuid.NewString(),
@@ -77,7 +68,7 @@ func TestDelete(t *testing.T) {
 	// Define test struct
 	type Test struct {
 		name      string
-		dbClient  fakeDynamoDbClient
+		dbClient  fakeDbClient
 		personId  string
 		expectErr bool
 	}
@@ -86,19 +77,23 @@ func TestDelete(t *testing.T) {
 	tests := []Test{
 		{
 			name:      "valid delete",
-			dbClient:  fakeDynamoDbClient{},
+			dbClient:  fakeDbClient{},
 			personId:  samplePerson1.Id,
 			expectErr: false,
 		},
 		{
-			name:      "db delete error",
-			dbClient:  fakeDynamoDbClient{returnedErr: assert.AnError},
+			name: "db delete error",
+			dbClient: fakeDbClient{
+				deleteItemErr: assert.AnError,
+			},
 			personId:  samplePerson1.Id,
 			expectErr: true,
 		},
 		{
-			name:      "db item not found error",
-			dbClient:  fakeDynamoDbClient{returnedErr: &dynamodb.ConditionalCheckFailedException{}},
+			name: "db item not found error",
+			dbClient: fakeDbClient{
+				deleteItemErr: &dynamodb.ConditionalCheckFailedException{},
+			},
 			personId:  samplePerson1.Id,
 			expectErr: true,
 		},
@@ -107,7 +102,7 @@ func TestDelete(t *testing.T) {
 	// Run tests
 	for _, test := range tests {
 		// Setup
-		dao := data.NewPersonDao(&test.dbClient, &encoder, tableName)
+		dao := data.NewPersonDao(&test.dbClient, tableName)
 
 		// Execute
 		err := dao.Delete(test.personId)
@@ -125,7 +120,7 @@ func TestGetById(t *testing.T) {
 	// Define test struct
 	type Test struct {
 		name           string
-		dbClient       fakeDynamoDbClient
+		dbClient       fakeDbClient
 		personId       string
 		expectedPerson model.Person
 		expectErr      bool
@@ -134,21 +129,27 @@ func TestGetById(t *testing.T) {
 	// Define tests
 	tests := []Test{
 		{
-			name:           "person found",
-			dbClient:       fakeDynamoDbClient{returnedValue: &dynamodb.GetItemOutput{Item: samplePersonItem1}},
+			name: "person found",
+			dbClient: fakeDbClient{
+				getItemOutput: &dynamodb.GetItemOutput{Item: samplePersonItem1},
+			},
 			personId:       samplePerson1.Id,
 			expectedPerson: samplePerson1,
 			expectErr:      false,
 		},
 		{
-			name:      "person not found",
-			dbClient:  fakeDynamoDbClient{returnedValue: &dynamodb.GetItemOutput{Item: nil}},
+			name: "person not found",
+			dbClient: fakeDbClient{
+				getItemOutput: &dynamodb.GetItemOutput{Item: nil},
+			},
 			personId:  samplePerson1.Id,
 			expectErr: true,
 		},
 		{
-			name:      "db get error",
-			dbClient:  fakeDynamoDbClient{returnedErr: assert.AnError},
+			name: "db get error",
+			dbClient: fakeDbClient{
+				getItemErr: assert.AnError,
+			},
 			personId:  samplePerson1.Id,
 			expectErr: true,
 		},
@@ -157,7 +158,7 @@ func TestGetById(t *testing.T) {
 	// Run tests
 	for _, test := range tests {
 		// Setup
-		dao := data.NewPersonDao(&test.dbClient, &encoder, tableName)
+		dao := data.NewPersonDao(&test.dbClient, tableName)
 
 		// Execute
 		person, err := dao.GetById(test.personId)
@@ -175,7 +176,7 @@ func TestInsert(t *testing.T) {
 	// Define test struct
 	type Test struct {
 		name      string
-		dbClient  fakeDynamoDbClient
+		dbClient  fakeDbClient
 		person    model.Person
 		expectErr bool
 	}
@@ -184,13 +185,15 @@ func TestInsert(t *testing.T) {
 	tests := []Test{
 		{
 			name:      "valid insert",
-			dbClient:  fakeDynamoDbClient{},
+			dbClient:  fakeDbClient{},
 			person:    samplePerson1,
 			expectErr: false,
 		},
 		{
-			name:      "db put error",
-			dbClient:  fakeDynamoDbClient{returnedErr: assert.AnError},
+			name: "db put error",
+			dbClient: fakeDbClient{
+				putItemErr: assert.AnError,
+			},
 			person:    samplePerson1,
 			expectErr: true,
 		},
@@ -199,7 +202,7 @@ func TestInsert(t *testing.T) {
 	// Run tests
 	for _, test := range tests {
 		// Setup
-		dao := data.NewPersonDao(&test.dbClient, &encoder, tableName)
+		dao := data.NewPersonDao(&test.dbClient, tableName)
 
 		// Execute
 		err := dao.Insert(test.person)
@@ -213,140 +216,107 @@ func TestInsert(t *testing.T) {
 	}
 }
 
-func TestList(t *testing.T) {
+func TestQuery(t *testing.T) {
 	// Define test struct
 	type Test struct {
-		name               string
-		dbClient           fakeDynamoDbClient
-		first              int
-		after              string
-		expectedConnection model.PersonConnection
-		expectErr          bool
+		name                string
+		dbClient            fakeDbClient
+		count               int
+		exclusiveStartId    string
+		expectedPeople      []model.Person
+		expectedHasNextPage bool
+		expectErr           bool
 	}
 
 	// Define tests
 	tests := []Test{
 		{
 			name: "request more items than in DB",
-			dbClient: fakeDynamoDbClient{returnedValue: &dynamodb.QueryOutput{
-				Count:            newInt64(2),
-				Items:            []DynamoItem{samplePersonItem1, samplePersonItem2},
-				LastEvaluatedKey: DynamoItem{},
-			}},
-			first: 3,
-			after: "",
-			expectedConnection: model.PersonConnection{
-				TotalCount: 2,
-				Edges: []model.PersonEdge{
-					{
-						Node:   samplePerson1,
-						Cursor: encoder.Encode(samplePerson1.Id),
-					},
-					{
-						Node:   samplePerson2,
-						Cursor: encoder.Encode(samplePerson2.Id),
-					},
-				},
-				PageInfo: model.PageInfo{
-					EndCursor:   encoder.Encode(samplePerson2.Id),
-					HasNextPage: false,
-				},
+			dbClient: fakeDbClient{
+				queryOutput: &dynamodb.QueryOutput{
+					Count:            newInt64(2),
+					Items:            []DynamoItem{samplePersonItem1, samplePersonItem2},
+					LastEvaluatedKey: DynamoItem{},
+				}},
+			count:            3,
+			exclusiveStartId: "",
+			expectedPeople: []model.Person{
+				samplePerson1,
+				samplePerson2,
 			},
-			expectErr: false,
+			expectedHasNextPage: false,
 		},
 		{
 			name: "request less items than in DB (start at beginning of list)",
-			dbClient: fakeDynamoDbClient{returnedValue: &dynamodb.QueryOutput{
-				Count: newInt64(2),
-				Items: []DynamoItem{samplePersonItem1},
-				LastEvaluatedKey: DynamoItem{
-					"Id": &dynamodb.AttributeValue{S: jsii.String(samplePerson1.Id)},
-				},
-			}},
-			first: 1,
-			after: "",
-			expectedConnection: model.PersonConnection{
-				TotalCount: 2,
-				Edges: []model.PersonEdge{
-					{
-						Node:   samplePerson1,
-						Cursor: encoder.Encode(samplePerson1.Id),
-					},
-				},
-				PageInfo: model.PageInfo{
-					EndCursor:   encoder.Encode(samplePerson1.Id),
-					HasNextPage: true,
-				},
+			dbClient: fakeDbClient{
+				queryOutput: &dynamodb.QueryOutput{
+					Count:            newInt64(2),
+					Items:            []DynamoItem{samplePersonItem1},
+					LastEvaluatedKey: samplePersonItem1,
+				}},
+			count: 1,
+			expectedPeople: []model.Person{
+				samplePerson1,
 			},
-			expectErr: false,
+			expectedHasNextPage: true,
 		},
 		{
 			name: "request less items than in DB (reach end of list)",
-			dbClient: fakeDynamoDbClient{returnedValue: &dynamodb.QueryOutput{
-				Count:            newInt64(2),
-				Items:            []DynamoItem{samplePersonItem2},
-				LastEvaluatedKey: DynamoItem{},
-			}},
-			first: 1,
-			after: encoder.Encode(samplePerson1.Id),
-			expectedConnection: model.PersonConnection{
-				TotalCount: 2,
-				Edges: []model.PersonEdge{
-					{
-						Node:   samplePerson2,
-						Cursor: encoder.Encode(samplePerson2.Id),
-					},
-				},
-				PageInfo: model.PageInfo{
-					EndCursor:   encoder.Encode(samplePerson2.Id),
-					HasNextPage: false,
-				},
+			dbClient: fakeDbClient{
+				queryOutput: &dynamodb.QueryOutput{
+					Count:            newInt64(2),
+					Items:            []DynamoItem{samplePersonItem2},
+					LastEvaluatedKey: DynamoItem{},
+				}},
+			count:            1,
+			exclusiveStartId: samplePerson1.Id,
+			expectedPeople: []model.Person{
+				samplePerson2,
 			},
-			expectErr: false,
+			expectedHasNextPage: false,
 		},
 		{
-			name: "request 'first=0' but 'after' is not last person",
-			dbClient: fakeDynamoDbClient{returnedValue: &dynamodb.QueryOutput{
-				Count: newInt64(2),
-				Items: []DynamoItem{},
-				LastEvaluatedKey: DynamoItem{
-					"Id": &dynamodb.AttributeValue{S: jsii.String(samplePerson2.Id)},
-				},
-			}},
-			first: 0,
-			after: encoder.Encode(samplePerson1.Id),
-			expectedConnection: model.PersonConnection{
-				TotalCount: 2,
-				Edges:      []model.PersonEdge{},
-				PageInfo: model.PageInfo{
-					EndCursor:   "",
-					HasNextPage: true,
-				},
-			},
+			name: "request 'count=0' but 'exclusiveStartId' is not last person",
+			dbClient: fakeDbClient{
+				queryOutput: &dynamodb.QueryOutput{
+					Count:            newInt64(2),
+					Items:            []DynamoItem{},
+					LastEvaluatedKey: samplePersonItem2,
+				}},
+			count:               0,
+			exclusiveStartId:    samplePerson1.Id,
+			expectedPeople:      []model.Person{},
+			expectedHasNextPage: true,
 		},
 		{
-			name: "request 'first=0' but 'after' is last person",
-			dbClient: fakeDynamoDbClient{returnedValue: &dynamodb.QueryOutput{
-				Count:            newInt64(2),
-				Items:            []DynamoItem{},
-				LastEvaluatedKey: DynamoItem{},
-			}},
-			first: 0,
-			after: encoder.Encode(samplePerson2.Id),
-			expectedConnection: model.PersonConnection{
-				TotalCount: 2,
-				Edges:      []model.PersonEdge{},
-				PageInfo: model.PageInfo{
-					EndCursor:   "",
-					HasNextPage: false,
+			name: "request 'count=0' but 'exclusiveStartId' is last person",
+			dbClient: fakeDbClient{
+				queryOutput: &dynamodb.QueryOutput{
+					Count:            newInt64(2),
+					Items:            []DynamoItem{},
+					LastEvaluatedKey: DynamoItem{},
+				}},
+			count:               0,
+			exclusiveStartId:    samplePerson2.Id,
+			expectedPeople:      []model.Person{},
+			expectedHasNextPage: false,
+		},
+		{
+			name: "no people returned when 'count=0'",
+			dbClient: fakeDbClient{
+				queryOutput: &dynamodb.QueryOutput{
+					Count:            newInt64(1),
+					Items:            []DynamoItem{samplePersonItem1},
+					LastEvaluatedKey: samplePersonItem1,
 				},
 			},
+			expectedPeople:      []model.Person{},
+			expectedHasNextPage: true,
 		},
 		{
 			name: "db query error",
-			dbClient: fakeDynamoDbClient{
-				returnedValue: &dynamodb.QueryOutput{},
-				returnedErr:   assert.AnError,
+			dbClient: fakeDbClient{
+				queryErr: assert.AnError,
 			},
 			expectErr: true,
 		},
@@ -355,14 +325,61 @@ func TestList(t *testing.T) {
 	// Run tests
 	for _, test := range tests {
 		// Setup
-		dao := data.NewPersonDao(&test.dbClient, &encoder, tableName)
+		dao := data.NewPersonDao(&test.dbClient, tableName)
 
 		// Execute
-		connection, err := dao.List(test.first, test.after)
+		people, hasNextPage, err := dao.Query(test.count, test.exclusiveStartId)
 
 		// Verify
 		if !test.expectErr {
-			assert.Equal(t, test.expectedConnection, connection, test.name)
+			assert.Equal(t, test.expectedPeople, people, test.name)
+			assert.Equal(t, test.expectedHasNextPage, hasNextPage, test.name)
+		} else {
+			assert.NotNil(t, err, test.name)
+		}
+	}
+}
+
+func TestGetTotalCount(t *testing.T) {
+	// Define test struct
+	type Test struct {
+		name          string
+		dbClient      fakeDbClient
+		expectedCount int
+		expectErr     bool
+	}
+
+	// Define tests
+	tests := []Test{
+		{
+			name: "valid get total count",
+			dbClient: fakeDbClient{
+				queryOutput: &dynamodb.QueryOutput{
+					Count: newInt64(10),
+				},
+			},
+			expectedCount: 10,
+		},
+		{
+			name: "db query error",
+			dbClient: fakeDbClient{
+				queryErr: assert.AnError,
+			},
+			expectErr: true,
+		},
+	}
+
+	// Run tests
+	for _, test := range tests {
+		// Setup
+		dao := data.NewPersonDao(&test.dbClient, tableName)
+
+		// Execute
+		count, err := dao.GetTotalCount()
+
+		// Verify
+		if !test.expectErr {
+			assert.Equal(t, test.expectedCount, count, test.name)
 		} else {
 			assert.NotNil(t, err, test.name)
 		}

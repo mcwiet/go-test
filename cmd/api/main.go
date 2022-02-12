@@ -21,13 +21,13 @@ var (
 )
 
 func init() {
-	sess := session.Must(session.NewSession())
-	ddbClient := dynamodb.New(sess)
+	session := session.Must(session.NewSession())
+	ddbClient := dynamodb.New(session)
 	cursorEncoder := encoding.NewCursorEncoder()
 
 	tableName := os.Getenv("DDB_TABLE_NAME")
-	personDao := data.NewPersonDao(ddbClient, &cursorEncoder, tableName)
-	personService := service.NewPersonService(&personDao)
+	personDao := data.NewPersonDao(ddbClient, tableName)
+	personService := service.NewPersonService(&personDao, &cursorEncoder)
 	personController = controller.NewPersonController(&personService)
 }
 
