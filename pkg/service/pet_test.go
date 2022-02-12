@@ -55,14 +55,16 @@ func (e *fakeEncoder) Decode(input string) (string, error) {
 var (
 	encoder    = fakeEncoder{}
 	samplePet1 = model.Pet{
-		Id:   uuid.NewString(),
-		Name: "pet 1",
-		Age:  12,
+		Id:    uuid.NewString(),
+		Name:  "pet 1",
+		Age:   12,
+		Owner: "User 1",
 	}
 	samplePet2 = model.Pet{
-		Id:   uuid.NewString(),
-		Name: "pet 2",
-		Age:  20,
+		Id:    uuid.NewString(),
+		Name:  "pet 2",
+		Age:   20,
+		Owner: "User 2",
 	}
 )
 
@@ -73,6 +75,7 @@ func TestCreate(t *testing.T) {
 		petDao    fakePetDao
 		petName   string
 		petAge    int
+		petOwner  string
 		expectErr bool
 	}
 
@@ -83,6 +86,7 @@ func TestCreate(t *testing.T) {
 			petDao:    fakePetDao{},
 			petName:   samplePet1.Name,
 			petAge:    samplePet1.Age,
+			petOwner:  samplePet1.Owner,
 			expectErr: false,
 		},
 		{
@@ -100,7 +104,7 @@ func TestCreate(t *testing.T) {
 		service := service.NewPetService(test.petDao, &encoder)
 
 		// Execute
-		pet, err := service.Create(test.petName, test.petAge)
+		pet, err := service.Create(test.petName, test.petAge, test.petOwner)
 
 		// Verify
 		if !test.expectErr {

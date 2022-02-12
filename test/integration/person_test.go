@@ -16,7 +16,7 @@ import (
 
 var (
 	apiUrl string
-	token  string
+	token  authentication.CognitoToken
 	client *graphql.Client
 )
 
@@ -60,18 +60,21 @@ func createPet(t *testing.T) model.Pet {
 	// Setup
 	petName := "Integration Test"
 	petAge := 10
+	petOwner := token.Payload.Username
 	request := graphql.NewRequest(`
-		mutation ($name: String!, $age: Int!) {
-			createPet (name: $name, age: $age) {
+		mutation ($name: String!, $age: Int!, $owner: String) {
+			createPet (name: $name, age: $age, owner: $owner) {
 				id
 				name
 				age
+				owner
 			}
 		}
 	`)
 	request.Var("name", petName)
 	request.Var("age", petAge)
-	request.Header.Set("Authorization", token)
+	request.Var("owner", petOwner)
+	request.Header.Set("Authorization", token.String)
 
 	// Execute
 	var response map[string]interface{}
@@ -88,6 +91,7 @@ func createPet(t *testing.T) model.Pet {
 	assert.NotNil(t, pet.Id, stepName+"id should exist")
 	assert.Equal(t, petName, pet.Name, stepName+"name should match")
 	assert.Equal(t, petAge, pet.Age, stepName+"age should match")
+	assert.Equal(t, petOwner, pet.Owner, stepName+"owner should match")
 
 	return pet
 }
@@ -100,7 +104,7 @@ func deletePet(t *testing.T, pet *model.Pet) {
 		}
 	`)
 	request.Var("id", pet.Id)
-	request.Header.Set("Authorization", token)
+	request.Header.Set("Authorization", token.String)
 
 	// Execute
 	var response map[string]interface{}
@@ -119,11 +123,12 @@ func getPet(t *testing.T, id string, expectedPet *model.Pet) {
 				id
 				name
 				age
+				owner
 			}
 		}
 	`)
 	request.Var("id", id)
-	request.Header.Set("Authorization", token)
+	request.Header.Set("Authorization", token.String)
 
 	// Execute
 	var response map[string]interface{}
@@ -161,7 +166,7 @@ func listPets(t *testing.T) {
 			}
 		}
 	`)
-	request.Header.Set("Authorization", token)
+	request.Header.Set("Authorization", token.String)
 
 	// Execute
 	var response map[string]interface{}

@@ -12,6 +12,7 @@ type Pet {
   id: ID!
   name: String!
   age: Int!
+  owner: String
 }
 
 type PetEdge {
@@ -31,6 +32,6 @@ type Query {
 }
 
 type Mutation {
-  createPet(name: String!, age: Int!): Pet!
+  createPet(name: String!, age: Int!, owner: String): Pet!
   deletePet(id: ID!): Boolean
 }

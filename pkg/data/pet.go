@@ -69,9 +69,10 @@ func (p *PetDao) GetById(id string) (model.Pet, error) {
 			"Id":   {S: jsii.String(id)},
 			"Sort": {S: jsii.String(petSortLabel)},
 		},
-		ProjectionExpression: jsii.String("Id, #name, Age"),
+		ProjectionExpression: jsii.String("Id, #name, Age, #owner"),
 		ExpressionAttributeNames: map[string]*string{
-			"#name": jsii.String("Name"),
+			"#name":  jsii.String("Name"),
+			"#owner": jsii.String("Owner"),
 		},
 	})
 
@@ -93,10 +94,11 @@ func (p *PetDao) Insert(pet model.Pet) error {
 	_, err := p.client.PutItem(&dynamodb.PutItemInput{
 		TableName: &p.tableName,
 		Item: DynamoItem{
-			"Id":   {S: jsii.String(pet.Id)},
-			"Sort": {S: jsii.String(petSortLabel)},
-			"Name": {S: &pet.Name},
-			"Age":  {N: &age},
+			"Id":    {S: jsii.String(pet.Id)},
+			"Sort":  {S: jsii.String(petSortLabel)},
+			"Name":  {S: &pet.Name},
+			"Age":   {N: &age},
+			"Owner": {S: &pet.Owner},
 		},
 	})
 
@@ -162,10 +164,15 @@ func (p *PetDao) GetTotalCount() (int, error) {
 // Convert a DynamoDB item to a pet
 func convertItemToPet(item DynamoItem) model.Pet {
 	age, _ := strconv.Atoi(*item["Age"].N)
+	owner := ""
+	if item["Owner"] != nil {
+		owner = *item["Owner"].S
+	}
 	return model.Pet{
-		Id:   *item["Id"].S,
-		Name: *item["Name"].S,
-		Age:  age,
+		Id:    *item["Id"].S,
+		Name:  *item["Name"].S,
+		Age:   age,
+		Owner: owner,
 	}
 }
 
@@ -188,9 +195,10 @@ func buildQueryInput(tableName string, count int, exclusiveStartId string) dynam
 		TableName:              &tableName,
 		IndexName:              jsii.String("sort-key-gsi"),
 		KeyConditionExpression: jsii.String("Sort = :sortVal"),
-		ProjectionExpression:   jsii.String("Id, #name, Age"),
+		ProjectionExpression:   jsii.String("Id, #name, Age, #owner"),
 		ExpressionAttributeNames: map[string]*string{
-			"#name": jsii.String("Name"),
+			"#name":  jsii.String("Name"),
+			"#owner": jsii.String("Owner"),
 		},
 		ExpressionAttributeValues: DynamoItem{
 			":sortVal": {S: jsii.String(petSortLabel)},
