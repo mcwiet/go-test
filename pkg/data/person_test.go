@@ -14,7 +14,7 @@ import (
 type DynamoItem = map[string]*dynamodb.AttributeValue
 
 // Define mocks / stubs
-type fakeDynamoDbClient struct {
+type fakeDbClient struct {
 	deleteItemOutput *dynamodb.DeleteItemOutput
 	deleteItemErr    error
 	getItemOutput    *dynamodb.GetItemOutput
@@ -26,16 +26,16 @@ type fakeDynamoDbClient struct {
 }
 
 // Define mock / stub behavior
-func (f *fakeDynamoDbClient) DeleteItem(*dynamodb.DeleteItemInput) (*dynamodb.DeleteItemOutput, error) {
+func (f *fakeDbClient) DeleteItem(*dynamodb.DeleteItemInput) (*dynamodb.DeleteItemOutput, error) {
 	return f.deleteItemOutput, f.deleteItemErr
 }
-func (f *fakeDynamoDbClient) GetItem(*dynamodb.GetItemInput) (*dynamodb.GetItemOutput, error) {
+func (f *fakeDbClient) GetItem(*dynamodb.GetItemInput) (*dynamodb.GetItemOutput, error) {
 	return f.getItemOutput, f.getItemErr
 }
-func (f *fakeDynamoDbClient) PutItem(*dynamodb.PutItemInput) (*dynamodb.PutItemOutput, error) {
+func (f *fakeDbClient) PutItem(*dynamodb.PutItemInput) (*dynamodb.PutItemOutput, error) {
 	return f.putItemOutput, f.putItemErr
 }
-func (f *fakeDynamoDbClient) Query(*dynamodb.QueryInput) (*dynamodb.QueryOutput, error) {
+func (f *fakeDbClient) Query(*dynamodb.QueryInput) (*dynamodb.QueryOutput, error) {
 	return f.queryOutput, f.queryErr
 }
 
@@ -68,7 +68,7 @@ func TestDelete(t *testing.T) {
 	// Define test struct
 	type Test struct {
 		name      string
-		dbClient  fakeDynamoDbClient
+		dbClient  fakeDbClient
 		personId  string
 		expectErr bool
 	}
@@ -77,13 +77,13 @@ func TestDelete(t *testing.T) {
 	tests := []Test{
 		{
 			name:      "valid delete",
-			dbClient:  fakeDynamoDbClient{},
+			dbClient:  fakeDbClient{},
 			personId:  samplePerson1.Id,
 			expectErr: false,
 		},
 		{
 			name: "db delete error",
-			dbClient: fakeDynamoDbClient{
+			dbClient: fakeDbClient{
 				deleteItemErr: assert.AnError,
 			},
 			personId:  samplePerson1.Id,
@@ -91,7 +91,7 @@ func TestDelete(t *testing.T) {
 		},
 		{
 			name: "db item not found error",
-			dbClient: fakeDynamoDbClient{
+			dbClient: fakeDbClient{
 				deleteItemErr: &dynamodb.ConditionalCheckFailedException{},
 			},
 			personId:  samplePerson1.Id,
@@ -120,7 +120,7 @@ func TestGetById(t *testing.T) {
 	// Define test struct
 	type Test struct {
 		name           string
-		dbClient       fakeDynamoDbClient
+		dbClient       fakeDbClient
 		personId       string
 		expectedPerson model.Person
 		expectErr      bool
@@ -130,7 +130,7 @@ func TestGetById(t *testing.T) {
 	tests := []Test{
 		{
 			name: "person found",
-			dbClient: fakeDynamoDbClient{
+			dbClient: fakeDbClient{
 				getItemOutput: &dynamodb.GetItemOutput{Item: samplePersonItem1},
 			},
 			personId:       samplePerson1.Id,
@@ -139,7 +139,7 @@ func TestGetById(t *testing.T) {
 		},
 		{
 			name: "person not found",
-			dbClient: fakeDynamoDbClient{
+			dbClient: fakeDbClient{
 				getItemOutput: &dynamodb.GetItemOutput{Item: nil},
 			},
 			personId:  samplePerson1.Id,
@@ -147,7 +147,7 @@ func TestGetById(t *testing.T) {
 		},
 		{
 			name: "db get error",
-			dbClient: fakeDynamoDbClient{
+			dbClient: fakeDbClient{
 				getItemErr: assert.AnError,
 			},
 			personId:  samplePerson1.Id,
@@ -176,7 +176,7 @@ func TestInsert(t *testing.T) {
 	// Define test struct
 	type Test struct {
 		name      string
-		dbClient  fakeDynamoDbClient
+		dbClient  fakeDbClient
 		person    model.Person
 		expectErr bool
 	}
@@ -185,13 +185,13 @@ func TestInsert(t *testing.T) {
 	tests := []Test{
 		{
 			name:      "valid insert",
-			dbClient:  fakeDynamoDbClient{},
+			dbClient:  fakeDbClient{},
 			person:    samplePerson1,
 			expectErr: false,
 		},
 		{
 			name: "db put error",
-			dbClient: fakeDynamoDbClient{
+			dbClient: fakeDbClient{
 				putItemErr: assert.AnError,
 			},
 			person:    samplePerson1,
@@ -220,7 +220,7 @@ func TestQuery(t *testing.T) {
 	// Define test struct
 	type Test struct {
 		name                string
-		dbClient            fakeDynamoDbClient
+		dbClient            fakeDbClient
 		count               int
 		exclusiveStartId    string
 		expectedPeople      []model.Person
@@ -232,7 +232,7 @@ func TestQuery(t *testing.T) {
 	tests := []Test{
 		{
 			name: "request more items than in DB",
-			dbClient: fakeDynamoDbClient{
+			dbClient: fakeDbClient{
 				queryOutput: &dynamodb.QueryOutput{
 					Count:            newInt64(2),
 					Items:            []DynamoItem{samplePersonItem1, samplePersonItem2},
@@ -248,13 +248,11 @@ func TestQuery(t *testing.T) {
 		},
 		{
 			name: "request less items than in DB (start at beginning of list)",
-			dbClient: fakeDynamoDbClient{
+			dbClient: fakeDbClient{
 				queryOutput: &dynamodb.QueryOutput{
-					Count: newInt64(2),
-					Items: []DynamoItem{samplePersonItem1},
-					LastEvaluatedKey: DynamoItem{
-						"Id": &dynamodb.AttributeValue{S: jsii.String(samplePerson1.Id)},
-					},
+					Count:            newInt64(2),
+					Items:            []DynamoItem{samplePersonItem1},
+					LastEvaluatedKey: samplePersonItem1,
 				}},
 			count: 1,
 			expectedPeople: []model.Person{
@@ -264,7 +262,7 @@ func TestQuery(t *testing.T) {
 		},
 		{
 			name: "request less items than in DB (reach end of list)",
-			dbClient: fakeDynamoDbClient{
+			dbClient: fakeDbClient{
 				queryOutput: &dynamodb.QueryOutput{
 					Count:            newInt64(2),
 					Items:            []DynamoItem{samplePersonItem2},
@@ -278,14 +276,12 @@ func TestQuery(t *testing.T) {
 			expectedHasNextPage: false,
 		},
 		{
-			name: "request 'first=0' but 'after' is not last person",
-			dbClient: fakeDynamoDbClient{
+			name: "request 'count=0' but 'exclusiveStartId' is not last person",
+			dbClient: fakeDbClient{
 				queryOutput: &dynamodb.QueryOutput{
-					Count: newInt64(2),
-					Items: []DynamoItem{},
-					LastEvaluatedKey: DynamoItem{
-						"Id": &dynamodb.AttributeValue{S: jsii.String(samplePerson2.Id)},
-					},
+					Count:            newInt64(2),
+					Items:            []DynamoItem{},
+					LastEvaluatedKey: samplePersonItem2,
 				}},
 			count:               0,
 			exclusiveStartId:    samplePerson1.Id,
@@ -293,8 +289,8 @@ func TestQuery(t *testing.T) {
 			expectedHasNextPage: true,
 		},
 		{
-			name: "request 'first=0' but 'after' is last person",
-			dbClient: fakeDynamoDbClient{
+			name: "request 'count=0' but 'exclusiveStartId' is last person",
+			dbClient: fakeDbClient{
 				queryOutput: &dynamodb.QueryOutput{
 					Count:            newInt64(2),
 					Items:            []DynamoItem{},
@@ -306,8 +302,20 @@ func TestQuery(t *testing.T) {
 			expectedHasNextPage: false,
 		},
 		{
+			name: "no people returned when 'count=0'",
+			dbClient: fakeDbClient{
+				queryOutput: &dynamodb.QueryOutput{
+					Count:            newInt64(1),
+					Items:            []DynamoItem{samplePersonItem1},
+					LastEvaluatedKey: samplePersonItem1,
+				},
+			},
+			expectedPeople:      []model.Person{},
+			expectedHasNextPage: true,
+		},
+		{
 			name: "db query error",
-			dbClient: fakeDynamoDbClient{
+			dbClient: fakeDbClient{
 				queryErr: assert.AnError,
 			},
 			expectErr: true,
@@ -326,6 +334,52 @@ func TestQuery(t *testing.T) {
 		if !test.expectErr {
 			assert.Equal(t, test.expectedPeople, people, test.name)
 			assert.Equal(t, test.expectedHasNextPage, hasNextPage, test.name)
+		} else {
+			assert.NotNil(t, err, test.name)
+		}
+	}
+}
+
+func TestGetTotalCount(t *testing.T) {
+	// Define test struct
+	type Test struct {
+		name          string
+		dbClient      fakeDbClient
+		expectedCount int
+		expectErr     bool
+	}
+
+	// Define tests
+	tests := []Test{
+		{
+			name: "valid get total count",
+			dbClient: fakeDbClient{
+				queryOutput: &dynamodb.QueryOutput{
+					Count: newInt64(10),
+				},
+			},
+			expectedCount: 10,
+		},
+		{
+			name: "db query error",
+			dbClient: fakeDbClient{
+				queryErr: assert.AnError,
+			},
+			expectErr: true,
+		},
+	}
+
+	// Run tests
+	for _, test := range tests {
+		// Setup
+		dao := data.NewPersonDao(&test.dbClient, tableName)
+
+		// Execute
+		count, err := dao.GetTotalCount()
+
+		// Verify
+		if !test.expectErr {
+			assert.Equal(t, test.expectedCount, count, test.name)
 		} else {
 			assert.NotNil(t, err, test.name)
 		}
