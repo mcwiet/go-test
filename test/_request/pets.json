@@ -1,0 +1,10 @@
+{
+  "info": {
+    "parentTypeName": "Query",
+    "fieldName": "pets"
+  },
+  "arguments": {
+    "first": 5,
+    "after": ""
+  }
+}

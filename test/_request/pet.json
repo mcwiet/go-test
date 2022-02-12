@@ -1,10 +1,9 @@
 {
   "info": {
     "parentTypeName": "Query",
-    "fieldName": "people"
+    "fieldName": "pet"
   },
   "arguments": {
-    "first": 5,
-    "after": ""
+    "id": ""
   }
 }

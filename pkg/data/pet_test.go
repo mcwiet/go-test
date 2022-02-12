@@ -41,25 +41,25 @@ func (f *fakeDbClient) Query(*dynamodb.QueryInput) (*dynamodb.QueryOutput, error
 
 // Define common data
 var (
-	tableName     = "table"
-	samplePerson1 = model.Person{
+	tableName  = "table"
+	samplePet1 = model.Pet{
 		Id:   uuid.NewString(),
-		Name: "person 1",
+		Name: "pet 1",
 		Age:  10,
 	}
-	samplePerson2 = model.Person{
+	samplePet2 = model.Pet{
 		Id:   uuid.NewString(),
-		Name: "person 2",
+		Name: "pet 2",
 		Age:  92,
 	}
-	samplePersonItem1 = DynamoItem{
-		"Id":   {S: &samplePerson1.Id},
-		"Name": {S: &samplePerson1.Name},
+	samplePetItem1 = DynamoItem{
+		"Id":   {S: &samplePet1.Id},
+		"Name": {S: &samplePet1.Name},
 		"Age":  {N: jsii.String("10")},
 	}
-	samplePersonItem2 = DynamoItem{
-		"Id":   {S: &samplePerson2.Id},
-		"Name": {S: &samplePerson2.Name},
+	samplePetItem2 = DynamoItem{
+		"Id":   {S: &samplePet2.Id},
+		"Name": {S: &samplePet2.Name},
 		"Age":  {N: jsii.String("92")},
 	}
 )
@@ -69,7 +69,7 @@ func TestDelete(t *testing.T) {
 	type Test struct {
 		name      string
 		dbClient  fakeDbClient
-		personId  string
+		petId     string
 		expectErr bool
 	}
 
@@ -78,7 +78,7 @@ func TestDelete(t *testing.T) {
 		{
 			name:      "valid delete",
 			dbClient:  fakeDbClient{},
-			personId:  samplePerson1.Id,
+			petId:     samplePet1.Id,
 			expectErr: false,
 		},
 		{
@@ -86,7 +86,7 @@ func TestDelete(t *testing.T) {
 			dbClient: fakeDbClient{
 				deleteItemErr: assert.AnError,
 			},
-			personId:  samplePerson1.Id,
+			petId:     samplePet1.Id,
 			expectErr: true,
 		},
 		{
@@ -94,7 +94,7 @@ func TestDelete(t *testing.T) {
 			dbClient: fakeDbClient{
 				deleteItemErr: &dynamodb.ConditionalCheckFailedException{},
 			},
-			personId:  samplePerson1.Id,
+			petId:     samplePet1.Id,
 			expectErr: true,
 		},
 	}
@@ -102,10 +102,10 @@ func TestDelete(t *testing.T) {
 	// Run tests
 	for _, test := range tests {
 		// Setup
-		dao := data.NewPersonDao(&test.dbClient, tableName)
+		dao := data.NewPetDao(&test.dbClient, tableName)
 
 		// Execute
-		err := dao.Delete(test.personId)
+		err := dao.Delete(test.petId)
 
 		// Verify
 		if !test.expectErr {
@@ -119,30 +119,30 @@ func TestDelete(t *testing.T) {
 func TestGetById(t *testing.T) {
 	// Define test struct
 	type Test struct {
-		name           string
-		dbClient       fakeDbClient
-		personId       string
-		expectedPerson model.Person
-		expectErr      bool
+		name        string
+		dbClient    fakeDbClient
+		petId       string
+		expectedPet model.Pet
+		expectErr   bool
 	}
 
 	// Define tests
 	tests := []Test{
 		{
-			name: "person found",
+			name: "pet found",
 			dbClient: fakeDbClient{
-				getItemOutput: &dynamodb.GetItemOutput{Item: samplePersonItem1},
+				getItemOutput: &dynamodb.GetItemOutput{Item: samplePetItem1},
 			},
-			personId:       samplePerson1.Id,
-			expectedPerson: samplePerson1,
-			expectErr:      false,
+			petId:       samplePet1.Id,
+			expectedPet: samplePet1,
+			expectErr:   false,
 		},
 		{
-			name: "person not found",
+			name: "pet not found",
 			dbClient: fakeDbClient{
 				getItemOutput: &dynamodb.GetItemOutput{Item: nil},
 			},
-			personId:  samplePerson1.Id,
+			petId:     samplePet1.Id,
 			expectErr: true,
 		},
 		{
@@ -150,7 +150,7 @@ func TestGetById(t *testing.T) {
 			dbClient: fakeDbClient{
 				getItemErr: assert.AnError,
 			},
-			personId:  samplePerson1.Id,
+			petId:     samplePet1.Id,
 			expectErr: true,
 		},
 	}
@@ -158,14 +158,14 @@ func TestGetById(t *testing.T) {
 	// Run tests
 	for _, test := range tests {
 		// Setup
-		dao := data.NewPersonDao(&test.dbClient, tableName)
+		dao := data.NewPetDao(&test.dbClient, tableName)
 
 		// Execute
-		person, err := dao.GetById(test.personId)
+		pet, err := dao.GetById(test.petId)
 
 		// Verify
 		if !test.expectErr {
-			assert.Equal(t, test.expectedPerson, person, test.name)
+			assert.Equal(t, test.expectedPet, pet, test.name)
 		} else {
 			assert.NotNil(t, err, test.name)
 		}
@@ -177,7 +177,7 @@ func TestInsert(t *testing.T) {
 	type Test struct {
 		name      string
 		dbClient  fakeDbClient
-		person    model.Person
+		pet       model.Pet
 		expectErr bool
 	}
 
@@ -186,7 +186,7 @@ func TestInsert(t *testing.T) {
 		{
 			name:      "valid insert",
 			dbClient:  fakeDbClient{},
-			person:    samplePerson1,
+			pet:       samplePet1,
 			expectErr: false,
 		},
 		{
@@ -194,7 +194,7 @@ func TestInsert(t *testing.T) {
 			dbClient: fakeDbClient{
 				putItemErr: assert.AnError,
 			},
-			person:    samplePerson1,
+			pet:       samplePet1,
 			expectErr: true,
 		},
 	}
@@ -202,10 +202,10 @@ func TestInsert(t *testing.T) {
 	// Run tests
 	for _, test := range tests {
 		// Setup
-		dao := data.NewPersonDao(&test.dbClient, tableName)
+		dao := data.NewPetDao(&test.dbClient, tableName)
 
 		// Execute
-		err := dao.Insert(test.person)
+		err := dao.Insert(test.pet)
 
 		// Verify
 		if !test.expectErr {
@@ -223,7 +223,7 @@ func TestQuery(t *testing.T) {
 		dbClient            fakeDbClient
 		count               int
 		exclusiveStartId    string
-		expectedPeople      []model.Person
+		expectedPets        []model.Pet
 		expectedHasNextPage bool
 		expectErr           bool
 	}
@@ -235,14 +235,14 @@ func TestQuery(t *testing.T) {
 			dbClient: fakeDbClient{
 				queryOutput: &dynamodb.QueryOutput{
 					Count:            newInt64(2),
-					Items:            []DynamoItem{samplePersonItem1, samplePersonItem2},
+					Items:            []DynamoItem{samplePetItem1, samplePetItem2},
 					LastEvaluatedKey: DynamoItem{},
 				}},
 			count:            3,
 			exclusiveStartId: "",
-			expectedPeople: []model.Person{
-				samplePerson1,
-				samplePerson2,
+			expectedPets: []model.Pet{
+				samplePet1,
+				samplePet2,
 			},
 			expectedHasNextPage: false,
 		},
@@ -251,12 +251,12 @@ func TestQuery(t *testing.T) {
 			dbClient: fakeDbClient{
 				queryOutput: &dynamodb.QueryOutput{
 					Count:            newInt64(2),
-					Items:            []DynamoItem{samplePersonItem1},
-					LastEvaluatedKey: samplePersonItem1,
+					Items:            []DynamoItem{samplePetItem1},
+					LastEvaluatedKey: samplePetItem1,
 				}},
 			count: 1,
-			expectedPeople: []model.Person{
-				samplePerson1,
+			expectedPets: []model.Pet{
+				samplePet1,
 			},
 			expectedHasNextPage: true,
 		},
@@ -265,31 +265,31 @@ func TestQuery(t *testing.T) {
 			dbClient: fakeDbClient{
 				queryOutput: &dynamodb.QueryOutput{
 					Count:            newInt64(2),
-					Items:            []DynamoItem{samplePersonItem2},
+					Items:            []DynamoItem{samplePetItem2},
 					LastEvaluatedKey: DynamoItem{},
 				}},
 			count:            1,
-			exclusiveStartId: samplePerson1.Id,
-			expectedPeople: []model.Person{
-				samplePerson2,
+			exclusiveStartId: samplePet1.Id,
+			expectedPets: []model.Pet{
+				samplePet2,
 			},
 			expectedHasNextPage: false,
 		},
 		{
-			name: "request 'count=0' but 'exclusiveStartId' is not last person",
+			name: "request 'count=0' but 'exclusiveStartId' is not last pet",
 			dbClient: fakeDbClient{
 				queryOutput: &dynamodb.QueryOutput{
 					Count:            newInt64(2),
 					Items:            []DynamoItem{},
-					LastEvaluatedKey: samplePersonItem2,
+					LastEvaluatedKey: samplePetItem2,
 				}},
 			count:               0,
-			exclusiveStartId:    samplePerson1.Id,
-			expectedPeople:      []model.Person{},
+			exclusiveStartId:    samplePet1.Id,
+			expectedPets:        []model.Pet{},
 			expectedHasNextPage: true,
 		},
 		{
-			name: "request 'count=0' but 'exclusiveStartId' is last person",
+			name: "request 'count=0' but 'exclusiveStartId' is last pet",
 			dbClient: fakeDbClient{
 				queryOutput: &dynamodb.QueryOutput{
 					Count:            newInt64(2),
@@ -297,20 +297,20 @@ func TestQuery(t *testing.T) {
 					LastEvaluatedKey: DynamoItem{},
 				}},
 			count:               0,
-			exclusiveStartId:    samplePerson2.Id,
-			expectedPeople:      []model.Person{},
+			exclusiveStartId:    samplePet2.Id,
+			expectedPets:        []model.Pet{},
 			expectedHasNextPage: false,
 		},
 		{
-			name: "no people returned when 'count=0'",
+			name: "no pets returned when 'count=0'",
 			dbClient: fakeDbClient{
 				queryOutput: &dynamodb.QueryOutput{
 					Count:            newInt64(1),
-					Items:            []DynamoItem{samplePersonItem1},
-					LastEvaluatedKey: samplePersonItem1,
+					Items:            []DynamoItem{samplePetItem1},
+					LastEvaluatedKey: samplePetItem1,
 				},
 			},
-			expectedPeople:      []model.Person{},
+			expectedPets:        []model.Pet{},
 			expectedHasNextPage: true,
 		},
 		{
@@ -325,14 +325,14 @@ func TestQuery(t *testing.T) {
 	// Run tests
 	for _, test := range tests {
 		// Setup
-		dao := data.NewPersonDao(&test.dbClient, tableName)
+		dao := data.NewPetDao(&test.dbClient, tableName)
 
 		// Execute
-		people, hasNextPage, err := dao.Query(test.count, test.exclusiveStartId)
+		pets, hasNextPage, err := dao.Query(test.count, test.exclusiveStartId)
 
 		// Verify
 		if !test.expectErr {
-			assert.Equal(t, test.expectedPeople, people, test.name)
+			assert.Equal(t, test.expectedPets, pets, test.name)
 			assert.Equal(t, test.expectedHasNextPage, hasNextPage, test.name)
 		} else {
 			assert.NotNil(t, err, test.name)
@@ -372,7 +372,7 @@ func TestGetTotalCount(t *testing.T) {
 	// Run tests
 	for _, test := range tests {
 		// Setup
-		dao := data.NewPersonDao(&test.dbClient, tableName)
+		dao := data.NewPetDao(&test.dbClient, tableName)
 
 		// Execute
 		count, err := dao.GetTotalCount()

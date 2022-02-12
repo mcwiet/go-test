@@ -115,7 +115,7 @@ install:
 	@ go mod download
 	@ echo "✅ Done installing dependencies"
 
-## Invoke the API; set API_REQUEST=[name of request] (e.g. use 'person' for ./test/_request/person.json)
+## Invoke the API; set API_REQUEST=[name of request] (e.g. use 'pet' for ./test/_request/pet.json)
 invoke-api: build-infra
 	@ echo "⏳ Invoking API with event '${EVENTS_DIR}/${API_REQUEST}.json'..."
 	@ sam local invoke go-${ENV}-api-lambda -e ${EVENTS_DIR}/${API_REQUEST}.json -t ${CDK_DIR}/go-${ENV}-api.template.json
