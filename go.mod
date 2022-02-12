@@ -26,6 +26,7 @@ require (
 	github.com/aws/aws-cdk-go/awscdkappsyncalpha/v2 v2.9.0-alpha.0
 	github.com/aws/aws-cdk-go/awscdklambdagoalpha/v2 v2.9.0-alpha.0
 	github.com/aws/aws-sdk-go v1.42.44
+	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/machinebox/graphql v0.2.2
 	github.com/mitchellh/mapstructure v1.4.3
 	github.com/stretchr/testify v1.7.0

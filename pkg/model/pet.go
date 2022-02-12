@@ -1,9 +1,10 @@
 package model
 
 type Pet struct {
-	Id   string `json:"id"`
-	Name string `json:"name"`
-	Age  int    `json:"age"`
+	Id    string `json:"id"`
+	Name  string `json:"name"`
+	Age   int    `json:"age"`
+	Owner string `json:"owner,omitempty"`
 }
 
 type PetEdge struct {
@@ -13,6 +14,6 @@ type PetEdge struct {
 
 type PetConnection struct {
 	TotalCount int       `json:"totalCount"`
-	Edges      []PetEdge `json:"edges"`
+	Edges      []PetEdge `json:"edges,omitempty"`
 	PageInfo   PageInfo  `json:"pageInfo"`
 }

@@ -33,11 +33,12 @@ func NewPetService(petDao PetDao, encoder CursorEncoder) PetService {
 }
 
 // Create a new pet
-func (s *PetService) Create(name string, age int) (model.Pet, error) {
+func (s *PetService) Create(name string, age int, owner string) (model.Pet, error) {
 	pet := model.Pet{
-		Id:   uuid.NewString(),
-		Name: name,
-		Age:  age,
+		Id:    uuid.NewString(),
+		Name:  name,
+		Age:   age,
+		Owner: owner,
 	}
 	err := s.petDao.Insert(pet)
 	return pet, err

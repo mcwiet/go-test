@@ -5,7 +5,7 @@ import (
 )
 
 type PetService interface {
-	Create(name string, age int) (model.Pet, error)
+	Create(name string, age int, owner string) (model.Pet, error)
 	Delete(id string) error
 	GetById(id string) (model.Pet, error)
 	List(first int, after string) (model.PetConnection, error)
@@ -27,7 +27,11 @@ func NewPetController(service PetService) PetController {
 func (c *PetController) HandleCreate(request Request) Response {
 	name := request.Arguments["name"].(string)
 	age := int(request.Arguments["age"].(float64))
-	pet, err := c.petService.Create(name, age)
+	owner := ""
+	if request.Arguments["owner"] != nil {
+		owner = request.Arguments["owner"].(string)
+	}
+	pet, err := c.petService.Create(name, age, owner)
 	if err == nil {
 		return Response{Data: pet}
 	} else {

@@ -17,7 +17,7 @@ type fakePetService struct {
 }
 
 // Define mock / stub behavior
-func (s *fakePetService) Create(name string, age int) (model.Pet, error) {
+func (s *fakePetService) Create(name string, age int, owner string) (model.Pet, error) {
 	ret, _ := s.returnedValue.(model.Pet)
 	return ret, s.returnedErr
 }
@@ -36,9 +36,10 @@ func (s *fakePetService) List(first int, after string) (model.PetConnection, err
 // Define common data
 var (
 	samplePet = model.Pet{
-		Id:   uuid.NewString(),
-		Name: "dummy",
-		Age:  1,
+		Id:    uuid.NewString(),
+		Name:  "Levi",
+		Age:   1,
+		Owner: "User",
 	}
 	sampleConnection = model.PetConnection{
 		TotalCount: 1,
@@ -60,7 +61,20 @@ func TestHandleCreate(t *testing.T) {
 	// Define tests
 	tests := []Test{
 		{
-			name:       "valid create",
+			name:       "create with all args",
+			petService: fakePetService{returnedValue: samplePet},
+			request: controller.Request{
+				Arguments: map[string]interface{}{
+					"name":  samplePet.Name,
+					"age":   float64(samplePet.Age),
+					"owner": samplePet.Owner,
+				},
+			},
+			expectedResponse: controller.Response{Data: samplePet},
+			expectErr:        false,
+		},
+		{
+			name:       "create without optional args",
 			petService: fakePetService{returnedValue: samplePet},
 			request: controller.Request{
 				Arguments: map[string]interface{}{
@@ -76,8 +90,9 @@ func TestHandleCreate(t *testing.T) {
 			petService: fakePetService{returnedErr: errors.New("create error")},
 			request: controller.Request{
 				Arguments: map[string]interface{}{
-					"name": samplePet.Name,
-					"age":  float64(samplePet.Age),
+					"name":  samplePet.Name,
+					"age":   float64(samplePet.Age),
+					"owner": samplePet.Owner,
 				},
 			},
 			expectErr: true,

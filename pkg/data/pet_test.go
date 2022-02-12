@@ -43,24 +43,28 @@ func (f *fakeDbClient) Query(*dynamodb.QueryInput) (*dynamodb.QueryOutput, error
 var (
 	tableName  = "table"
 	samplePet1 = model.Pet{
-		Id:   uuid.NewString(),
-		Name: "pet 1",
-		Age:  10,
+		Id:    uuid.NewString(),
+		Name:  "pet 1",
+		Age:   10,
+		Owner: "User1",
 	}
 	samplePet2 = model.Pet{
-		Id:   uuid.NewString(),
-		Name: "pet 2",
-		Age:  92,
+		Id:    uuid.NewString(),
+		Name:  "pet 2",
+		Age:   92,
+		Owner: "User2",
 	}
 	samplePetItem1 = DynamoItem{
-		"Id":   {S: &samplePet1.Id},
-		"Name": {S: &samplePet1.Name},
-		"Age":  {N: jsii.String("10")},
+		"Id":    {S: &samplePet1.Id},
+		"Name":  {S: &samplePet1.Name},
+		"Age":   {N: jsii.String("10")},
+		"Owner": {S: &samplePet1.Owner},
 	}
 	samplePetItem2 = DynamoItem{
-		"Id":   {S: &samplePet2.Id},
-		"Name": {S: &samplePet2.Name},
-		"Age":  {N: jsii.String("92")},
+		"Id":    {S: &samplePet2.Id},
+		"Name":  {S: &samplePet2.Name},
+		"Age":   {N: jsii.String("92")},
+		"Owner": {S: &samplePet2.Owner},
 	}
 )
 
