@@ -45,7 +45,7 @@ The API abides by a few general principles:
 - Each API request has 3 layers: controller (parse the HTTP request and call services), services (run business logic) and data (interact with the data store)
 - Dependency injection is used as much as possible to make unit testing easier (enable use of stubs and mocks)
 - Initial unit tests are simple and generally test a "working path" and an "error path"
-- Dependencies between CDK stacks are implemented as SSM parameters (rather than stack outputs / exports); this leads to reduced coupling and allows stacks to be deleted without first deleting their dependenent stacks ([see here for more context](https://tusharsharma.dev/posts/aws-cfn-with-ssm-parameters))
+- Dependencies between CDK stacks are implemented as SSM parameters (rather than stack outputs / exports); this leads to reduced coupling and allows stacks to be deleted without first deleting their dependent stacks ([see here for more context](https://tusharsharma.dev/posts/aws-cfn-with-ssm-parameters))
 - To delete an environment, delete the CloudFormation stacks and manually delete any resources where the status was marked as **DELETE_SKIPPED** (such as a DynamoDB Table or Cognito User Pool)
 
 ### Adding a New API
