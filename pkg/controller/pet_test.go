@@ -70,7 +70,7 @@ func TestHandleCreate(t *testing.T) {
 					"owner": samplePet.Owner,
 				},
 			},
-			expectedResponse: controller.Response{Data: samplePet},
+			expectedResponse: controller.Response{Data: model.CreatePetPayload{Pet: samplePet}},
 			expectErr:        false,
 		},
 		{
@@ -82,7 +82,7 @@ func TestHandleCreate(t *testing.T) {
 					"age":  float64(samplePet.Age),
 				},
 			},
-			expectedResponse: controller.Response{Data: samplePet},
+			expectedResponse: controller.Response{Data: model.CreatePetPayload{Pet: samplePet}},
 			expectErr:        false,
 		},
 		{
@@ -127,7 +127,7 @@ func TestHandleDelete(t *testing.T) {
 					"id": samplePet.Id,
 				},
 			},
-			expectedResponse: controller.Response{},
+			expectedResponse: controller.Response{Data: model.DeletePetPayload{Id: samplePet.Id}},
 			expectErr:        false,
 		},
 		{

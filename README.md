@@ -32,6 +32,14 @@ The instructions below provide steps for setting up an environment both locally 
 
 ## Developer Notes
 
+### API Schema
+
+The API abides by a few general principles:
+
+- All operations utilize a single `input` object for receiving data (e.g. `CreatePetInput`)
+- All mutations return a mutation-specific `payload` object (e.g. `CreatePetPayload`)
+- All queries return 'basic model' objects (e.g. `Pet`) or `connection` objects (e.g. `PetConnection`)
+
 ### Design Comments
 
 - Each API request has 3 layers: controller (parse the HTTP request and call services), services (run business logic) and data (interact with the data store)

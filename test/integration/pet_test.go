@@ -63,11 +63,13 @@ func createPet(t *testing.T) model.Pet {
 	petOwner := token.Payload.Username
 	request := graphql.NewRequest(`
 		mutation ($name: String!, $age: Int!, $owner: String) {
-			createPet (name: $name, age: $age, owner: $owner) {
-				id
-				name
-				age
-				owner
+			createPet (input: { name: $name, age: $age, owner: $owner }) {
+				pet {
+					id
+					name
+					age
+					owner
+				}
 			}
 		}
 	`)
@@ -79,8 +81,8 @@ func createPet(t *testing.T) model.Pet {
 	// Execute
 	var response map[string]interface{}
 	err := client.Run(context.Background(), request, &response)
-	var pet model.Pet
-	mapstructure.Decode(response["createPet"], &pet)
+	var payload model.CreatePetPayload
+	mapstructure.Decode(response["createPet"], &payload)
 
 	// Verify
 	stepName := "createPet"
@@ -88,6 +90,7 @@ func createPet(t *testing.T) model.Pet {
 	if err != nil {
 		return model.Pet{}
 	}
+	pet := payload.Pet
 	assert.NotNil(t, pet.Id, stepName+"id should exist")
 	assert.Equal(t, petName, pet.Name, stepName+"name should match")
 	assert.Equal(t, petAge, pet.Age, stepName+"age should match")
@@ -100,7 +103,9 @@ func deletePet(t *testing.T, pet *model.Pet) {
 	// Setup
 	request := graphql.NewRequest(`
 		mutation ($id: ID!) {
-			deletePet (id: $id)
+			deletePet (input: { id: $id }) {
+				id
+			}
 		}
 	`)
 	request.Var("id", pet.Id)
@@ -119,7 +124,7 @@ func getPet(t *testing.T, id string, expectedPet *model.Pet) {
 	// Setup
 	request := graphql.NewRequest(`
 		query ($id: ID!) {
-			pet (id: $id) {
+			pet (input: { id: $id }) {
 				id
 				name
 				age
@@ -151,7 +156,7 @@ func listPets(t *testing.T) {
 	// Setup
 	request := graphql.NewRequest(`
 		query {
-			pets (first: 1, after: "") {
+			pets (input: { first: 1, after: "" }) {
 				totalCount
 				edges {
 					node {
