@@ -90,16 +90,9 @@ func (p *PetDao) GetById(id string) (model.Pet, error) {
 
 // Inserts a pet to the data store
 func (p *PetDao) Insert(pet model.Pet) error {
-	age := strconv.Itoa(pet.Age)
 	_, err := p.client.PutItem(&dynamodb.PutItemInput{
 		TableName: &p.tableName,
-		Item: DynamoItem{
-			"Id":    {S: jsii.String(pet.Id)},
-			"Sort":  {S: jsii.String(petSortLabel)},
-			"Name":  {S: &pet.Name},
-			"Age":   {N: &age},
-			"Owner": {S: &pet.Owner},
-		},
+		Item:      convertPetToItem(pet),
 	})
 
 	if err != nil {
@@ -161,6 +154,21 @@ func (p *PetDao) GetTotalCount() (int, error) {
 	return count, err
 }
 
+// Updates a pet in the data store by performing a full replace
+func (p *PetDao) Update(pet model.Pet) error {
+	_, err := p.client.PutItem(&dynamodb.PutItemInput{
+		TableName: &p.tableName,
+		Item:      convertPetToItem(pet),
+	})
+
+	if err != nil {
+		log.Println(err)
+		return errors.New("error updating pet")
+	}
+
+	return nil
+}
+
 // Convert a DynamoDB item to a pet
 func convertItemToPet(item DynamoItem) model.Pet {
 	age, _ := strconv.Atoi(*item["Age"].N)
@@ -173,6 +181,18 @@ func convertItemToPet(item DynamoItem) model.Pet {
 		Name:  *item["Name"].S,
 		Age:   age,
 		Owner: owner,
+	}
+}
+
+// Convert a pet to a DynamoDB item
+func convertPetToItem(pet model.Pet) DynamoItem {
+	age := strconv.Itoa(pet.Age)
+	return DynamoItem{
+		"Id":    {S: jsii.String(pet.Id)},
+		"Sort":  {S: jsii.String(petSortLabel)},
+		"Name":  {S: &pet.Name},
+		"Age":   {N: &age},
+		"Owner": {S: &pet.Owner},
 	}
 }
 

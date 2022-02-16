@@ -32,12 +32,23 @@ The instructions below provide steps for setting up an environment both locally 
 
 ## Developer Notes
 
+### API Schema
+
+The API abides by a few general principles:
+
+- All operations utilize a single `input` object for receiving data (e.g. `CreatePetInput`)
+- All mutations return a mutation-specific `payload` object (e.g. `CreatePetPayload`)
+- All queries return 'basic model' objects (e.g. `Pet`) or `connection` objects (e.g. `PetConnection`)
+- Avoid generic `update` mutations; prefer mutations which change small amounts of data (e.g. `updatePetOwner`)
+
+A few established GraphQL schemas, like GitHub's, were referenced for patterns as well.
+
 ### Design Comments
 
 - Each API request has 3 layers: controller (parse the HTTP request and call services), services (run business logic) and data (interact with the data store)
 - Dependency injection is used as much as possible to make unit testing easier (enable use of stubs and mocks)
 - Initial unit tests are simple and generally test a "working path" and an "error path"
-- Dependencies between CDK stacks are implemented as SSM parameters (rather than stack outputs / exports); this leads to reduced coupling and allows stacks to be deleted without first deleting their dependenent stacks ([see here for more context](https://tusharsharma.dev/posts/aws-cfn-with-ssm-parameters))
+- Dependencies between CDK stacks are implemented as SSM parameters (rather than stack outputs / exports); this leads to reduced coupling and allows stacks to be deleted without first deleting their dependent stacks ([see here for more context](https://tusharsharma.dev/posts/aws-cfn-with-ssm-parameters))
 - To delete an environment, delete the CloudFormation stacks and manually delete any resources where the status was marked as **DELETE_SKIPPED** (such as a DynamoDB Table or Cognito User Pool)
 
 ### Adding a New API
@@ -56,3 +67,4 @@ These are the recommended high level steps to adding functionality to the API:
 1. [Directory structure recommendations](https://github.com/golang-standards/project-layout)
 1. [GraphQL knowledge base](https://graphql.org/learn/)
 1. [GraphQL specification](https://spec.graphql.org/)
+1. [GitHub GraphQL Schema](https://docs.github.com/en/graphql/overview/public-schema)

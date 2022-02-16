@@ -1,6 +1,8 @@
 package controller
 
 import (
+	"encoding/json"
+
 	"github.com/mcwiet/go-test/pkg/model"
 )
 
@@ -9,6 +11,7 @@ type PetService interface {
 	Delete(id string) error
 	GetById(id string) (model.Pet, error)
 	List(first int, after string) (model.PetConnection, error)
+	UpdateOwner(id string, owner string) (model.Pet, error)
 }
 
 // Object containing data needed for the Pet controller
@@ -25,15 +28,14 @@ func NewPetController(service PetService) PetController {
 
 // Handles request for creating a pet
 func (c *PetController) HandleCreate(request Request) Response {
-	name := request.Arguments["name"].(string)
-	age := int(request.Arguments["age"].(float64))
-	owner := ""
-	if request.Arguments["owner"] != nil {
-		owner = request.Arguments["owner"].(string)
-	}
-	pet, err := c.petService.Create(name, age, owner)
+	var input model.CreatePetInput
+	inputBytes, _ := json.Marshal(request.Arguments["input"])
+	json.Unmarshal(inputBytes, &input)
+
+	pet, err := c.petService.Create(input.Name, input.Age, input.Owner)
+
 	if err == nil {
-		return Response{Data: pet}
+		return Response{Data: model.CreatePetPayload{Pet: pet}}
 	} else {
 		return Response{Error: err}
 	}
@@ -41,10 +43,15 @@ func (c *PetController) HandleCreate(request Request) Response {
 
 // Handles request for deleting a pet
 func (c *PetController) HandleDelete(request Request) Response {
-	id := request.Arguments["id"].(string)
-	err := c.petService.Delete(id)
+	var input model.DeletePetInput
+	inputBytes, _ := json.Marshal(request.Arguments["input"])
+	json.Unmarshal(inputBytes, &input)
+
+	err := c.petService.Delete(input.Id)
+
 	if err == nil {
-		return Response{}
+		//lint:ignore S1016 Input and payload happen to look similar
+		return Response{Data: model.DeletePetPayload{Id: input.Id}}
 	} else {
 		return Response{Error: err}
 	}
@@ -52,8 +59,12 @@ func (c *PetController) HandleDelete(request Request) Response {
 
 // Handles request for getting a specific pet
 func (c *PetController) HandleGet(request Request) Response {
-	id := request.Arguments["id"].(string)
-	pet, err := c.petService.GetById(id)
+	var input model.PetInput
+	inputBytes, _ := json.Marshal(request.Arguments["input"])
+	json.Unmarshal(inputBytes, &input)
+
+	pet, err := c.petService.GetById(input.Id)
+
 	if err == nil {
 		return Response{Data: pet}
 	} else {
@@ -63,17 +74,29 @@ func (c *PetController) HandleGet(request Request) Response {
 
 // Handles request for listing pets
 func (c *PetController) HandleList(request Request) Response {
-	first := 0
-	if request.Arguments["first"] != nil {
-		first = int(request.Arguments["first"].(float64))
-	}
-	after := ""
-	if request.Arguments["after"] != nil {
-		after = request.Arguments["after"].(string)
-	}
-	connection, err := c.petService.List(first, after)
+	var input model.PetsInput
+	inputBytes, _ := json.Marshal(request.Arguments["input"])
+	json.Unmarshal(inputBytes, &input)
+
+	connection, err := c.petService.List(input.First, input.After)
+
 	if err == nil {
 		return Response{Data: connection}
+	} else {
+		return Response{Error: err}
+	}
+}
+
+// Handles request for updating a pet
+func (c *PetController) HandleUpdateOwner(request Request) Response {
+	var input model.UpdatePetOwnerInput
+	inputBytes, _ := json.Marshal(request.Arguments["input"])
+	json.Unmarshal(inputBytes, &input)
+
+	updatedPet, err := c.petService.UpdateOwner(input.Id, input.Owner)
+
+	if err == nil {
+		return Response{Data: model.UpdatePetOwnerPayload{Pet: updatedPet}}
 	} else {
 		return Response{Error: err}
 	}

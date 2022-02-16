@@ -4,7 +4,9 @@
     "fieldName": "pets"
   },
   "arguments": {
-    "first": 5,
-    "after": ""
+    "input": {
+      "first": 1,
+      "after": ""
+    }
   }
 }

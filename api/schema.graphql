@@ -3,16 +3,62 @@ schema {
   mutation: Mutation
 }
 
+# ----- QUERIES -----
+
+type Query {
+  pet(input: PetInput!): Pet!
+  pets(input: PetsInput!): PetConnection!
+}
+
+# ----- MUTATIONS -----
+
+type Mutation {
+  createPet(input: CreatePetInput!): CreatePetPayload!
+  deletePet(input: DeletePetInput!): DeletePetPayload!
+  updatePetOwner(input: UpdatePetOwnerInput!): UpdatePetOwnerPayload!
+}
+
+# ----- COMMON TYPES -----
+
 type PageInfo {
   endCursor: String
   hasNextPage: Boolean!
 }
+
+# ----- PET TYPES -----
 
 type Pet {
   id: ID!
   name: String!
   age: Int!
   owner: String
+}
+
+input CreatePetInput {
+  name: String!
+  age: Int!
+  owner: String
+}
+
+type CreatePetPayload {
+  pet: Pet!
+}
+
+input DeletePetInput {
+  id: ID!
+}
+
+type DeletePetPayload {
+  id: ID!
+}
+
+input PetInput {
+  id: ID!
+}
+
+input PetsInput {
+  first: Int
+  after: String
 }
 
 type PetEdge {
@@ -26,12 +72,11 @@ type PetConnection {
   pageInfo: PageInfo!
 }
 
-type Query {
-  pets(first: Int, after: String): PetConnection!
-  pet(id: ID!): Pet!
+input UpdatePetOwnerInput {
+  id: ID!
+  owner: String!
 }
 
-type Mutation {
-  createPet(name: String!, age: Int!, owner: String): Pet!
-  deletePet(id: ID!): Boolean
+type UpdatePetOwnerPayload {
+  pet: Pet!
 }

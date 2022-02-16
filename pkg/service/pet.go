@@ -1,6 +1,8 @@
 package service
 
 import (
+	"fmt"
+
 	"github.com/google/uuid"
 	"github.com/mcwiet/go-test/pkg/model"
 )
@@ -8,9 +10,10 @@ import (
 type PetDao interface {
 	Delete(id string) error
 	GetById(id string) (model.Pet, error)
-	Insert(model.Pet) error
 	GetTotalCount() (int, error)
+	Insert(model.Pet) error
 	Query(count int, exclusiveStartId string) ([]model.Pet, bool, error)
+	Update(model.Pet) error
 }
 
 type CursorEncoder interface {
@@ -64,6 +67,8 @@ func (s *PetService) List(first int, after string) (model.PetConnection, error) 
 		return model.PetConnection{}, err
 	}
 
+	fmt.Println(pets)
+
 	totalCount, err := s.petDao.GetTotalCount()
 	if err != nil {
 		return model.PetConnection{}, err
@@ -91,4 +96,17 @@ func (s *PetService) List(first int, after string) (model.PetConnection, error) 
 	}
 
 	return connection, err
+}
+
+// Updates the owner of a pet
+func (s *PetService) UpdateOwner(id string, owner string) (model.Pet, error) {
+	pet, err := s.petDao.GetById(id)
+	if err != nil {
+		return model.Pet{}, err
+	}
+
+	pet.Owner = owner
+	err = s.petDao.Update(pet)
+
+	return pet, err
 }
