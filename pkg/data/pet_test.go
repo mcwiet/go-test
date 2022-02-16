@@ -390,6 +390,50 @@ func TestGetTotalCount(t *testing.T) {
 	}
 }
 
+func TestUpdate(t *testing.T) {
+	// Define test struct
+	type Test struct {
+		name      string
+		dbClient  fakeDbClient
+		pet       model.Pet
+		expectErr bool
+	}
+
+	// Define tests
+	tests := []Test{
+		{
+			name:      "valid update",
+			dbClient:  fakeDbClient{},
+			pet:       samplePet1,
+			expectErr: false,
+		},
+		{
+			name: "db put error",
+			dbClient: fakeDbClient{
+				putItemErr: assert.AnError,
+			},
+			pet:       samplePet1,
+			expectErr: true,
+		},
+	}
+
+	// Run tests
+	for _, test := range tests {
+		// Setup
+		dao := data.NewPetDao(&test.dbClient, tableName)
+
+		// Execute
+		err := dao.Update(test.pet)
+
+		// Verify
+		if !test.expectErr {
+			assert.Nil(t, err, test.name)
+		} else {
+			assert.NotNil(t, err, test.name)
+		}
+	}
+}
+
 func newInt64(val int) *int64 {
 	valInt64 := int64(val)
 	return &valInt64
