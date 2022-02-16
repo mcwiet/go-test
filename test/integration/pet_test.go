@@ -37,7 +37,6 @@ func init() {
 
 // Sequentially run functions involved for testing pet API operations
 func TestPetApi(t *testing.T) {
-
 	// Create some pets
 	pet1 := createPet(t)
 	pet2 := createPet(t)
@@ -47,6 +46,9 @@ func TestPetApi(t *testing.T) {
 
 	// Get a pet
 	getPet(t, pet1.Id, &pet1)
+
+	// Update the pet owner
+	updatePetOwner(t, pet1, token.Payload.Username)
 
 	// Delete the pets
 	deletePet(t, &pet1)
@@ -60,7 +62,7 @@ func createPet(t *testing.T) model.Pet {
 	// Setup
 	petName := "Integration Test"
 	petAge := 10
-	petOwner := token.Payload.Username
+	petOwner := ""
 	request := graphql.NewRequest(`
 		mutation ($name: String!, $age: Int!, $owner: String) {
 			createPet (input: { name: $name, age: $age, owner: $owner }) {
@@ -190,4 +192,33 @@ func listPets(t *testing.T) {
 	lastEdge := connection.Edges[len(connection.Edges)-1]
 	assert.Equal(t, lastEdge.Cursor, connection.PageInfo.EndCursor, stepName+": should have correct end cursor")
 	assert.Equal(t, true, connection.PageInfo.HasNextPage, connection.PageInfo.EndCursor, stepName+": should have next page")
+}
+
+func updatePetOwner(t *testing.T, pet model.Pet, newOwner string) {
+	// Setup
+	request := graphql.NewRequest(`
+		mutation ($id: ID!, $owner: String!) {
+			updatePetOwner (input: { id: $id, owner: $owner }) {
+				pet {
+					id
+					owner
+				}
+			}
+		}
+	`)
+	request.Var("id", pet.Id)
+	request.Var("owner", newOwner)
+	request.Header.Set("Authorization", token.String)
+
+	// Execute
+	var response map[string]interface{}
+	err := client.Run(context.Background(), request, &response)
+	var updatedPet model.UpdatePetOwnerPayload
+	mapstructure.Decode(response["updatePetOwner"], &updatedPet)
+
+	// Verify
+	stepName := "updatePetOwner"
+	assert.Nil(t, err, stepName+": should not error")
+	assert.NotEqual(t, pet.Owner, newOwner, stepName+": new owner should not match current owner")
+	assert.Equal(t, newOwner, updatedPet.Pet.Owner, stepName+": should should update the owner")
 }

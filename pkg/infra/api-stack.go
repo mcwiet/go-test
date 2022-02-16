@@ -62,6 +62,7 @@ func NewApiStack(scope constructs.Construct, id string, props *ApiStackProps) aw
 	createResolver(api, "Query", "pets", lambdaSource)
 	createResolver(api, "Mutation", "createPet", lambdaSource)
 	createResolver(api, "Mutation", "deletePet", lambdaSource)
+	createResolver(api, "Mutation", "updatePetOwner", lambdaSource)
 
 	// Dynamo DB table
 	tableName := *stackName + "-primary-table"

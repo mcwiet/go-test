@@ -54,6 +54,8 @@ func handle(ctx context.Context, rawRequest interface{}) (interface{}, error) {
 			response = petController.HandleCreate(request)
 		case "deletePet":
 			response = petController.HandleDelete(request)
+		case "updatePetOwner":
+			response = petController.HandleUpdateOwner(request)
 		default:
 			response = controller.Response{Error: errors.New("mutation not recognized")}
 		}

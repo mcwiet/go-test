@@ -15,6 +15,7 @@ type Query {
 type Mutation {
   createPet(input: CreatePetInput!): CreatePetPayload!
   deletePet(input: DeletePetInput!): DeletePetPayload!
+  updatePetOwner(input: UpdatePetOwnerInput!): UpdatePetOwnerPayload!
 }
 
 # ----- COMMON TYPES -----
@@ -69,4 +70,13 @@ type PetConnection {
   totalCount: Int!
   edges: [PetEdge!]
   pageInfo: PageInfo!
+}
+
+input UpdatePetOwnerInput {
+  id: ID!
+  owner: String!
+}
+
+type UpdatePetOwnerPayload {
+  pet: Pet!
 }

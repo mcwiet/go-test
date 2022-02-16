@@ -4,6 +4,8 @@
     "fieldName": "deletePet"
   },
   "arguments": {
-    "id": ""
+    "input": {
+      "id": ""
+    }
   }
 }

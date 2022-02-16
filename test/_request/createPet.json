@@ -4,7 +4,9 @@
     "fieldName": "createPet"
   },
   "arguments": {
-    "name": "Levi",
-    "age": 3
+    "input": {
+      "name": "Levi",
+      "age": 3
+    }
   }
 }

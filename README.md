@@ -39,6 +39,9 @@ The API abides by a few general principles:
 - All operations utilize a single `input` object for receiving data (e.g. `CreatePetInput`)
 - All mutations return a mutation-specific `payload` object (e.g. `CreatePetPayload`)
 - All queries return 'basic model' objects (e.g. `Pet`) or `connection` objects (e.g. `PetConnection`)
+- Avoid generic `update` mutations; prefer mutations which change small amounts of data (e.g. `updatePetOwner`)
+
+A few established GraphQL schemas, like GitHub's, were referenced for patterns as well.
 
 ### Design Comments
 
@@ -64,3 +67,4 @@ These are the recommended high level steps to adding functionality to the API:
 1. [Directory structure recommendations](https://github.com/golang-standards/project-layout)
 1. [GraphQL knowledge base](https://graphql.org/learn/)
 1. [GraphQL specification](https://spec.graphql.org/)
+1. [GitHub GraphQL Schema](https://docs.github.com/en/graphql/overview/public-schema)

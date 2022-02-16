@@ -11,6 +11,7 @@ type PetService interface {
 	Delete(id string) error
 	GetById(id string) (model.Pet, error)
 	List(first int, after string) (model.PetConnection, error)
+	UpdateOwner(id string, owner string) (model.Pet, error)
 }
 
 // Object containing data needed for the Pet controller
@@ -81,6 +82,21 @@ func (c *PetController) HandleList(request Request) Response {
 
 	if err == nil {
 		return Response{Data: connection}
+	} else {
+		return Response{Error: err}
+	}
+}
+
+// Handles request for updating a pet
+func (c *PetController) HandleUpdateOwner(request Request) Response {
+	var input model.UpdatePetOwnerInput
+	inputBytes, _ := json.Marshal(request.Arguments["input"])
+	json.Unmarshal(inputBytes, &input)
+
+	updatedPet, err := c.petService.UpdateOwner(input.Id, input.Owner)
+
+	if err == nil {
+		return Response{Data: model.UpdatePetOwnerPayload{Pet: updatedPet}}
 	} else {
 		return Response{Error: err}
 	}

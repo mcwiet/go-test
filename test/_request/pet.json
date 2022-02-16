@@ -4,6 +4,8 @@
     "fieldName": "pet"
   },
   "arguments": {
-    "id": ""
+    "input": {
+      "id": ""
+    }
   }
 }

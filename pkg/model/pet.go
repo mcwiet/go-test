@@ -34,13 +34,12 @@ type PetsInput struct {
 	After string `json:"after"`
 }
 
-type UpdatePetInput struct {
-	Name  string `json:"name,omitempty"`
-	Age   int    `json:"age,omitempty"`
+type UpdatePetOwnerInput struct {
+	Id    string `json:"id,omitempty"`
 	Owner string `json:"owner,omitempty"`
 }
 
-type UpdatePetPayload struct {
+type UpdatePetOwnerPayload struct {
 	Pet Pet `json:"pet"`
 }
 

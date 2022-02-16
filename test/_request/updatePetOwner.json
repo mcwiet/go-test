@@ -1,0 +1,12 @@
+{
+  "info": {
+    "parentTypeName": "Mutation",
+    "fieldName": "updatePetOwner"
+  },
+  "arguments": {
+    "input": {
+      "id": "072c74e3-27df-4faa-8c5e-4ed252f5b2fc",
+      "owner": "Mike"
+    }
+  }
+}
