@@ -1,8 +1,6 @@
 package service
 
 import (
-	"fmt"
-
 	"github.com/google/uuid"
 	"github.com/mcwiet/go-test/pkg/model"
 )
@@ -66,8 +64,6 @@ func (s *PetService) List(first int, after string) (model.PetConnection, error) 
 	if err != nil {
 		return model.PetConnection{}, err
 	}
-
-	fmt.Println(pets)
 
 	totalCount, err := s.petDao.GetTotalCount()
 	if err != nil {

@@ -25,7 +25,7 @@ type PetDao struct {
 	tableName string
 }
 
-var (
+const (
 	petSortLabel = "pet"
 )
 

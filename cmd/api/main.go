@@ -35,8 +35,7 @@ func handle(ctx context.Context, rawRequest interface{}) (interface{}, error) {
 	request := controller.NewRequest(rawRequest)
 	var response controller.Response
 
-	log.Println(request.Info.ParentTypeName)
-	log.Println(request.Info.FieldName)
+	log.Println(request.Info.ParentTypeName + " " + request.Info.FieldName)
 
 	switch request.Info.ParentTypeName {
 	case "Query":
