@@ -3,7 +3,7 @@ package model
 type User struct {
 	Username string `json:"username"`
 	Email    string `json:"email"`
-	Name     string `name:"name,omitempty"`
+	Name     string `json:"name,omitempty"`
 }
 
 type UserEdge struct {

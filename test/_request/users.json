@@ -5,7 +5,7 @@
   },
   "arguments": {
     "input": {
-      "first": 1,
+      "first": 10,
       "after": ""
     }
   }
