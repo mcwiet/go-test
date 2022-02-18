@@ -1,0 +1,11 @@
+{
+  "info": {
+    "parentTypeName": "Query",
+    "fieldName": "user"
+  },
+  "arguments": {
+    "input": {
+      "username": ""
+    }
+  }
+}

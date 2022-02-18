@@ -60,6 +60,8 @@ func NewApiStack(scope constructs.Construct, id string, props *ApiStackProps) aw
 	// Resolvers
 	createResolver(api, "Query", "pet", lambdaSource)
 	createResolver(api, "Query", "pets", lambdaSource)
+	createResolver(api, "Query", "user", lambdaSource)
+	createResolver(api, "Query", "users", lambdaSource)
 	createResolver(api, "Mutation", "createPet", lambdaSource)
 	createResolver(api, "Mutation", "deletePet", lambdaSource)
 	createResolver(api, "Mutation", "updatePetOwner", lambdaSource)
@@ -96,8 +98,21 @@ func NewApiStack(scope constructs.Construct, id string, props *ApiStackProps) aw
 		Resources: jsii.Strings(*table.TableArn(), *table.TableArn()+"/*"),
 	}))
 
+	// Permission for Lambda to access Cognito User Pool
+	userPoolArn := GetInfraParameter(stack, props.EnvName, ParamUserPoolArn)
+	lambda.AddToRolePolicy(awsiam.NewPolicyStatement(&awsiam.PolicyStatementProps{
+		Effect: awsiam.Effect_ALLOW,
+		Actions: jsii.Strings(
+			"cognito-idp:AdminGetUser",
+			"cognito-idp:ListUsers",
+			"cognito-idp:DescribeUserPool",
+		),
+		Resources: jsii.Strings(userPoolArn, userPoolArn+"/*"),
+	}))
+
 	// Add environment variables to Lambda to reference other infra
 	lambda.AddEnvironment(jsii.String("DDB_TABLE_NAME"), &tableName, nil)
+	lambda.AddEnvironment(jsii.String("USER_POOL_ID"), &userPoolId, nil)
 
 	return stack
 }

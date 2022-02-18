@@ -27,7 +27,7 @@ func (u *UserService) GetByUsername(username string) (model.User, error) {
 	return user, err
 }
 
-func (u *UserService) ListUsers(first int, after string) (model.UserConnection, error) {
+func (u *UserService) List(first int, after string) (model.UserConnection, error) {
 	decodedToken, err := u.encoder.Decode(after)
 	if err != nil {
 		return model.UserConnection{}, err
@@ -52,12 +52,9 @@ func (u *UserService) ListUsers(first int, after string) (model.UserConnection, 
 
 	for _, user := range users {
 		connection.Edges = append(connection.Edges, model.UserEdge{
-			Node:   user,
-			Cursor: "",
+			Node: user,
 		})
 	}
-
-	connection.Edges[len(connection.Edges)-1].Cursor = token
 
 	return connection, err
 }

@@ -8,6 +8,7 @@ import (
 // Defining all parameter names here - helps prevent typos and keep parameters organized
 const (
 	ParamAppSyncUrl          = "appsync-url"
+	ParamUserPoolArn         = "user-pool-arn"
 	ParamUserPoolId          = "user-pool-id"
 	ParamUserPoolApiClientId = "user-pool-api-client-id"
 )

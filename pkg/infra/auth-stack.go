@@ -30,11 +30,7 @@ func NewAuthStack(scope constructs.Construct, id string, props *AuthStackProps) 
 			},
 		},
 	})
-	// userPool := awscognito.NewCfnUserPool(stack, &userPoolName, &awscognito.CfnUserPoolProps{
-	// 	UserPoolName:       &userPoolName,
-	// 	AliasAttributes:    jsii.Strings("email"),
-	// 	UsernameAttributes: jsii.Strings("email"),
-	// })
+	NewInfraParameter(stack, props.EnvName, ParamUserPoolArn, *userPool.UserPoolArn())
 	NewInfraParameter(stack, props.EnvName, ParamUserPoolId, *userPool.UserPoolId())
 
 	// API App Client

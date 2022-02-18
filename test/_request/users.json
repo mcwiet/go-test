@@ -1,0 +1,12 @@
+{
+  "info": {
+    "parentTypeName": "Query",
+    "fieldName": "users"
+  },
+  "arguments": {
+    "input": {
+      "first": 1,
+      "after": ""
+    }
+  }
+}
