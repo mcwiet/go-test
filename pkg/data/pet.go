@@ -200,8 +200,7 @@ func convertPetToItem(pet model.Pet) DynamoItem {
 func buildQueryInput(tableName string, count int, exclusiveStartId string) dynamodb.QueryInput {
 	limit := int64(count)
 	if count == 0 {
-		// Dynamo minimum limit is 1
-		limit = 1
+		limit = 1 // Dynamo minimum limit is 1
 	}
 	exclusiveStartKey := DynamoItem{
 		"Id":   {S: &exclusiveStartId},

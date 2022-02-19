@@ -11,8 +11,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-type DynamoItem = map[string]*dynamodb.AttributeValue
-
 // Define mocks / stubs
 type fakeDbClient struct {
 	deleteItemOutput *dynamodb.DeleteItemOutput
@@ -54,13 +52,13 @@ var (
 		Age:   92,
 		Owner: "User2",
 	}
-	samplePetItem1 = DynamoItem{
+	samplePetItem1 = data.DynamoItem{
 		"Id":    {S: &samplePet1.Id},
 		"Name":  {S: &samplePet1.Name},
 		"Age":   {N: jsii.String("10")},
 		"Owner": {S: &samplePet1.Owner},
 	}
-	samplePetItem2 = DynamoItem{
+	samplePetItem2 = data.DynamoItem{
 		"Id":    {S: &samplePet2.Id},
 		"Name":  {S: &samplePet2.Name},
 		"Age":   {N: jsii.String("92")},
@@ -239,8 +237,8 @@ func TestQuery(t *testing.T) {
 			dbClient: fakeDbClient{
 				queryOutput: &dynamodb.QueryOutput{
 					Count:            newInt64(2),
-					Items:            []DynamoItem{samplePetItem1, samplePetItem2},
-					LastEvaluatedKey: DynamoItem{},
+					Items:            []data.DynamoItem{samplePetItem1, samplePetItem2},
+					LastEvaluatedKey: data.DynamoItem{},
 				}},
 			count:            3,
 			exclusiveStartId: "",
@@ -255,7 +253,7 @@ func TestQuery(t *testing.T) {
 			dbClient: fakeDbClient{
 				queryOutput: &dynamodb.QueryOutput{
 					Count:            newInt64(2),
-					Items:            []DynamoItem{samplePetItem1},
+					Items:            []data.DynamoItem{samplePetItem1},
 					LastEvaluatedKey: samplePetItem1,
 				}},
 			count: 1,
@@ -269,8 +267,8 @@ func TestQuery(t *testing.T) {
 			dbClient: fakeDbClient{
 				queryOutput: &dynamodb.QueryOutput{
 					Count:            newInt64(2),
-					Items:            []DynamoItem{samplePetItem2},
-					LastEvaluatedKey: DynamoItem{},
+					Items:            []data.DynamoItem{samplePetItem2},
+					LastEvaluatedKey: data.DynamoItem{},
 				}},
 			count:            1,
 			exclusiveStartId: samplePet1.Id,
@@ -284,7 +282,7 @@ func TestQuery(t *testing.T) {
 			dbClient: fakeDbClient{
 				queryOutput: &dynamodb.QueryOutput{
 					Count:            newInt64(2),
-					Items:            []DynamoItem{},
+					Items:            []data.DynamoItem{},
 					LastEvaluatedKey: samplePetItem2,
 				}},
 			count:               0,
@@ -297,8 +295,8 @@ func TestQuery(t *testing.T) {
 			dbClient: fakeDbClient{
 				queryOutput: &dynamodb.QueryOutput{
 					Count:            newInt64(2),
-					Items:            []DynamoItem{},
-					LastEvaluatedKey: DynamoItem{},
+					Items:            []data.DynamoItem{},
+					LastEvaluatedKey: data.DynamoItem{},
 				}},
 			count:               0,
 			exclusiveStartId:    samplePet2.Id,
@@ -310,7 +308,7 @@ func TestQuery(t *testing.T) {
 			dbClient: fakeDbClient{
 				queryOutput: &dynamodb.QueryOutput{
 					Count:            newInt64(1),
-					Items:            []DynamoItem{samplePetItem1},
+					Items:            []data.DynamoItem{samplePetItem1},
 					LastEvaluatedKey: samplePetItem1,
 				},
 			},

@@ -7,7 +7,7 @@ import (
 type UserDao interface {
 	GetByUsername(id string) (model.User, error)
 	GetTotalCount() (int, error)
-	Query(first int, after string) ([]model.User, string, error)
+	List(first int, after string) ([]model.User, string, error)
 }
 
 type UserService struct {
@@ -22,18 +22,20 @@ func NewUserService(userDao UserDao, encoder CursorEncoder) UserService {
 	}
 }
 
+// Get a user from their username
 func (u *UserService) GetByUsername(username string) (model.User, error) {
 	user, err := u.userDao.GetByUsername(username)
 	return user, err
 }
 
+// Get the first N users after the provided token
 func (u *UserService) List(first int, after string) (model.UserConnection, error) {
 	decodedToken, err := u.encoder.Decode(after)
 	if err != nil {
 		return model.UserConnection{}, err
 	}
 
-	users, token, err := u.userDao.Query(first, decodedToken)
+	users, token, err := u.userDao.List(first, decodedToken)
 	if err != nil {
 		return model.UserConnection{}, err
 	}

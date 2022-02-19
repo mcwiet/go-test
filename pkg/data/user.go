@@ -43,8 +43,8 @@ func (u *UserDao) GetByUsername(username string) (model.User, error) {
 	return convertAttributesToUser(username, ret.UserAttributes), nil
 }
 
-// List users
-func (u *UserDao) Query(first int, after string) ([]model.User, string, error) {
+// List users; returns users along with a token to continue listing (if more users exist)
+func (u *UserDao) List(first int, after string) ([]model.User, string, error) {
 	remaining := first
 	users := []model.User{}
 	paginationToken := after
