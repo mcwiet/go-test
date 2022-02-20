@@ -8,71 +8,42 @@ import (
 	"github.com/google/uuid"
 	"github.com/mcwiet/go-test/pkg/data"
 	"github.com/mcwiet/go-test/pkg/model"
+	"github.com/openlyinc/pointy"
 	"github.com/stretchr/testify/assert"
 )
 
-type DynamoItem = map[string]*dynamodb.AttributeValue
-
-// Define mocks / stubs
-type fakeDbClient struct {
-	deleteItemOutput *dynamodb.DeleteItemOutput
-	deleteItemErr    error
-	getItemOutput    *dynamodb.GetItemOutput
-	getItemErr       error
-	putItemOutput    *dynamodb.PutItemOutput
-	putItemErr       error
-	queryOutput      *dynamodb.QueryOutput
-	queryErr         error
-}
-
-// Define mock / stub behavior
-func (f *fakeDbClient) DeleteItem(*dynamodb.DeleteItemInput) (*dynamodb.DeleteItemOutput, error) {
-	return f.deleteItemOutput, f.deleteItemErr
-}
-func (f *fakeDbClient) GetItem(*dynamodb.GetItemInput) (*dynamodb.GetItemOutput, error) {
-	return f.getItemOutput, f.getItemErr
-}
-func (f *fakeDbClient) PutItem(*dynamodb.PutItemInput) (*dynamodb.PutItemOutput, error) {
-	return f.putItemOutput, f.putItemErr
-}
-func (f *fakeDbClient) Query(*dynamodb.QueryInput) (*dynamodb.QueryOutput, error) {
-	return f.queryOutput, f.queryErr
-}
-
-// Define common data
 var (
-	tableName  = "table"
-	samplePet1 = model.Pet{
+	SamplePet1 = model.Pet{
 		Id:    uuid.NewString(),
 		Name:  "pet 1",
 		Age:   10,
 		Owner: "User1",
 	}
-	samplePet2 = model.Pet{
+	SamplePet2 = model.Pet{
 		Id:    uuid.NewString(),
 		Name:  "pet 2",
 		Age:   92,
 		Owner: "User2",
 	}
-	samplePetItem1 = DynamoItem{
-		"Id":    {S: &samplePet1.Id},
-		"Name":  {S: &samplePet1.Name},
+	SamplePet1Item = data.DynamoItem{
+		"Id":    {S: &SamplePet1.Id},
+		"Name":  {S: &SamplePet1.Name},
 		"Age":   {N: jsii.String("10")},
-		"Owner": {S: &samplePet1.Owner},
+		"Owner": {S: &SamplePet1.Owner},
 	}
-	samplePetItem2 = DynamoItem{
-		"Id":    {S: &samplePet2.Id},
-		"Name":  {S: &samplePet2.Name},
+	SamplePet2Item = data.DynamoItem{
+		"Id":    {S: &SamplePet2.Id},
+		"Name":  {S: &SamplePet2.Name},
 		"Age":   {N: jsii.String("92")},
-		"Owner": {S: &samplePet2.Owner},
+		"Owner": {S: &SamplePet2.Owner},
 	}
 )
 
-func TestDelete(t *testing.T) {
+func TestPetDelete(t *testing.T) {
 	// Define test struct
 	type Test struct {
 		name      string
-		dbClient  fakeDbClient
+		dbClient  FakeDynamoDbClient
 		petId     string
 		expectErr bool
 	}
@@ -81,24 +52,24 @@ func TestDelete(t *testing.T) {
 	tests := []Test{
 		{
 			name:      "valid delete",
-			dbClient:  fakeDbClient{},
-			petId:     samplePet1.Id,
+			dbClient:  FakeDynamoDbClient{},
+			petId:     SamplePet1.Id,
 			expectErr: false,
 		},
 		{
 			name: "db delete error",
-			dbClient: fakeDbClient{
+			dbClient: FakeDynamoDbClient{
 				deleteItemErr: assert.AnError,
 			},
-			petId:     samplePet1.Id,
+			petId:     SamplePet1.Id,
 			expectErr: true,
 		},
 		{
 			name: "db item not found error",
-			dbClient: fakeDbClient{
+			dbClient: FakeDynamoDbClient{
 				deleteItemErr: &dynamodb.ConditionalCheckFailedException{},
 			},
-			petId:     samplePet1.Id,
+			petId:     SamplePet1.Id,
 			expectErr: true,
 		},
 	}
@@ -106,7 +77,7 @@ func TestDelete(t *testing.T) {
 	// Run tests
 	for _, test := range tests {
 		// Setup
-		dao := data.NewPetDao(&test.dbClient, tableName)
+		dao := data.NewPetDao(&test.dbClient, SampleTableName)
 
 		// Execute
 		err := dao.Delete(test.petId)
@@ -120,11 +91,11 @@ func TestDelete(t *testing.T) {
 	}
 }
 
-func TestGetById(t *testing.T) {
+func TestPetGetById(t *testing.T) {
 	// Define test struct
 	type Test struct {
 		name        string
-		dbClient    fakeDbClient
+		dbClient    FakeDynamoDbClient
 		petId       string
 		expectedPet model.Pet
 		expectErr   bool
@@ -134,27 +105,27 @@ func TestGetById(t *testing.T) {
 	tests := []Test{
 		{
 			name: "pet found",
-			dbClient: fakeDbClient{
-				getItemOutput: &dynamodb.GetItemOutput{Item: samplePetItem1},
+			dbClient: FakeDynamoDbClient{
+				getItemOutput: &dynamodb.GetItemOutput{Item: SamplePet1Item},
 			},
-			petId:       samplePet1.Id,
-			expectedPet: samplePet1,
+			petId:       SamplePet1.Id,
+			expectedPet: SamplePet1,
 			expectErr:   false,
 		},
 		{
 			name: "pet not found",
-			dbClient: fakeDbClient{
+			dbClient: FakeDynamoDbClient{
 				getItemOutput: &dynamodb.GetItemOutput{Item: nil},
 			},
-			petId:     samplePet1.Id,
+			petId:     SamplePet1.Id,
 			expectErr: true,
 		},
 		{
 			name: "db get error",
-			dbClient: fakeDbClient{
+			dbClient: FakeDynamoDbClient{
 				getItemErr: assert.AnError,
 			},
-			petId:     samplePet1.Id,
+			petId:     SamplePet1.Id,
 			expectErr: true,
 		},
 	}
@@ -162,13 +133,14 @@ func TestGetById(t *testing.T) {
 	// Run tests
 	for _, test := range tests {
 		// Setup
-		dao := data.NewPetDao(&test.dbClient, tableName)
+		dao := data.NewPetDao(&test.dbClient, SampleTableName)
 
 		// Execute
 		pet, err := dao.GetById(test.petId)
 
 		// Verify
 		if !test.expectErr {
+			assert.Nil(t, err, test.name)
 			assert.Equal(t, test.expectedPet, pet, test.name)
 		} else {
 			assert.NotNil(t, err, test.name)
@@ -176,11 +148,11 @@ func TestGetById(t *testing.T) {
 	}
 }
 
-func TestInsert(t *testing.T) {
+func TestPetInsert(t *testing.T) {
 	// Define test struct
 	type Test struct {
 		name      string
-		dbClient  fakeDbClient
+		dbClient  FakeDynamoDbClient
 		pet       model.Pet
 		expectErr bool
 	}
@@ -189,16 +161,16 @@ func TestInsert(t *testing.T) {
 	tests := []Test{
 		{
 			name:      "valid insert",
-			dbClient:  fakeDbClient{},
-			pet:       samplePet1,
+			dbClient:  FakeDynamoDbClient{},
+			pet:       SamplePet1,
 			expectErr: false,
 		},
 		{
 			name: "db put error",
-			dbClient: fakeDbClient{
+			dbClient: FakeDynamoDbClient{
 				putItemErr: assert.AnError,
 			},
-			pet:       samplePet1,
+			pet:       SamplePet1,
 			expectErr: true,
 		},
 	}
@@ -206,7 +178,7 @@ func TestInsert(t *testing.T) {
 	// Run tests
 	for _, test := range tests {
 		// Setup
-		dao := data.NewPetDao(&test.dbClient, tableName)
+		dao := data.NewPetDao(&test.dbClient, SampleTableName)
 
 		// Execute
 		err := dao.Insert(test.pet)
@@ -220,11 +192,11 @@ func TestInsert(t *testing.T) {
 	}
 }
 
-func TestQuery(t *testing.T) {
+func TestPetQuery(t *testing.T) {
 	// Define test struct
 	type Test struct {
 		name                string
-		dbClient            fakeDbClient
+		dbClient            FakeDynamoDbClient
 		count               int
 		exclusiveStartId    string
 		expectedPets        []model.Pet
@@ -236,82 +208,82 @@ func TestQuery(t *testing.T) {
 	tests := []Test{
 		{
 			name: "request more items than in DB",
-			dbClient: fakeDbClient{
+			dbClient: FakeDynamoDbClient{
 				queryOutput: &dynamodb.QueryOutput{
-					Count:            newInt64(2),
-					Items:            []DynamoItem{samplePetItem1, samplePetItem2},
-					LastEvaluatedKey: DynamoItem{},
+					Count:            pointy.Int64(2),
+					Items:            []data.DynamoItem{SamplePet1Item, SamplePet2Item},
+					LastEvaluatedKey: data.DynamoItem{},
 				}},
 			count:            3,
 			exclusiveStartId: "",
 			expectedPets: []model.Pet{
-				samplePet1,
-				samplePet2,
+				SamplePet1,
+				SamplePet2,
 			},
 			expectedHasNextPage: false,
 		},
 		{
 			name: "request less items than in DB (start at beginning of list)",
-			dbClient: fakeDbClient{
+			dbClient: FakeDynamoDbClient{
 				queryOutput: &dynamodb.QueryOutput{
-					Count:            newInt64(2),
-					Items:            []DynamoItem{samplePetItem1},
-					LastEvaluatedKey: samplePetItem1,
+					Count:            pointy.Int64(2),
+					Items:            []data.DynamoItem{SamplePet1Item},
+					LastEvaluatedKey: SamplePet1Item,
 				}},
 			count: 1,
 			expectedPets: []model.Pet{
-				samplePet1,
+				SamplePet1,
 			},
 			expectedHasNextPage: true,
 		},
 		{
 			name: "request less items than in DB (reach end of list)",
-			dbClient: fakeDbClient{
+			dbClient: FakeDynamoDbClient{
 				queryOutput: &dynamodb.QueryOutput{
-					Count:            newInt64(2),
-					Items:            []DynamoItem{samplePetItem2},
-					LastEvaluatedKey: DynamoItem{},
+					Count:            pointy.Int64(2),
+					Items:            []data.DynamoItem{SamplePet2Item},
+					LastEvaluatedKey: data.DynamoItem{},
 				}},
 			count:            1,
-			exclusiveStartId: samplePet1.Id,
+			exclusiveStartId: SamplePet1.Id,
 			expectedPets: []model.Pet{
-				samplePet2,
+				SamplePet2,
 			},
 			expectedHasNextPage: false,
 		},
 		{
 			name: "request 'count=0' but 'exclusiveStartId' is not last pet",
-			dbClient: fakeDbClient{
+			dbClient: FakeDynamoDbClient{
 				queryOutput: &dynamodb.QueryOutput{
-					Count:            newInt64(2),
-					Items:            []DynamoItem{},
-					LastEvaluatedKey: samplePetItem2,
+					Count:            pointy.Int64(2),
+					Items:            []data.DynamoItem{},
+					LastEvaluatedKey: SamplePet2Item,
 				}},
 			count:               0,
-			exclusiveStartId:    samplePet1.Id,
+			exclusiveStartId:    SamplePet1.Id,
 			expectedPets:        []model.Pet{},
 			expectedHasNextPage: true,
 		},
 		{
 			name: "request 'count=0' but 'exclusiveStartId' is last pet",
-			dbClient: fakeDbClient{
+			dbClient: FakeDynamoDbClient{
 				queryOutput: &dynamodb.QueryOutput{
-					Count:            newInt64(2),
-					Items:            []DynamoItem{},
-					LastEvaluatedKey: DynamoItem{},
+					Count:            pointy.Int64(2),
+					Items:            []data.DynamoItem{},
+					LastEvaluatedKey: data.DynamoItem{},
 				}},
 			count:               0,
-			exclusiveStartId:    samplePet2.Id,
+			exclusiveStartId:    SamplePet2.Id,
 			expectedPets:        []model.Pet{},
 			expectedHasNextPage: false,
 		},
 		{
 			name: "no pets returned when 'count=0'",
-			dbClient: fakeDbClient{
+			dbClient: FakeDynamoDbClient{
 				queryOutput: &dynamodb.QueryOutput{
-					Count:            newInt64(1),
-					Items:            []DynamoItem{samplePetItem1},
-					LastEvaluatedKey: samplePetItem1,
+					Count:            pointy.Int64(1),
+					Items:            []data.DynamoItem{SamplePet1Item},
+					LastEvaluatedKey: SamplePet1Item,
 				},
 			},
 			expectedPets:        []model.Pet{},
@@ -319,7 +291,7 @@ func TestQuery(t *testing.T) {
 		},
 		{
 			name: "db query error",
-			dbClient: fakeDbClient{
+			dbClient: FakeDynamoDbClient{
 				queryErr: assert.AnError,
 			},
 			expectErr: true,
@@ -329,13 +301,14 @@ func TestQuery(t *testing.T) {
 	// Run tests
 	for _, test := range tests {
 		// Setup
-		dao := data.NewPetDao(&test.dbClient, tableName)
+		dao := data.NewPetDao(&test.dbClient, SampleTableName)
 
 		// Execute
 		pets, hasNextPage, err := dao.Query(test.count, test.exclusiveStartId)
 
 		// Verify
 		if !test.expectErr {
+			assert.Nil(t, err, test.name)
 			assert.Equal(t, test.expectedPets, pets, test.name)
 			assert.Equal(t, test.expectedHasNextPage, hasNextPage, test.name)
 		} else {
@@ -344,11 +317,11 @@ func TestQuery(t *testing.T) {
 	}
 }
 
-func TestGetTotalCount(t *testing.T) {
+func TestPetGetTotalCount(t *testing.T) {
 	// Define test struct
 	type Test struct {
 		name          string
-		dbClient      fakeDbClient
+		dbClient      FakeDynamoDbClient
 		expectedCount int
 		expectErr     bool
 	}
@@ -357,16 +330,16 @@ func TestGetTotalCount(t *testing.T) {
 	tests := []Test{
 		{
 			name: "valid get total count",
-			dbClient: fakeDbClient{
+			dbClient: FakeDynamoDbClient{
 				queryOutput: &dynamodb.QueryOutput{
-					Count: newInt64(10),
+					Count: pointy.Int64(10),
 				},
 			},
 			expectedCount: 10,
 		},
 		{
 			name: "db query error",
-			dbClient: fakeDbClient{
+			dbClient: FakeDynamoDbClient{
 				queryErr: assert.AnError,
 			},
 			expectErr: true,
@@ -376,13 +349,14 @@ func TestGetTotalCount(t *testing.T) {
 	// Run tests
 	for _, test := range tests {
 		// Setup
-		dao := data.NewPetDao(&test.dbClient, tableName)
+		dao := data.NewPetDao(&test.dbClient, SampleTableName)
 
 		// Execute
 		count, err := dao.GetTotalCount()
 
 		// Verify
 		if !test.expectErr {
+			assert.Nil(t, err, test.name)
 			assert.Equal(t, test.expectedCount, count, test.name)
 		} else {
 			assert.NotNil(t, err, test.name)
@@ -390,11 +364,11 @@ func TestGetTotalCount(t *testing.T) {
 	}
 }
 
-func TestUpdate(t *testing.T) {
+func TestPetUpdate(t *testing.T) {
 	// Define test struct
 	type Test struct {
 		name      string
-		dbClient  fakeDbClient
+		dbClient  FakeDynamoDbClient
 		pet       model.Pet
 		expectErr bool
 	}
@@ -403,16 +377,16 @@ func TestUpdate(t *testing.T) {
 	tests := []Test{
 		{
 			name:      "valid update",
-			dbClient:  fakeDbClient{},
-			pet:       samplePet1,
+			dbClient:  FakeDynamoDbClient{},
+			pet:       SamplePet1,
 			expectErr: false,
 		},
 		{
 			name: "db put error",
-			dbClient: fakeDbClient{
+			dbClient: FakeDynamoDbClient{
 				putItemErr: assert.AnError,
 			},
-			pet:       samplePet1,
+			pet:       SamplePet1,
 			expectErr: true,
 		},
 	}
@@ -420,7 +394,7 @@ func TestUpdate(t *testing.T) {
 	// Run tests
 	for _, test := range tests {
 		// Setup
-		dao := data.NewPetDao(&test.dbClient, tableName)
+		dao := data.NewPetDao(&test.dbClient, SampleTableName)
 
 		// Execute
 		err := dao.Update(test.pet)
@@ -432,9 +406,4 @@ func TestUpdate(t *testing.T) {
 			assert.NotNil(t, err, test.name)
 		}
 	}
-}
-
-func newInt64(val int) *int64 {
-	valInt64 := int64(val)
-	return &valInt64
 }

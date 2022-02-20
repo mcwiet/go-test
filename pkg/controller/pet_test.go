@@ -9,108 +9,77 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-// Define mocks / stubs
-type fakePetService struct {
-	createOutput      model.Pet
-	createErr         error
-	deleteErr         error
-	getByIdOutput     model.Pet
-	getByIdErr        error
-	listOutput        model.PetConnection
-	listErr           error
-	updateOwnerOutput model.Pet
-	updateOwnerErr    error
-}
-
-// Define mock / stub behavior
-func (s *fakePetService) Create(name string, age int, owner string) (model.Pet, error) {
-	return s.createOutput, s.createErr
-}
-func (s *fakePetService) Delete(id string) error {
-	return s.deleteErr
-}
-func (s *fakePetService) GetById(id string) (model.Pet, error) {
-	return s.getByIdOutput, s.getByIdErr
-}
-func (s *fakePetService) List(first int, after string) (model.PetConnection, error) {
-	return s.listOutput, s.listErr
-}
-func (s *fakePetService) UpdateOwner(id string, owner string) (model.Pet, error) {
-	return s.updateOwnerOutput, s.updateOwnerErr
-}
-
-// Define common data
 var (
-	samplePet = model.Pet{
+	SamplePet = model.Pet{
 		Id:    uuid.NewString(),
 		Name:  "Levi",
 		Age:   1,
 		Owner: "User",
 	}
-	sampleConnection = model.PetConnection{
+	SamplePetConnection = model.PetConnection{
 		TotalCount: 1,
-		Edges:      []model.PetEdge{{Node: samplePet, Cursor: "cursor"}},
+		Edges:      []model.PetEdge{{Node: SamplePet, Cursor: "cursor"}},
 		PageInfo:   model.PageInfo{EndCursor: "cursor", HasNextPage: false},
 	}
 )
 
 // Define test struct
-type Test struct {
+type PetTest struct {
 	name             string
-	petService       fakePetService
+	petService       FakePetService
 	request          controller.Request
 	expectedResponse controller.Response
 	expectErr        bool
 }
 
-func TestHandleCreate(t *testing.T) {
+func TestPetHandleCreate(t *testing.T) {
 	// Define tests
-	tests := []Test{
+	tests := []PetTest{
 		{
 			name: "create with all args",
-			petService: fakePetService{
-				createOutput: samplePet,
+			petService: FakePetService{
+				createPet: SamplePet,
 			},
 			request: controller.Request{
 				Arguments: map[string]interface{}{"input": map[string]interface{}{
-					"name":  samplePet.Name,
-					"age":   float64(samplePet.Age),
-					"owner": samplePet.Owner,
+					"name":  SamplePet.Name,
+					"age":   float64(SamplePet.Age),
+					"owner": SamplePet.Owner,
 				}},
 			},
 			expectedResponse: controller.Response{
 				Data: model.CreatePetPayload{
-					Pet: samplePet,
+					Pet: SamplePet,
 				}},
 			expectErr: false,
 		},
 		{
 			name: "create without optional args",
-			petService: fakePetService{
-				createOutput: samplePet,
+			petService: FakePetService{
+				createPet: SamplePet,
 			},
 			request: controller.Request{
 				Arguments: map[string]interface{}{"input": map[string]interface{}{
-					"name": samplePet.Name,
-					"age":  float64(samplePet.Age),
+					"name": SamplePet.Name,
+					"age":  float64(SamplePet.Age),
 				}},
 			},
 			expectedResponse: controller.Response{
 				Data: model.CreatePetPayload{
-					Pet: samplePet,
+					Pet: SamplePet,
 				}},
 			expectErr: false,
 		},
 		{
 			name: "service create error",
-			petService: fakePetService{
+			petService: FakePetService{
 				createErr: assert.AnError,
 			},
 			request: controller.Request{
 				Arguments: map[string]interface{}{"input": map[string]interface{}{
-					"name":  samplePet.Name,
-					"age":   float64(samplePet.Age),
-					"owner": samplePet.Owner,
+					"name":  SamplePet.Name,
+					"age":   float64(SamplePet.Age),
+					"owner": SamplePet.Owner,
 				}},
 			},
 			expectErr: true,
@@ -134,32 +103,32 @@ func TestHandleCreate(t *testing.T) {
 	}
 }
 
-func TestHandleDelete(t *testing.T) {
+func TestPetHandleDelete(t *testing.T) {
 	// Define tests
-	tests := []Test{
+	tests := []PetTest{
 		{
 			name:       "valid delete",
-			petService: fakePetService{},
+			petService: FakePetService{},
 			request: controller.Request{
 				Arguments: map[string]interface{}{"input": map[string]interface{}{
-					"id": samplePet.Id,
+					"id": SamplePet.Id,
 				}},
 			},
 			expectedResponse: controller.Response{
 				Data: model.DeletePetPayload{
-					Id: samplePet.Id,
+					Id: SamplePet.Id,
 				},
 			},
 			expectErr: false,
 		},
 		{
 			name: "service delete error",
-			petService: fakePetService{
+			petService: FakePetService{
 				deleteErr: assert.AnError,
 			},
 			request: controller.Request{
 				Arguments: map[string]interface{}{"input": map[string]interface{}{
-					"id": samplePet.Id,
+					"id": SamplePet.Id,
 				}},
 			},
 			expectErr: true,
@@ -183,32 +152,32 @@ func TestHandleDelete(t *testing.T) {
 	}
 }
 
-func TestHandleGet(t *testing.T) {
+func TestPetHandleGet(t *testing.T) {
 	// Define tests
-	tests := []Test{
+	tests := []PetTest{
 		{
 			name: "valid get",
-			petService: fakePetService{
-				getByIdOutput: samplePet,
+			petService: FakePetService{
+				getByIdUser: SamplePet,
 			},
 			request: controller.Request{
 				Arguments: map[string]interface{}{"input": map[string]interface{}{
-					"id": samplePet.Id,
+					"id": SamplePet.Id,
 				}},
 			},
 			expectedResponse: controller.Response{
-				Data: samplePet,
+				Data: SamplePet,
 			},
 			expectErr: false,
 		},
 		{
 			name: "service get error",
-			petService: fakePetService{
+			petService: FakePetService{
 				getByIdErr: assert.AnError,
 			},
 			request: controller.Request{
 				Arguments: map[string]interface{}{"input": map[string]interface{}{
-					"id": samplePet.Id,
+					"id": SamplePet.Id,
 				}},
 			},
 			expectErr: true,
@@ -232,25 +201,25 @@ func TestHandleGet(t *testing.T) {
 	}
 }
 
-func TestHandleList(t *testing.T) {
+func TestPetHandleList(t *testing.T) {
 	// Define tests
-	tests := []Test{
+	tests := []PetTest{
 		{
 			name: "list without input",
-			petService: fakePetService{
-				listOutput: sampleConnection,
+			petService: FakePetService{
+				listConnection: SamplePetConnection,
 			},
 			request: controller.Request{
 				Arguments: map[string]interface{}{},
 			},
 			expectedResponse: controller.Response{
-				Data: sampleConnection,
+				Data: SamplePetConnection,
 			},
 			expectErr: false,
 		},
 		{
 			name:       "list with input",
-			petService: fakePetService{listOutput: sampleConnection},
+			petService: FakePetService{listConnection: SamplePetConnection},
 			request: controller.Request{
 				Arguments: map[string]interface{}{"input": map[string]interface{}{
 					"first": float64(10),
@@ -258,13 +227,13 @@ func TestHandleList(t *testing.T) {
 				}},
 			},
 			expectedResponse: controller.Response{
-				Data: sampleConnection,
+				Data: SamplePetConnection,
 			},
 			expectErr: false,
 		},
 		{
 			name:       "service list error",
-			petService: fakePetService{listErr: assert.AnError},
+			petService: FakePetService{listErr: assert.AnError},
 			request: controller.Request{
 				Arguments: map[string]interface{}{},
 			},
@@ -289,39 +258,39 @@ func TestHandleList(t *testing.T) {
 	}
 }
 
-func TestHandleUpdateOwner(t *testing.T) {
+func TestPetHandleUpdateOwner(t *testing.T) {
 	// Define tests
-	tests := []Test{
+	tests := []PetTest{
 		{
 			name: "valid update owner",
-			petService: fakePetService{
-				updateOwnerOutput: samplePet,
+			petService: FakePetService{
+				updateOwnerPet: SamplePet,
 			},
 			request: controller.Request{
 				Arguments: map[string]interface{}{
-					"id":    samplePet.Id,
-					"owner": samplePet.Owner,
+					"id":    SamplePet.Id,
+					"owner": SamplePet.Owner,
 				},
 			},
 			expectedResponse: controller.Response{
 				Data: model.UpdatePetOwnerPayload{
-					Pet: samplePet,
+					Pet: SamplePet,
 				},
 			},
 			expectErr: false,
 		},
 		{
 			name:       "service update owner error",
-			petService: fakePetService{updateOwnerErr: assert.AnError},
+			petService: FakePetService{updateOwnerErr: assert.AnError},
 			request: controller.Request{
 				Arguments: map[string]interface{}{
-					"id":    samplePet.Id,
-					"owner": samplePet.Owner,
+					"id":    SamplePet.Id,
+					"owner": SamplePet.Owner,
 				},
 			},
 			expectedResponse: controller.Response{
 				Data: model.UpdatePetOwnerPayload{
-					Pet: samplePet,
+					Pet: SamplePet,
 				},
 			},
 			expectErr: true,

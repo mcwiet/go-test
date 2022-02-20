@@ -1,3 +1,4 @@
 {
-  "app": "go mod download && go run ./cmd/infra"
+  "app": "go mod download && go run ./cmd/infra",
+  "requireApproval": "never"
 }

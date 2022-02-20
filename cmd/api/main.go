@@ -13,30 +13,37 @@ import (
 
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/cognitoidentityprovider"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 )
 
 var (
-	petController controller.PetController
+	petController  controller.PetController
+	userController controller.UserController
 )
 
 func init() {
 	session := session.Must(session.NewSession())
 	ddbClient := dynamodb.New(session)
+	cognitoClient := cognitoidentityprovider.New(session)
 	cursorEncoder := encoding.NewCursorEncoder()
 
 	tableName := os.Getenv("DDB_TABLE_NAME")
 	petDao := data.NewPetDao(ddbClient, tableName)
 	petService := service.NewPetService(&petDao, &cursorEncoder)
 	petController = controller.NewPetController(&petService)
+
+	userPoolId := os.Getenv("USER_POOL_ID")
+	userDao := data.NewUserDao(cognitoClient, userPoolId)
+	userService := service.NewUserService(&userDao, &cursorEncoder)
+	userController = controller.NewUserController(&userService)
 }
 
 func handle(ctx context.Context, rawRequest interface{}) (interface{}, error) {
 	request := controller.NewRequest(rawRequest)
 	var response controller.Response
 
-	log.Println(request.Info.ParentTypeName)
-	log.Println(request.Info.FieldName)
+	log.Println(request.Info.ParentTypeName + " " + request.Info.FieldName)
 
 	switch request.Info.ParentTypeName {
 	case "Query":
@@ -45,6 +52,10 @@ func handle(ctx context.Context, rawRequest interface{}) (interface{}, error) {
 			response = petController.HandleGet(request)
 		case "pets":
 			response = petController.HandleList(request)
+		case "user":
+			response = userController.HandleGet(request)
+		case "users":
+			response = userController.HandleList(request)
 		default:
 			response = controller.Response{Error: errors.New("query not recognized")}
 		}

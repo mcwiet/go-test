@@ -1,8 +1,6 @@
 package service
 
 import (
-	"fmt"
-
 	"github.com/google/uuid"
 	"github.com/mcwiet/go-test/pkg/model"
 )
@@ -61,13 +59,15 @@ func (s *PetService) GetById(id string) (model.Pet, error) {
 
 // Lists pets
 func (s *PetService) List(first int, after string) (model.PetConnection, error) {
-	exclusiveStartId, _ := s.encoder.Decode(after)
-	pets, hasNextPage, err := s.petDao.Query(first, exclusiveStartId)
+	exclusiveStartId, err := s.encoder.Decode(after)
 	if err != nil {
 		return model.PetConnection{}, err
 	}
 
-	fmt.Println(pets)
+	pets, hasNextPage, err := s.petDao.Query(first, exclusiveStartId)
+	if err != nil {
+		return model.PetConnection{}, err
+	}
 
 	totalCount, err := s.petDao.GetTotalCount()
 	if err != nil {

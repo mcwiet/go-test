@@ -7,6 +7,17 @@ type Pet struct {
 	Owner string `json:"owner,omitempty"`
 }
 
+type PetEdge struct {
+	Node   Pet    `json:"node"`
+	Cursor string `json:"cursor"`
+}
+
+type PetConnection struct {
+	TotalCount int       `json:"totalCount"`
+	Edges      []PetEdge `json:"edges"`
+	PageInfo   PageInfo  `json:"pageInfo"`
+}
+
 type CreatePetInput struct {
 	Name  string `json:"name"`
 	Age   int    `json:"age"`
@@ -35,21 +46,10 @@ type PetsInput struct {
 }
 
 type UpdatePetOwnerInput struct {
-	Id    string `json:"id,omitempty"`
-	Owner string `json:"owner,omitempty"`
+	Id    string `json:"id"`
+	Owner string `json:"owner"`
 }
 
 type UpdatePetOwnerPayload struct {
 	Pet Pet `json:"pet"`
-}
-
-type PetEdge struct {
-	Node   Pet    `json:"node"`
-	Cursor string `json:"cursor"`
-}
-
-type PetConnection struct {
-	TotalCount int       `json:"totalCount"`
-	Edges      []PetEdge `json:"edges,omitempty"`
-	PageInfo   PageInfo  `json:"pageInfo"`
 }
