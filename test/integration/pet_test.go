@@ -4,36 +4,11 @@ import (
 	"context"
 	"testing"
 
-	"github.com/aws/aws-sdk-go/aws/session"
-	cognito "github.com/aws/aws-sdk-go/service/cognitoidentityprovider"
 	"github.com/machinebox/graphql"
-	"github.com/mcwiet/go-test/pkg/authentication"
 	"github.com/mcwiet/go-test/pkg/model"
-	"github.com/mcwiet/go-test/test/integration"
 	"github.com/mitchellh/mapstructure"
 	"github.com/stretchr/testify/assert"
 )
-
-var (
-	apiUrl string
-	token  authentication.CognitoToken
-	client *graphql.Client
-)
-
-func init() {
-	// Setup the GraphQL client
-	apiUrl = integration.GetRequiredEnv("API_URL")
-	client = graphql.NewClient(apiUrl)
-
-	// Get an access token for making API calls
-	clientId := integration.GetRequiredEnv("USER_POOL_APP_CLIENT_ID")
-	session, _ := session.NewSession()
-	cognitoClient := cognito.New(session)
-	auth := authentication.NewCognitoAuthenticator(cognitoClient, clientId)
-	email := integration.GetRequiredEnv("TEST_USER_EMAIL")
-	password := integration.GetRequiredEnv("TEST_USER_PASSWORD")
-	token, _ = auth.Login(email, password)
-}
 
 // Sequentially run functions involved for testing pet API operations
 func TestPetApi(t *testing.T) {
@@ -48,7 +23,7 @@ func TestPetApi(t *testing.T) {
 	getPet(t, pet1.Id, &pet1)
 
 	// Update the pet owner
-	updatePetOwner(t, pet1, token.Payload.Username)
+	updatePetOwner(t, pet1, AuthToken.Payload.Username)
 
 	// Delete the pets
 	deletePet(t, &pet1)
@@ -78,11 +53,11 @@ func createPet(t *testing.T) model.Pet {
 	request.Var("name", petName)
 	request.Var("age", petAge)
 	request.Var("owner", petOwner)
-	request.Header.Set("Authorization", token.String)
+	request.Header.Set("Authorization", AuthToken.String)
 
 	// Execute
 	var response map[string]interface{}
-	err := client.Run(context.Background(), request, &response)
+	err := GraphQlClient.Run(context.Background(), request, &response)
 	var payload model.CreatePetPayload
 	mapstructure.Decode(response["createPet"], &payload)
 
@@ -111,11 +86,11 @@ func deletePet(t *testing.T, pet *model.Pet) {
 		}
 	`)
 	request.Var("id", pet.Id)
-	request.Header.Set("Authorization", token.String)
+	request.Header.Set("Authorization", AuthToken.String)
 
 	// Execute
 	var response map[string]interface{}
-	err := client.Run(context.Background(), request, &response)
+	err := GraphQlClient.Run(context.Background(), request, &response)
 
 	// Verify
 	stepName := "deletePet"
@@ -135,11 +110,11 @@ func getPet(t *testing.T, id string, expectedPet *model.Pet) {
 		}
 	`)
 	request.Var("id", id)
-	request.Header.Set("Authorization", token.String)
+	request.Header.Set("Authorization", AuthToken.String)
 
 	// Execute
 	var response map[string]interface{}
-	err := client.Run(context.Background(), request, &response)
+	err := GraphQlClient.Run(context.Background(), request, &response)
 	var pet model.Pet
 	mapstructure.Decode(response["pet"], &pet)
 
@@ -173,11 +148,11 @@ func listPets(t *testing.T) {
 			}
 		}
 	`)
-	request.Header.Set("Authorization", token.String)
+	request.Header.Set("Authorization", AuthToken.String)
 
 	// Execute
 	var response map[string]interface{}
-	err := client.Run(context.Background(), request, &response)
+	err := GraphQlClient.Run(context.Background(), request, &response)
 	var connection model.PetConnection
 	mapstructure.Decode(response["pets"], &connection)
 
@@ -191,7 +166,7 @@ func listPets(t *testing.T) {
 	assert.GreaterOrEqual(t, connection.TotalCount, 2, stepName+": should have total count of at least 2")
 	lastEdge := connection.Edges[len(connection.Edges)-1]
 	assert.Equal(t, lastEdge.Cursor, connection.PageInfo.EndCursor, stepName+": should have correct end cursor")
-	assert.Equal(t, true, connection.PageInfo.HasNextPage, connection.PageInfo.EndCursor, stepName+": should have next page")
+	assert.Equal(t, true, connection.PageInfo.HasNextPage, stepName+": should have next page")
 }
 
 func updatePetOwner(t *testing.T, pet model.Pet, newOwner string) {
@@ -208,11 +183,11 @@ func updatePetOwner(t *testing.T, pet model.Pet, newOwner string) {
 	`)
 	request.Var("id", pet.Id)
 	request.Var("owner", newOwner)
-	request.Header.Set("Authorization", token.String)
+	request.Header.Set("Authorization", AuthToken.String)
 
 	// Execute
 	var response map[string]interface{}
-	err := client.Run(context.Background(), request, &response)
+	err := GraphQlClient.Run(context.Background(), request, &response)
 	var updatedPet model.UpdatePetOwnerPayload
 	mapstructure.Decode(response["updatePetOwner"], &updatedPet)
 
