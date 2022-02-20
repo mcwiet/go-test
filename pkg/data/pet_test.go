@@ -82,7 +82,7 @@ func TestDeletePet(t *testing.T) {
 			name:      "valid delete",
 			dbClient:  fakeDbClient{},
 			petId:     samplePet1.Id,
-			expectErr: jsii,
+			expectErr: false,
 		},
 		{
 			name: "db delete error",
