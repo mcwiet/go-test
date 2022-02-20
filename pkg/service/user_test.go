@@ -156,9 +156,16 @@ func TestUserList(t *testing.T) {
 		{
 			name: "decode error",
 			userDao: FakeUserDao{
-				getTotalCountErr: assert.AnError,
+				listUsers: []model.User{
+					SampleUser1,
+					SampleUser2,
+				},
+				listToken:          "",
+				getTotalCountValue: 2,
 			},
-			encoder:   SampleEncoder,
+			encoder: FakeEncoder{
+				decodeErr: assert.AnError,
+			},
 			first:     1,
 			after:     "",
 			expectErr: true,
