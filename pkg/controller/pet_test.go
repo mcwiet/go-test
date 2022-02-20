@@ -16,7 +16,7 @@ var (
 		Age:   1,
 		Owner: "User",
 	}
-	SampleConnection = model.PetConnection{
+	SamplePetConnection = model.PetConnection{
 		TotalCount: 1,
 		Edges:      []model.PetEdge{{Node: SamplePet, Cursor: "cursor"}},
 		PageInfo:   model.PageInfo{EndCursor: "cursor", HasNextPage: false},
@@ -24,7 +24,7 @@ var (
 )
 
 // Define test struct
-type Test struct {
+type PetTest struct {
 	name             string
 	petService       FakePetService
 	request          controller.Request
@@ -32,13 +32,13 @@ type Test struct {
 	expectErr        bool
 }
 
-func TestHandleCreate(t *testing.T) {
+func TestPetHandleCreate(t *testing.T) {
 	// Define tests
-	tests := []Test{
+	tests := []PetTest{
 		{
 			name: "create with all args",
 			petService: FakePetService{
-				createOutput: SamplePet,
+				createPet: SamplePet,
 			},
 			request: controller.Request{
 				Arguments: map[string]interface{}{"input": map[string]interface{}{
@@ -56,7 +56,7 @@ func TestHandleCreate(t *testing.T) {
 		{
 			name: "create without optional args",
 			petService: FakePetService{
-				createOutput: SamplePet,
+				createPet: SamplePet,
 			},
 			request: controller.Request{
 				Arguments: map[string]interface{}{"input": map[string]interface{}{
@@ -103,9 +103,9 @@ func TestHandleCreate(t *testing.T) {
 	}
 }
 
-func TestHandleDelete(t *testing.T) {
+func TestPetHandleDelete(t *testing.T) {
 	// Define tests
-	tests := []Test{
+	tests := []PetTest{
 		{
 			name:       "valid delete",
 			petService: FakePetService{},
@@ -152,13 +152,13 @@ func TestHandleDelete(t *testing.T) {
 	}
 }
 
-func TestHandleGet(t *testing.T) {
+func TestPetHandleGet(t *testing.T) {
 	// Define tests
-	tests := []Test{
+	tests := []PetTest{
 		{
 			name: "valid get",
 			petService: FakePetService{
-				getByIdOutput: SamplePet,
+				getByIdUser: SamplePet,
 			},
 			request: controller.Request{
 				Arguments: map[string]interface{}{"input": map[string]interface{}{
@@ -201,25 +201,25 @@ func TestHandleGet(t *testing.T) {
 	}
 }
 
-func TestHandleList(t *testing.T) {
+func TestPetHandleList(t *testing.T) {
 	// Define tests
-	tests := []Test{
+	tests := []PetTest{
 		{
 			name: "list without input",
 			petService: FakePetService{
-				listOutput: SampleConnection,
+				listConnection: SamplePetConnection,
 			},
 			request: controller.Request{
 				Arguments: map[string]interface{}{},
 			},
 			expectedResponse: controller.Response{
-				Data: SampleConnection,
+				Data: SamplePetConnection,
 			},
 			expectErr: false,
 		},
 		{
 			name:       "list with input",
-			petService: FakePetService{listOutput: SampleConnection},
+			petService: FakePetService{listConnection: SamplePetConnection},
 			request: controller.Request{
 				Arguments: map[string]interface{}{"input": map[string]interface{}{
 					"first": float64(10),
@@ -227,7 +227,7 @@ func TestHandleList(t *testing.T) {
 				}},
 			},
 			expectedResponse: controller.Response{
-				Data: SampleConnection,
+				Data: SamplePetConnection,
 			},
 			expectErr: false,
 		},
@@ -258,13 +258,13 @@ func TestHandleList(t *testing.T) {
 	}
 }
 
-func TestHandleUpdateOwner(t *testing.T) {
+func TestPetHandleUpdateOwner(t *testing.T) {
 	// Define tests
-	tests := []Test{
+	tests := []PetTest{
 		{
 			name: "valid update owner",
 			petService: FakePetService{
-				updateOwnerOutput: SamplePet,
+				updateOwnerPet: SamplePet,
 			},
 			request: controller.Request{
 				Arguments: map[string]interface{}{

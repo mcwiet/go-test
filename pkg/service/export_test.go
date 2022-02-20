@@ -53,21 +53,21 @@ func (f FakePetDao) Update(pet model.Pet) error {
 }
 
 type FakeUserDao struct {
-	GetByUsernameOutput model.User
-	GetByUsernameErr    error
-	GetTotalCountOutput int
-	GetTotalCountErr    error
-	ListOutput          []model.User
-	ListToken           string
-	ListErr             error
+	getByUsernameUser  model.User
+	getByUsernameErr   error
+	getTotalCountValue int
+	getTotalCountErr   error
+	listUsers          []model.User
+	listToken          string
+	listErr            error
 }
 
 func (u *FakeUserDao) GetByUsername(string) (model.User, error) {
-	return u.GetByUsernameOutput, u.GetByUsernameErr
+	return u.getByUsernameUser, u.getByUsernameErr
 }
 func (u *FakeUserDao) GetTotalCount() (int, error) {
-	return u.GetTotalCountOutput, u.GetTotalCountErr
+	return u.getTotalCountValue, u.getTotalCountErr
 }
 func (u *FakeUserDao) List(int, string) ([]model.User, string, error) {
-	return u.ListOutput, u.ListToken, u.ListErr
+	return u.listUsers, u.listToken, u.listErr
 }

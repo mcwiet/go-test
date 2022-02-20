@@ -40,7 +40,7 @@ func TestUserGetByUsername(t *testing.T) {
 		{
 			name: "valid get by username",
 			userDao: FakeUserDao{
-				GetByUsernameOutput: SampleUser1,
+				getByUsernameUser: SampleUser1,
 			},
 			username:     SampleUser1.Username,
 			expectedUser: SampleUser1,
@@ -49,7 +49,7 @@ func TestUserGetByUsername(t *testing.T) {
 		{
 			name: "DAO get by username error",
 			userDao: FakeUserDao{
-				GetByUsernameErr: assert.AnError,
+				getByUsernameErr: assert.AnError,
 			},
 			username:  SampleUser1.Username,
 			expectErr: true,
@@ -84,12 +84,12 @@ func TestUserList(t *testing.T) {
 		{
 			name: "list all users",
 			userDao: FakeUserDao{
-				ListOutput: []model.User{
+				listUsers: []model.User{
 					SampleUser1,
 					SampleUser2,
 				},
-				ListToken:           "",
-				GetTotalCountOutput: 2,
+				listToken:          "",
+				getTotalCountValue: 2,
 			},
 			first: 10,
 			after: "",
@@ -108,11 +108,11 @@ func TestUserList(t *testing.T) {
 		{
 			name: "list first of two users",
 			userDao: FakeUserDao{
-				ListOutput: []model.User{
+				listUsers: []model.User{
 					SampleUser1,
 				},
-				ListToken:           "token",
-				GetTotalCountOutput: 2,
+				listToken:          "token",
+				getTotalCountValue: 2,
 			},
 			first: 1,
 			after: "",
@@ -130,11 +130,11 @@ func TestUserList(t *testing.T) {
 		{
 			name: "list second of two users",
 			userDao: FakeUserDao{
-				ListOutput: []model.User{
+				listUsers: []model.User{
 					SampleUser2,
 				},
-				ListToken:           "",
-				GetTotalCountOutput: 2,
+				listToken:          "",
+				getTotalCountValue: 2,
 			},
 			first: 1,
 			after: SampleEncoder.Encode("token"),
@@ -152,7 +152,7 @@ func TestUserList(t *testing.T) {
 		{
 			name: "DAO get total count error",
 			userDao: FakeUserDao{
-				GetTotalCountErr: assert.AnError,
+				getTotalCountErr: assert.AnError,
 			},
 			first:     1,
 			after:     "",
@@ -161,7 +161,7 @@ func TestUserList(t *testing.T) {
 		{
 			name: "DAO list error",
 			userDao: FakeUserDao{
-				ListErr: assert.AnError,
+				listErr: assert.AnError,
 			},
 			first:     1,
 			after:     "",
