@@ -8,6 +8,7 @@ require (
 	github.com/aws/constructs-go/constructs/v10 v10.0.47
 	github.com/aws/jsii-runtime-go v1.52.1
 	github.com/google/uuid v1.3.0
+	github.com/openlyinc/pointy v1.1.2
 )
 
 require (

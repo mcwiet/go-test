@@ -8,6 +8,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/mcwiet/go-test/pkg/data"
 	"github.com/mcwiet/go-test/pkg/model"
+	"github.com/openlyinc/pointy"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -66,7 +67,7 @@ var (
 	}
 )
 
-func TestDelete(t *testing.T) {
+func TestDeletePet(t *testing.T) {
 	// Define test struct
 	type Test struct {
 		name      string
@@ -81,7 +82,7 @@ func TestDelete(t *testing.T) {
 			name:      "valid delete",
 			dbClient:  fakeDbClient{},
 			petId:     samplePet1.Id,
-			expectErr: false,
+			expectErr: jsii,
 		},
 		{
 			name: "db delete error",
@@ -118,7 +119,7 @@ func TestDelete(t *testing.T) {
 	}
 }
 
-func TestGetById(t *testing.T) {
+func TestGetByIdPet(t *testing.T) {
 	// Define test struct
 	type Test struct {
 		name        string
@@ -174,7 +175,7 @@ func TestGetById(t *testing.T) {
 	}
 }
 
-func TestInsert(t *testing.T) {
+func TestInsertPet(t *testing.T) {
 	// Define test struct
 	type Test struct {
 		name      string
@@ -218,7 +219,7 @@ func TestInsert(t *testing.T) {
 	}
 }
 
-func TestQuery(t *testing.T) {
+func TestQueryPet(t *testing.T) {
 	// Define test struct
 	type Test struct {
 		name                string
@@ -236,7 +237,7 @@ func TestQuery(t *testing.T) {
 			name: "request more items than in DB",
 			dbClient: fakeDbClient{
 				queryOutput: &dynamodb.QueryOutput{
-					Count:            newInt64(2),
+					Count:            pointy.Int64(2),
 					Items:            []data.DynamoItem{samplePetItem1, samplePetItem2},
 					LastEvaluatedKey: data.DynamoItem{},
 				}},
@@ -252,7 +253,7 @@ func TestQuery(t *testing.T) {
 			name: "request less items than in DB (start at beginning of list)",
 			dbClient: fakeDbClient{
 				queryOutput: &dynamodb.QueryOutput{
-					Count:            newInt64(2),
+					Count:            pointy.Int64(2),
 					Items:            []data.DynamoItem{samplePetItem1},
 					LastEvaluatedKey: samplePetItem1,
 				}},
@@ -266,7 +267,7 @@ func TestQuery(t *testing.T) {
 			name: "request less items than in DB (reach end of list)",
 			dbClient: fakeDbClient{
 				queryOutput: &dynamodb.QueryOutput{
-					Count:            newInt64(2),
+					Count:            pointy.Int64(2),
 					Items:            []data.DynamoItem{samplePetItem2},
 					LastEvaluatedKey: data.DynamoItem{},
 				}},
@@ -281,7 +282,7 @@ func TestQuery(t *testing.T) {
 			name: "request 'count=0' but 'exclusiveStartId' is not last pet",
 			dbClient: fakeDbClient{
 				queryOutput: &dynamodb.QueryOutput{
-					Count:            newInt64(2),
+					Count:            pointy.Int64(2),
 					Items:            []data.DynamoItem{},
 					LastEvaluatedKey: samplePetItem2,
 				}},
@@ -294,7 +295,7 @@ func TestQuery(t *testing.T) {
 			name: "request 'count=0' but 'exclusiveStartId' is last pet",
 			dbClient: fakeDbClient{
 				queryOutput: &dynamodb.QueryOutput{
-					Count:            newInt64(2),
+					Count:            pointy.Int64(2),
 					Items:            []data.DynamoItem{},
 					LastEvaluatedKey: data.DynamoItem{},
 				}},
@@ -307,7 +308,7 @@ func TestQuery(t *testing.T) {
 			name: "no pets returned when 'count=0'",
 			dbClient: fakeDbClient{
 				queryOutput: &dynamodb.QueryOutput{
-					Count:            newInt64(1),
+					Count:            pointy.Int64(1),
 					Items:            []data.DynamoItem{samplePetItem1},
 					LastEvaluatedKey: samplePetItem1,
 				},
@@ -342,7 +343,7 @@ func TestQuery(t *testing.T) {
 	}
 }
 
-func TestGetTotalCount(t *testing.T) {
+func TestGetTotalCountPet(t *testing.T) {
 	// Define test struct
 	type Test struct {
 		name          string
@@ -357,7 +358,7 @@ func TestGetTotalCount(t *testing.T) {
 			name: "valid get total count",
 			dbClient: fakeDbClient{
 				queryOutput: &dynamodb.QueryOutput{
-					Count: newInt64(10),
+					Count: pointy.Int64(10),
 				},
 			},
 			expectedCount: 10,
@@ -388,7 +389,7 @@ func TestGetTotalCount(t *testing.T) {
 	}
 }
 
-func TestUpdate(t *testing.T) {
+func TestUpdatePet(t *testing.T) {
 	// Define test struct
 	type Test struct {
 		name      string
@@ -430,9 +431,4 @@ func TestUpdate(t *testing.T) {
 			assert.NotNil(t, err, test.name)
 		}
 	}
-}
-
-func newInt64(val int) *int64 {
-	valInt64 := int64(val)
-	return &valInt64
 }

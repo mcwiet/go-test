@@ -7,6 +7,7 @@ import (
 	"github.com/aws/jsii-runtime-go"
 	"github.com/mcwiet/go-test/pkg/data"
 	"github.com/mcwiet/go-test/pkg/model"
+	"github.com/openlyinc/pointy"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -204,7 +205,7 @@ func TestGetTotalCountUsers(t *testing.T) {
 			userPoolClient: fakeUserPoolClient{
 				describeUserPoolOutput: &cognito.DescribeUserPoolOutput{
 					UserPool: &cognito.UserPoolType{
-						EstimatedNumberOfUsers: newInt64Temp(2)}}},
+						EstimatedNumberOfUsers: pointy.Int64(2)}}},
 			expectedCount: 2,
 			expectErr:     false,
 		},
@@ -226,9 +227,4 @@ func TestGetTotalCountUsers(t *testing.T) {
 			assert.NotNil(t, err, test.name)
 		}
 	}
-}
-
-func newInt64Temp(val int) *int64 {
-	valInt64 := int64(val)
-	return &valInt64
 }
