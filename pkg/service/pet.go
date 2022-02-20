@@ -59,7 +59,11 @@ func (s *PetService) GetById(id string) (model.Pet, error) {
 
 // Lists pets
 func (s *PetService) List(first int, after string) (model.PetConnection, error) {
-	exclusiveStartId, _ := s.encoder.Decode(after)
+	exclusiveStartId, err := s.encoder.Decode(after)
+	if err != nil {
+		return model.PetConnection{}, err
+	}
+
 	pets, hasNextPage, err := s.petDao.Query(first, exclusiveStartId)
 	if err != nil {
 		return model.PetConnection{}, err

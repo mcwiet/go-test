@@ -74,6 +74,7 @@ func TestUserList(t *testing.T) {
 	type Test struct {
 		name               string
 		userDao            FakeUserDao
+		encoder            FakeEncoder
 		first              int
 		after              string
 		expectedConnection model.UserConnection
@@ -91,8 +92,9 @@ func TestUserList(t *testing.T) {
 				listToken:          "",
 				getTotalCountValue: 2,
 			},
-			first: 10,
-			after: "",
+			encoder: SampleEncoder,
+			first:   10,
+			after:   "",
 			expectedConnection: model.UserConnection{
 				TotalCount: 2,
 				Edges: []model.UserEdge{
@@ -114,8 +116,9 @@ func TestUserList(t *testing.T) {
 				listToken:          "token",
 				getTotalCountValue: 2,
 			},
-			first: 1,
-			after: "",
+			encoder: SampleEncoder,
+			first:   1,
+			after:   "",
 			expectedConnection: model.UserConnection{
 				TotalCount: 2,
 				Edges: []model.UserEdge{
@@ -136,8 +139,9 @@ func TestUserList(t *testing.T) {
 				listToken:          "",
 				getTotalCountValue: 2,
 			},
-			first: 1,
-			after: SampleEncoder.Encode("token"),
+			encoder: SampleEncoder,
+			first:   1,
+			after:   SampleEncoder.Encode("token"),
 			expectedConnection: model.UserConnection{
 				TotalCount: 2,
 				Edges: []model.UserEdge{
@@ -150,10 +154,21 @@ func TestUserList(t *testing.T) {
 			},
 		},
 		{
+			name: "decode error",
+			userDao: FakeUserDao{
+				getTotalCountErr: assert.AnError,
+			},
+			encoder:   SampleEncoder,
+			first:     1,
+			after:     "",
+			expectErr: true,
+		},
+		{
 			name: "DAO get total count error",
 			userDao: FakeUserDao{
 				getTotalCountErr: assert.AnError,
 			},
+			encoder:   SampleEncoder,
 			first:     1,
 			after:     "",
 			expectErr: true,
@@ -163,6 +178,7 @@ func TestUserList(t *testing.T) {
 			userDao: FakeUserDao{
 				listErr: assert.AnError,
 			},
+			encoder:   SampleEncoder,
 			first:     1,
 			after:     "",
 			expectErr: true,
@@ -171,7 +187,7 @@ func TestUserList(t *testing.T) {
 
 	for _, test := range tests {
 		// Setup
-		service := service.NewUserService(&test.userDao, &SampleEncoder)
+		service := service.NewUserService(&test.userDao, &test.encoder)
 
 		// Execute
 		connection, err := service.List(test.first, test.after)

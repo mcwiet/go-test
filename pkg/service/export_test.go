@@ -10,14 +10,20 @@ var (
 	SampleEncoder = FakeEncoder{}
 )
 
-type FakeEncoder struct{}
+type FakeEncoder struct {
+	decodeErr error
+}
 
 func (e *FakeEncoder) Encode(input string) string {
 	return base64.StdEncoding.EncodeToString([]byte(input))
 }
 func (e *FakeEncoder) Decode(input string) (string, error) {
-	valBytes, _ := base64.StdEncoding.DecodeString(input)
-	return string(valBytes), nil
+	if e.decodeErr == nil {
+		valBytes, _ := base64.StdEncoding.DecodeString(input)
+		return string(valBytes), nil
+	} else {
+		return "", e.decodeErr
+	}
 }
 
 type FakePetDao struct {
@@ -33,22 +39,22 @@ type FakePetDao struct {
 	updateErr          error
 }
 
-func (f FakePetDao) Delete(string) error {
+func (f *FakePetDao) Delete(string) error {
 	return f.deleteErr
 }
-func (f FakePetDao) GetById(string) (model.Pet, error) {
+func (f *FakePetDao) GetById(string) (model.Pet, error) {
 	return f.getByIdPet, f.getByIdErr
 }
-func (f FakePetDao) GetTotalCount() (int, error) {
+func (f *FakePetDao) GetTotalCount() (int, error) {
 	return f.getTotalCountValue, f.getTotalCountErr
 }
-func (f FakePetDao) Insert(model.Pet) error {
+func (f *FakePetDao) Insert(model.Pet) error {
 	return f.insertErr
 }
-func (f FakePetDao) Query(count int, exclusiveStartId string) ([]model.Pet, bool, error) {
+func (f *FakePetDao) Query(count int, exclusiveStartId string) ([]model.Pet, bool, error) {
 	return f.queryPets, f.queryHasNextPage, f.queryErr
 }
-func (f FakePetDao) Update(pet model.Pet) error {
+func (f *FakePetDao) Update(pet model.Pet) error {
 	return f.updateErr
 }
 
