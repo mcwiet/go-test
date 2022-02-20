@@ -42,7 +42,6 @@ func (u *UserService) List(first int, after string) (model.UserConnection, error
 
 	token = u.encoder.Encode(token)
 	totalCount, err := u.userDao.GetTotalCount()
-
 	connection := model.UserConnection{
 		TotalCount: totalCount,
 		Edges:      []model.UserEdge{},

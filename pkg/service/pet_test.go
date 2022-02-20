@@ -1,7 +1,6 @@
 package service_test
 
 import (
-	"encoding/base64"
 	"errors"
 	"testing"
 
@@ -11,72 +10,34 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-// Define mocks / stubs
-type fakePetDao struct {
-	deleteErr          error
-	getByIdPet         model.Pet
-	getByIdErr         error
-	getTotalCountValue int
-	getTotalCountErr   error
-	insertErr          error
-	queryPets          []model.Pet
-	queryHasNextPage   bool
-	queryErr           error
-	updateErr          error
-}
-type petDaoGetTotalCount = service.PetDao
-type fakeEncoder struct{}
-
-// Define mock / stub behavior
-func (f fakePetDao) Delete(string) error {
-	return f.deleteErr
-}
-func (f fakePetDao) GetById(string) (model.Pet, error) {
-	return f.getByIdPet, f.getByIdErr
-}
-func (f fakePetDao) GetTotalCount() (int, error) {
-	return f.getTotalCountValue, f.getTotalCountErr
-}
-func (f fakePetDao) Insert(model.Pet) error {
-	return f.insertErr
-}
-func (f fakePetDao) Query(count int, exclusiveStartId string) ([]model.Pet, bool, error) {
-	return f.queryPets, f.queryHasNextPage, f.queryErr
-}
-func (f fakePetDao) Update(pet model.Pet) error {
-	return f.updateErr
-}
-
-func (e *fakeEncoder) Encode(input string) string {
-	return base64.StdEncoding.EncodeToString([]byte(input))
-}
-func (e *fakeEncoder) Decode(input string) (string, error) {
-	valBytes, _ := base64.StdEncoding.DecodeString(input)
-	return string(valBytes), nil
-}
-
-// Define common data
 var (
-	encoder    = fakeEncoder{}
-	samplePet1 = model.Pet{
+	SamplePet1 = model.Pet{
 		Id:    uuid.NewString(),
 		Name:  "pet 1",
 		Age:   12,
 		Owner: "User 1",
 	}
-	samplePet2 = model.Pet{
+	SamplePet2 = model.Pet{
 		Id:    uuid.NewString(),
 		Name:  "pet 2",
 		Age:   20,
 		Owner: "User 2",
 	}
+	SamplePet1Edge = model.PetEdge{
+		Node:   SamplePet1,
+		Cursor: SampleEncoder.Encode(SamplePet1.Id),
+	}
+	SamplePet2Edge = model.PetEdge{
+		Node:   SamplePet2,
+		Cursor: SampleEncoder.Encode(SamplePet2.Id),
+	}
 )
 
-func TestCreate(t *testing.T) {
+func TestPetCreate(t *testing.T) {
 	// Define test struct
 	type Test struct {
 		name      string
-		petDao    fakePetDao
+		petDao    FakePetDao
 		petName   string
 		petAge    int
 		petOwner  string
@@ -87,17 +48,17 @@ func TestCreate(t *testing.T) {
 	tests := []Test{
 		{
 			name:      "valid create",
-			petDao:    fakePetDao{},
-			petName:   samplePet1.Name,
-			petAge:    samplePet1.Age,
-			petOwner:  samplePet1.Owner,
+			petDao:    FakePetDao{},
+			petName:   SamplePet1.Name,
+			petAge:    SamplePet1.Age,
+			petOwner:  SamplePet1.Owner,
 			expectErr: false,
 		},
 		{
 			name:      "DAO insert error",
-			petDao:    fakePetDao{insertErr: errors.New("dao error")},
-			petName:   samplePet1.Name,
-			petAge:    samplePet1.Age,
+			petDao:    FakePetDao{insertErr: errors.New("dao error")},
+			petName:   SamplePet1.Name,
+			petAge:    SamplePet1.Age,
 			expectErr: true,
 		},
 	}
@@ -105,28 +66,29 @@ func TestCreate(t *testing.T) {
 	// Run tests
 	for _, test := range tests {
 		// Setup
-		service := service.NewPetService(test.petDao, &encoder)
+		service := service.NewPetService(test.petDao, &SampleEncoder)
 
 		// Execute
 		pet, err := service.Create(test.petName, test.petAge, test.petOwner)
 
 		// Verify
 		if !test.expectErr {
+			assert.Nil(t, err, test.name)
 			_, uuidErr := uuid.Parse(pet.Id)
+			assert.Nil(t, uuidErr, test.name)
 			assert.Equal(t, pet.Name, test.petName, test.name)
 			assert.Equal(t, pet.Age, test.petAge, test.name)
-			assert.Nil(t, uuidErr, test.name)
 		} else {
 			assert.NotNil(t, err, test.name)
 		}
 	}
 }
 
-func TestGetById(t *testing.T) {
+func TestPetGetById(t *testing.T) {
 	// Define test struct
 	type Test struct {
 		name        string
-		petDao      fakePetDao
+		petDao      FakePetDao
 		petId       string
 		expectedPet model.Pet
 		expectErr   bool
@@ -136,16 +98,16 @@ func TestGetById(t *testing.T) {
 	tests := []Test{
 		{
 			name:        "valid get by id",
-			petDao:      fakePetDao{getByIdPet: samplePet1},
-			petId:       samplePet1.Id,
-			expectedPet: samplePet1,
+			petDao:      FakePetDao{getByIdPet: SamplePet1},
+			petId:       SamplePet1.Id,
+			expectedPet: SamplePet1,
 			expectErr:   false,
 		},
 		{
 			name:        "DAO get error",
-			petDao:      fakePetDao{getByIdErr: errors.New("dao error")},
-			petId:       samplePet1.Id,
-			expectedPet: samplePet1,
+			petDao:      FakePetDao{getByIdErr: errors.New("dao error")},
+			petId:       SamplePet1.Id,
+			expectedPet: SamplePet1,
 			expectErr:   true,
 		},
 	}
@@ -153,13 +115,14 @@ func TestGetById(t *testing.T) {
 	// Run tests
 	for _, test := range tests {
 		// Setup
-		service := service.NewPetService(test.petDao, &encoder)
+		service := service.NewPetService(test.petDao, &SampleEncoder)
 
 		// Execute
 		pet, err := service.GetById(test.petId)
 
 		// Verify
 		if !test.expectErr {
+			assert.Nil(t, err, test.name)
 			assert.Equal(t, test.expectedPet, pet, test.name)
 		} else {
 			assert.NotNil(t, err, test.name)
@@ -167,11 +130,11 @@ func TestGetById(t *testing.T) {
 	}
 }
 
-func TestDelete(t *testing.T) {
+func TestPetDelete(t *testing.T) {
 	// Define test struct
 	type Test struct {
 		name      string
-		petDao    fakePetDao
+		petDao    FakePetDao
 		petId     string
 		expectErr bool
 	}
@@ -180,8 +143,8 @@ func TestDelete(t *testing.T) {
 	tests := []Test{
 		{
 			name:      "valid delete",
-			petDao:    fakePetDao{deleteErr: nil},
-			petId:     samplePet1.Id,
+			petDao:    FakePetDao{deleteErr: nil},
+			petId:     SamplePet1.Id,
 			expectErr: false,
 		},
 	}
@@ -189,7 +152,7 @@ func TestDelete(t *testing.T) {
 	// Run tests
 	for _, test := range tests {
 		// Setup
-		service := service.NewPetService(test.petDao, &encoder)
+		service := service.NewPetService(test.petDao, &SampleEncoder)
 
 		// Execute
 		err := service.Delete(test.petId)
@@ -203,11 +166,11 @@ func TestDelete(t *testing.T) {
 	}
 }
 
-func TestList(t *testing.T) {
+func TestPetList(t *testing.T) {
 	// Define test struct
 	type Test struct {
 		name               string
-		petDao             fakePetDao
+		petDao             FakePetDao
 		first              int
 		after              string
 		expectedConnection model.PetConnection
@@ -218,9 +181,9 @@ func TestList(t *testing.T) {
 	tests := []Test{
 		{
 			name: "list all pets",
-			petDao: fakePetDao{
+			petDao: FakePetDao{
 				getTotalCountValue: 2,
-				queryPets:          []model.Pet{samplePet1, samplePet2},
+				queryPets:          []model.Pet{SamplePet1, SamplePet2},
 				queryHasNextPage:   false,
 			},
 			first: 10,
@@ -228,17 +191,11 @@ func TestList(t *testing.T) {
 			expectedConnection: model.PetConnection{
 				TotalCount: 2,
 				Edges: []model.PetEdge{
-					{
-						Node:   samplePet1,
-						Cursor: encoder.Encode(samplePet1.Id),
-					},
-					{
-						Node:   samplePet2,
-						Cursor: encoder.Encode(samplePet2.Id),
-					},
+					SamplePet1Edge,
+					SamplePet2Edge,
 				},
 				PageInfo: model.PageInfo{
-					EndCursor:   encoder.Encode(samplePet2.Id),
+					EndCursor:   SampleEncoder.Encode(SamplePet2.Id),
 					HasNextPage: false,
 				},
 			},
@@ -246,9 +203,9 @@ func TestList(t *testing.T) {
 		},
 		{
 			name: "list first of two pets",
-			petDao: fakePetDao{
+			petDao: FakePetDao{
 				getTotalCountValue: 2,
-				queryPets:          []model.Pet{samplePet1},
+				queryPets:          []model.Pet{SamplePet1},
 				queryHasNextPage:   true,
 			},
 			first: 1,
@@ -256,13 +213,10 @@ func TestList(t *testing.T) {
 			expectedConnection: model.PetConnection{
 				TotalCount: 2,
 				Edges: []model.PetEdge{
-					{
-						Node:   samplePet1,
-						Cursor: encoder.Encode(samplePet1.Id),
-					},
+					SamplePet1Edge,
 				},
 				PageInfo: model.PageInfo{
-					EndCursor:   encoder.Encode(samplePet1.Id),
+					EndCursor:   SampleEncoder.Encode(SamplePet1.Id),
 					HasNextPage: true,
 				},
 			},
@@ -270,23 +224,20 @@ func TestList(t *testing.T) {
 		},
 		{
 			name: "list second of two pets",
-			petDao: fakePetDao{
+			petDao: FakePetDao{
 				getTotalCountValue: 2,
-				queryPets:          []model.Pet{samplePet2},
+				queryPets:          []model.Pet{SamplePet2},
 				queryHasNextPage:   false,
 			},
 			first: 1,
-			after: encoder.Encode(samplePet1.Id),
+			after: SampleEncoder.Encode("token"),
 			expectedConnection: model.PetConnection{
 				TotalCount: 2,
 				Edges: []model.PetEdge{
-					{
-						Node:   samplePet2,
-						Cursor: encoder.Encode(samplePet2.Id),
-					},
+					SamplePet2Edge,
 				},
 				PageInfo: model.PageInfo{
-					EndCursor:   encoder.Encode(samplePet2.Id),
+					EndCursor:   SampleEncoder.Encode(SamplePet2.Id),
 					HasNextPage: false,
 				},
 			},
@@ -294,7 +245,7 @@ func TestList(t *testing.T) {
 		},
 		{
 			name: "DAO total count error",
-			petDao: fakePetDao{
+			petDao: FakePetDao{
 				getTotalCountErr: assert.AnError,
 			},
 			first:     1,
@@ -303,7 +254,7 @@ func TestList(t *testing.T) {
 		},
 		{
 			name: "DAO query error",
-			petDao: fakePetDao{
+			petDao: FakePetDao{
 				getTotalCountValue: 2,
 				queryErr:           assert.AnError,
 			},
@@ -316,13 +267,14 @@ func TestList(t *testing.T) {
 	//Run tests
 	for _, test := range tests {
 		// Setup
-		service := service.NewPetService(test.petDao, &encoder)
+		service := service.NewPetService(test.petDao, &SampleEncoder)
 
 		// Execute
 		pets, err := service.List(test.first, test.after)
 
 		// Verify
 		if !test.expectErr {
+			assert.Nil(t, err, test.name)
 			assert.Equal(t, test.expectedConnection, pets, test.name)
 		} else {
 			assert.NotNil(t, err, test.name)
@@ -330,7 +282,7 @@ func TestList(t *testing.T) {
 	}
 }
 
-func TestUpdateOwner(t *testing.T) {
+func TestPetUpdateOwner(t *testing.T) {
 	// Define test struct
 	type Test struct {
 		name      string
@@ -344,23 +296,23 @@ func TestUpdateOwner(t *testing.T) {
 	tests := []Test{
 		{
 			name:      "valid update owner",
-			petDao:    fakePetDao{getByIdPet: samplePet1},
-			petId:     samplePet1.Id,
-			petOwner:  samplePet2.Owner,
+			petDao:    FakePetDao{getByIdPet: SamplePet1},
+			petId:     SamplePet1.Id,
+			petOwner:  SamplePet2.Owner,
 			expectErr: false,
 		},
 		{
 			name:      "DAO get error",
-			petDao:    fakePetDao{getByIdErr: assert.AnError},
-			petId:     samplePet1.Id,
-			petOwner:  samplePet2.Owner,
+			petDao:    FakePetDao{getByIdErr: assert.AnError},
+			petId:     SamplePet1.Id,
+			petOwner:  SamplePet2.Owner,
 			expectErr: true,
 		},
 		{
 			name:      "DAO update error",
-			petDao:    fakePetDao{updateErr: assert.AnError},
-			petId:     samplePet1.Id,
-			petOwner:  samplePet2.Owner,
+			petDao:    FakePetDao{updateErr: assert.AnError},
+			petId:     SamplePet1.Id,
+			petOwner:  SamplePet2.Owner,
 			expectErr: true,
 		},
 	}
@@ -368,13 +320,14 @@ func TestUpdateOwner(t *testing.T) {
 	// Run
 	for _, test := range tests {
 		// Setup
-		service := service.NewPetService(test.petDao, &encoder)
+		service := service.NewPetService(test.petDao, &SampleEncoder)
 
 		// Execute
 		pet, err := service.UpdateOwner(test.petId, test.petOwner)
 
 		// Verify
 		if !test.expectErr {
+			assert.Nil(t, err, test.name)
 			assert.Equal(t, test.petOwner, pet.Owner)
 		} else {
 			assert.NotNil(t, err, test.name)

@@ -11,55 +11,33 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-type fakeUserPoolClient struct {
-	adminGetUserOutput     *cognito.AdminGetUserOutput
-	adminGetUserErr        error
-	listUsersOutput        *cognito.ListUsersOutput
-	listUsersErr           error
-	describeUserPoolOutput *cognito.DescribeUserPoolOutput
-	describeUserPoolErr    error
-}
-
-func (f *fakeUserPoolClient) AdminGetUser(*cognito.AdminGetUserInput) (*cognito.AdminGetUserOutput, error) {
-	return f.adminGetUserOutput, f.adminGetUserErr
-}
-
-func (f *fakeUserPoolClient) ListUsers(*cognito.ListUsersInput) (*cognito.ListUsersOutput, error) {
-	return f.listUsersOutput, f.listUsersErr
-}
-
-func (f *fakeUserPoolClient) DescribeUserPool(*cognito.DescribeUserPoolInput) (*cognito.DescribeUserPoolOutput, error) {
-	return f.describeUserPoolOutput, f.describeUserPoolErr
-}
-
 var (
-	sampleUserPoolId = "user-pool-id"
-	sampleUser1      = model.User{
+	SampleUser1 = model.User{
 		Username: "test-user-1",
 		Email:    "email1@email.com",
 		Name:     "Test User 1",
 	}
-	sampleUser2 = model.User{
+	SampleUser2 = model.User{
 		Username: "test-user-2",
 		Email:    "email2@email.com",
 		Name:     "Test User 2",
 	}
-	sampleUserAttrs1 = []*cognito.AttributeType{
-		{Name: jsii.String("email"), Value: &sampleUser1.Email},
-		{Name: jsii.String("name"), Value: &sampleUser1.Name},
+	SampleUser1Attrs = []*cognito.AttributeType{
+		{Name: jsii.String("email"), Value: &SampleUser1.Email},
+		{Name: jsii.String("name"), Value: &SampleUser1.Name},
 	}
-	sampleUserAttrs2 = []*cognito.AttributeType{
-		{Name: jsii.String("email"), Value: &sampleUser2.Email},
-		{Name: jsii.String("name"), Value: &sampleUser2.Name},
+	SampleUser2Attrs = []*cognito.AttributeType{
+		{Name: jsii.String("email"), Value: &SampleUser2.Email},
+		{Name: jsii.String("name"), Value: &SampleUser2.Name},
 	}
-	samplePaginationToken = "test pagination token"
+	SamplePaginationToken = "test pagination token"
 )
 
-func TestGetByUsername(t *testing.T) {
+func TestUserGetByUsername(t *testing.T) {
 	// Define test struct
 	type Test struct {
 		name           string
-		userPoolClient fakeUserPoolClient
+		userPoolClient FakeUserPoolClient
 		username       string
 		expectedUser   model.User
 		expectErr      bool
@@ -69,18 +47,21 @@ func TestGetByUsername(t *testing.T) {
 	tests := []Test{
 		{
 			name: "valid get by username",
-			userPoolClient: fakeUserPoolClient{
+			userPoolClient: FakeUserPoolClient{
 				adminGetUserOutput: &cognito.AdminGetUserOutput{
-					UserAttributes: sampleUserAttrs1}},
-			username:     sampleUser1.Username,
-			expectedUser: sampleUser1,
+					UserAttributes: SampleUser1Attrs,
+				},
+			},
+			username:     SampleUser1.Username,
+			expectedUser: SampleUser1,
 			expectErr:    false,
 		},
 		{
 			name: "DAO get user error",
-			userPoolClient: fakeUserPoolClient{
-				adminGetUserErr: assert.AnError},
-			username:  sampleUser1.Username,
+			userPoolClient: FakeUserPoolClient{
+				adminGetUserErr: assert.AnError,
+			},
+			username:  SampleUser1.Username,
 			expectErr: true,
 		},
 	}
@@ -88,13 +69,14 @@ func TestGetByUsername(t *testing.T) {
 	// Run tests
 	for _, test := range tests {
 		// Setup
-		userDao := data.NewUserDao(&test.userPoolClient, sampleUserPoolId)
+		userDao := data.NewUserDao(&test.userPoolClient, SampleUserPoolId)
 
 		// Execute
 		user, err := userDao.GetByUsername(test.username)
 
 		// Verify
 		if !test.expectErr {
+			assert.Nil(t, err, test.name)
 			assert.Equal(t, test.expectedUser, user, test.name)
 		} else {
 			assert.NotNil(t, err, test.name)
@@ -102,12 +84,11 @@ func TestGetByUsername(t *testing.T) {
 	}
 }
 
-// func TestQuery
-func TestList(t *testing.T) {
+func TestUserList(t *testing.T) {
 	// Define test struct
 	type Test struct {
 		name           string
-		userPoolClient fakeUserPoolClient
+		userPoolClient FakeUserPoolClient
 		first          int
 		after          string
 		expectedUsers  []model.User
@@ -119,51 +100,63 @@ func TestList(t *testing.T) {
 	tests := []Test{
 		{
 			name: "request more users than in DB",
-			userPoolClient: fakeUserPoolClient{
+			userPoolClient: FakeUserPoolClient{
 				listUsersOutput: &cognito.ListUsersOutput{
 					Users: []*cognito.UserType{
-						{Username: &sampleUser1.Username, Attributes: sampleUserAttrs1},
-						{Username: &sampleUser2.Username, Attributes: sampleUserAttrs2}}}},
+						{Username: &SampleUser1.Username, Attributes: SampleUser1Attrs},
+						{Username: &SampleUser2.Username, Attributes: SampleUser2Attrs},
+					},
+				},
+			},
 			first: 10,
 			after: "",
 			expectedUsers: []model.User{
-				sampleUser1,
-				sampleUser2,
+				SampleUser1,
+				SampleUser2,
 			},
 			expectedToken: "",
 			expectErr:     false,
 		},
 		{
 			name: "request some users (beginning of list)",
-			userPoolClient: fakeUserPoolClient{
+			userPoolClient: FakeUserPoolClient{
 				listUsersOutput: &cognito.ListUsersOutput{
 					Users: []*cognito.UserType{
-						{Username: &sampleUser1.Username, Attributes: sampleUserAttrs1}},
-					PaginationToken: &samplePaginationToken}},
+						{Username: &SampleUser1.Username, Attributes: SampleUser1Attrs},
+					},
+					PaginationToken: &SamplePaginationToken,
+				},
+			},
 			first: 1,
 			after: "",
 			expectedUsers: []model.User{
-				sampleUser1},
-			expectedToken: samplePaginationToken,
+				SampleUser1,
+			},
+			expectedToken: SamplePaginationToken,
 			expectErr:     false,
 		},
 		{
 			name: "request some users (end of list)",
-			userPoolClient: fakeUserPoolClient{
+			userPoolClient: FakeUserPoolClient{
 				listUsersOutput: &cognito.ListUsersOutput{
 					Users: []*cognito.UserType{
-						{Username: &sampleUser2.Username, Attributes: sampleUserAttrs2}}}},
+						{Username: &SampleUser2.Username, Attributes: SampleUser2Attrs},
+					},
+				},
+			},
 			first: 1,
-			after: samplePaginationToken,
+			after: SamplePaginationToken,
 			expectedUsers: []model.User{
-				sampleUser2},
+				SampleUser2,
+			},
 			expectedToken: "",
 			expectErr:     false,
 		},
 		{
 			name: "DAO list error",
-			userPoolClient: fakeUserPoolClient{
-				listUsersErr: assert.AnError},
+			userPoolClient: FakeUserPoolClient{
+				listUsersErr: assert.AnError,
+			},
 			first:     1,
 			after:     "",
 			expectErr: true,
@@ -173,27 +166,27 @@ func TestList(t *testing.T) {
 	// Run tests
 	for _, test := range tests {
 		// Setup
-		userDao := data.NewUserDao(&test.userPoolClient, sampleUserPoolId)
+		userDao := data.NewUserDao(&test.userPoolClient, SampleUserPoolId)
 
 		// Execute
 		users, token, err := userDao.List(test.first, test.after)
 
 		// Verify
 		if !test.expectErr {
+			assert.Nil(t, err, test.name)
 			assert.Equal(t, test.expectedUsers, users, test.name)
 			assert.Equal(t, test.expectedToken, token, test.name)
-			assert.Nil(t, err, test.name)
 		} else {
 			assert.NotNil(t, err, test.name)
 		}
 	}
 }
 
-func TestGetTotalCountUsers(t *testing.T) {
+func TestUserGetTotalCountUsers(t *testing.T) {
 	// Define test struct
 	type Test struct {
 		name           string
-		userPoolClient fakeUserPoolClient
+		userPoolClient FakeUserPoolClient
 		expectedCount  int
 		expectErr      bool
 	}
@@ -202,27 +195,37 @@ func TestGetTotalCountUsers(t *testing.T) {
 	tests := []Test{
 		{
 			name: "valid get total count",
-			userPoolClient: fakeUserPoolClient{
+			userPoolClient: FakeUserPoolClient{
 				describeUserPoolOutput: &cognito.DescribeUserPoolOutput{
 					UserPool: &cognito.UserPoolType{
-						EstimatedNumberOfUsers: pointy.Int64(2)}}},
+						EstimatedNumberOfUsers: pointy.Int64(2),
+					},
+				},
+			},
 			expectedCount: 2,
 			expectErr:     false,
+		},
+		{
+			name: "DAO describe user pool error",
+			userPoolClient: FakeUserPoolClient{
+				describeUserPoolErr: assert.AnError,
+			},
+			expectErr: true,
 		},
 	}
 
 	// Run tests
 	for _, test := range tests {
 		// Setup
-		userDao := data.NewUserDao(&test.userPoolClient, sampleUserPoolId)
+		userDao := data.NewUserDao(&test.userPoolClient, SampleUserPoolId)
 
 		// Execute
 		count, err := userDao.GetTotalCount()
 
 		// Verify
 		if !test.expectErr {
-			assert.Equal(t, test.expectedCount, count, test.name)
 			assert.Nil(t, err, test.name)
+			assert.Equal(t, test.expectedCount, count, test.name)
 		} else {
 			assert.NotNil(t, err, test.name)
 		}
