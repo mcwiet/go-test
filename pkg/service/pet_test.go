@@ -66,7 +66,7 @@ func TestPetCreate(t *testing.T) {
 	// Run tests
 	for _, test := range tests {
 		// Setup
-		service := service.NewPetService(&test.petDao, &SampleEncoder)
+		service := service.NewPetService(&test.petDao, nil, nil)
 
 		// Execute
 		pet, err := service.Create(test.petName, test.petAge, test.petOwner)
@@ -115,7 +115,7 @@ func TestPetGetById(t *testing.T) {
 	// Run tests
 	for _, test := range tests {
 		// Setup
-		service := service.NewPetService(&test.petDao, &SampleEncoder)
+		service := service.NewPetService(&test.petDao, nil, &SampleEncoder)
 
 		// Execute
 		pet, err := service.GetById(test.petId)
@@ -152,7 +152,7 @@ func TestPetDelete(t *testing.T) {
 	// Run tests
 	for _, test := range tests {
 		// Setup
-		service := service.NewPetService(&test.petDao, &SampleEncoder)
+		service := service.NewPetService(&test.petDao, nil, nil)
 
 		// Execute
 		err := service.Delete(test.petId)
@@ -287,7 +287,7 @@ func TestPetList(t *testing.T) {
 	//Run tests
 	for _, test := range tests {
 		// Setup
-		service := service.NewPetService(&test.petDao, &test.encoder)
+		service := service.NewPetService(&test.petDao, nil, &test.encoder)
 
 		// Execute
 		pets, err := service.List(test.first, test.after)
@@ -307,6 +307,7 @@ func TestPetUpdateOwner(t *testing.T) {
 	type Test struct {
 		name      string
 		petDao    FakePetDao
+		userDao   FakeUserDao
 		petId     string
 		petOwner  string
 		expectErr bool
@@ -319,26 +320,47 @@ func TestPetUpdateOwner(t *testing.T) {
 			petDao: FakePetDao{
 				getByIdPet: SamplePet1,
 			},
+			userDao: FakeUserDao{
+				getByUsernameUser: SampleUser1,
+			},
 			petId:     SamplePet1.Id,
-			petOwner:  SamplePet2.Owner,
+			petOwner:  SampleUser1.Username,
 			expectErr: false,
 		},
 		{
-			name: "DAO get error",
+			name: "user DAO get error",
 			petDao: FakePetDao{
-				getByIdErr: assert.AnError,
+				getByIdPet: SamplePet1,
+			},
+			userDao: FakeUserDao{
+				getByUsernameErr: assert.AnError,
 			},
 			petId:     SamplePet1.Id,
-			petOwner:  SamplePet2.Owner,
+			petOwner:  SampleUser1.Username,
 			expectErr: true,
 		},
 		{
-			name: "DAO update error",
+			name: "pet DAO get error",
+			petDao: FakePetDao{
+				getByIdErr: assert.AnError,
+			},
+			userDao: FakeUserDao{
+				getByUsernameUser: SampleUser1,
+			},
+			petId:     SamplePet1.Id,
+			petOwner:  SampleUser1.Username,
+			expectErr: true,
+		},
+		{
+			name: "pet DAO update error",
 			petDao: FakePetDao{
 				updateErr: assert.AnError,
 			},
+			userDao: FakeUserDao{
+				getByUsernameUser: SampleUser1,
+			},
 			petId:     SamplePet1.Id,
-			petOwner:  SamplePet2.Owner,
+			petOwner:  SampleUser1.Username,
 			expectErr: true,
 		},
 	}
@@ -346,7 +368,7 @@ func TestPetUpdateOwner(t *testing.T) {
 	// Run
 	for _, test := range tests {
 		// Setup
-		service := service.NewPetService(&test.petDao, &SampleEncoder)
+		service := service.NewPetService(&test.petDao, &test.userDao, nil)
 
 		// Execute
 		pet, err := service.UpdateOwner(test.petId, test.petOwner)

@@ -28,14 +28,18 @@ func init() {
 	cognitoClient := cognitoidentityprovider.New(session)
 	cursorEncoder := encoding.NewCursorEncoder()
 
+	// Data
 	tableName := os.Getenv("DDB_TABLE_NAME")
 	petDao := data.NewPetDao(ddbClient, tableName)
-	petService := service.NewPetService(&petDao, &cursorEncoder)
-	petController = controller.NewPetController(&petService)
-
 	userPoolId := os.Getenv("USER_POOL_ID")
 	userDao := data.NewUserDao(cognitoClient, userPoolId)
+
+	// Service
+	petService := service.NewPetService(&petDao, &userDao, &cursorEncoder)
 	userService := service.NewUserService(&userDao, &cursorEncoder)
+
+	// Controller
+	petController = controller.NewPetController(&petService)
 	userController = controller.NewUserController(&userService)
 }
 

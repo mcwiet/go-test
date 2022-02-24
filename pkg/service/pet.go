@@ -1,6 +1,8 @@
 package service
 
 import (
+	"errors"
+
 	"github.com/google/uuid"
 	"github.com/mcwiet/go-test/pkg/model"
 )
@@ -22,13 +24,15 @@ type CursorEncoder interface {
 // Object containing data needed to use the Pet service
 type PetService struct {
 	petDao  PetDao
+	userDao UserDao
 	encoder CursorEncoder
 }
 
 // Creates a Pet service object
-func NewPetService(petDao PetDao, encoder CursorEncoder) PetService {
+func NewPetService(petDao PetDao, userDao UserDao, encoder CursorEncoder) PetService {
 	return PetService{
 		petDao:  petDao,
+		userDao: userDao,
 		encoder: encoder,
 	}
 }
@@ -103,6 +107,12 @@ func (s *PetService) UpdateOwner(id string, owner string) (model.Pet, error) {
 	pet, err := s.petDao.GetById(id)
 	if err != nil {
 		return model.Pet{}, err
+	}
+
+	// Check that owner is a user
+	_, err = s.userDao.GetByUsername(owner)
+	if err != nil {
+		return model.Pet{}, errors.New("owner is not a valid user")
 	}
 
 	pet.Owner = owner
