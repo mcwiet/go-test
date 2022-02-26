@@ -22,17 +22,19 @@ func (p *fakeProvider) InitiateAuth(input *cognito.InitiateAuthInput) (*cognito.
 
 // Define common data
 var (
-	tokenString              = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJvcmlnaW5fanRpIjoianRpIiwic3ViIjoic3ViIiwiZXZlbnRfaWQiOiJpZCIsInRva2VuX3VzZSI6ImFjY2VzcyIsInNjb3BlIjoiYXdzLmNvZ25pdG8uc2lnbmluLnVzZXIuYWRtaW4iLCJhdXRoX3RpbWUiOjEsImlzcyI6Imh0dHBzOi8vY29nbml0by1pZHAudXMtZWFzdC0xLmFtYXpvbmF3cy5jb20vdXMtZWFzdC0xX1hYWFhYWCIsImV4cCI6MiwiaWF0IjoxLCJqdGkiOiJqdGkiLCJjbGllbnRfaWQiOiJpZCIsInVzZXJuYW1lIjoidXNlcm5hbWUifQ.fHDYAob2l4ibGkRcA7IVfvU6bMuNns4gPwX5oAWTmN0"
+	accessTokenString        = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6Im1pa2UifQ.juIlHgvyROIutaxRV95WBIr9Cn4snjqWMHO385Io_uA"
+	idTokenString            = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6Im1pa2VAZW1haWwuY29tIn0.AtNfbHDL86yYD3MulZO5jzAsZRRSmgMjNmY5EmSLFO4"
+	refreshTokenString       = ""
 	sampleInitiateAuthOutput = cognito.InitiateAuthOutput{
 		AuthenticationResult: &cognito.AuthenticationResultType{
-			AccessToken: &tokenString,
+			AccessToken:  &accessTokenString,
+			IdToken:      &idTokenString,
+			RefreshToken: &refreshTokenString,
 		},
 	}
-	sampleToken = authentication.CognitoToken{
-		String: *sampleInitiateAuthOutput.AuthenticationResult.AccessToken,
-		Payload: authentication.CognitoTokenPayload{
-			Username: "mike",
-		},
+	sampleToken = authentication.UserToken{
+		AccessTokenString: *sampleInitiateAuthOutput.AuthenticationResult.AccessToken,
+		Username:          "mike",
 	}
 )
 
@@ -71,7 +73,7 @@ func TestLogin(t *testing.T) {
 		// Verify
 		if !test.expectErr {
 			assert.Nil(t, err, test.name)
-			assert.Equal(t, *sampleInitiateAuthOutput.AuthenticationResult.AccessToken, token.String, test.name)
+			assert.Equal(t, *sampleInitiateAuthOutput.AuthenticationResult.AccessToken, token.AccessTokenString, test.name)
 		} else {
 			assert.NotNil(t, err, test.name)
 		}

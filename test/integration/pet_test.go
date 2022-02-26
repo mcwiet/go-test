@@ -23,7 +23,7 @@ func TestPetApi(t *testing.T) {
 	getPet(t, pet1.Id, &pet1)
 
 	// Update the pet owner
-	updatePetOwner(t, pet1, AuthToken.Payload.Username)
+	updatePetOwner(t, pet1, UserToken.Username)
 
 	// Delete the pets
 	deletePet(t, &pet1)
@@ -53,7 +53,7 @@ func createPet(t *testing.T) model.Pet {
 	request.Var("name", petName)
 	request.Var("age", petAge)
 	request.Var("owner", petOwner)
-	request.Header.Set("Authorization", AuthToken.String)
+	request.Header.Set("Authorization", UserToken.AccessTokenString)
 
 	// Execute
 	var response map[string]interface{}
@@ -86,7 +86,7 @@ func deletePet(t *testing.T, pet *model.Pet) {
 		}
 	`)
 	request.Var("id", pet.Id)
-	request.Header.Set("Authorization", AuthToken.String)
+	request.Header.Set("Authorization", UserToken.AccessTokenString)
 
 	// Execute
 	var response map[string]interface{}
@@ -110,7 +110,7 @@ func getPet(t *testing.T, id string, expectedPet *model.Pet) {
 		}
 	`)
 	request.Var("id", id)
-	request.Header.Set("Authorization", AuthToken.String)
+	request.Header.Set("Authorization", UserToken.AccessTokenString)
 
 	// Execute
 	var response map[string]interface{}
@@ -148,7 +148,7 @@ func listPets(t *testing.T) {
 			}
 		}
 	`)
-	request.Header.Set("Authorization", AuthToken.String)
+	request.Header.Set("Authorization", UserToken.AccessTokenString)
 
 	// Execute
 	var response map[string]interface{}
@@ -183,7 +183,7 @@ func updatePetOwner(t *testing.T, pet model.Pet, newOwner string) {
 	`)
 	request.Var("id", pet.Id)
 	request.Var("owner", newOwner)
-	request.Header.Set("Authorization", AuthToken.String)
+	request.Header.Set("Authorization", UserToken.AccessTokenString)
 
 	// Execute
 	var response map[string]interface{}
