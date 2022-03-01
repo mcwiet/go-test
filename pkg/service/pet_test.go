@@ -66,7 +66,7 @@ func TestPetCreate(t *testing.T) {
 	// Run tests
 	for _, test := range tests {
 		// Setup
-		service := service.NewPetService(&test.petDao, nil, nil)
+		service := service.NewPetService(&test.petDao, nil, nil, nil)
 
 		// Execute
 		pet, err := service.Create(test.petName, test.petAge, test.petOwner)
@@ -115,7 +115,7 @@ func TestPetGetById(t *testing.T) {
 	// Run tests
 	for _, test := range tests {
 		// Setup
-		service := service.NewPetService(&test.petDao, nil, &SampleEncoder)
+		service := service.NewPetService(&test.petDao, nil, nil, &SampleEncoder)
 
 		// Execute
 		pet, err := service.GetById(test.petId)
@@ -152,7 +152,7 @@ func TestPetDelete(t *testing.T) {
 	// Run tests
 	for _, test := range tests {
 		// Setup
-		service := service.NewPetService(&test.petDao, nil, nil)
+		service := service.NewPetService(&test.petDao, nil, nil, nil)
 
 		// Execute
 		err := service.Delete(test.petId)
@@ -287,7 +287,7 @@ func TestPetList(t *testing.T) {
 	//Run tests
 	for _, test := range tests {
 		// Setup
-		service := service.NewPetService(&test.petDao, nil, &test.encoder)
+		service := service.NewPetService(&test.petDao, nil, nil, &test.encoder)
 
 		// Execute
 		pets, err := service.List(test.first, test.after)
@@ -305,12 +305,13 @@ func TestPetList(t *testing.T) {
 func TestPetUpdateOwner(t *testing.T) {
 	// Define test struct
 	type Test struct {
-		name      string
-		petDao    FakePetDao
-		userDao   FakeUserDao
-		petId     string
-		petOwner  string
-		expectErr bool
+		name       string
+		petDao     FakePetDao
+		userDao    FakeUserDao
+		authorizer FakeAuthorizer
+		petId      string
+		petOwner   string
+		expectErr  bool
 	}
 
 	// Define tests
@@ -323,9 +324,42 @@ func TestPetUpdateOwner(t *testing.T) {
 			userDao: FakeUserDao{
 				getByUsernameUser: SampleUser1,
 			},
+			authorizer: FakeAuthorizer{
+				IsAuthorizedResult: true,
+			},
 			petId:     SamplePet1.Id,
 			petOwner:  SampleUser1.Username,
 			expectErr: false,
+		},
+		{
+			name: "unauthorized",
+			petDao: FakePetDao{
+				updateErr: assert.AnError,
+			},
+			userDao: FakeUserDao{
+				getByUsernameUser: SampleUser1,
+			},
+			authorizer: FakeAuthorizer{
+				IsAuthorizedResult: false,
+			},
+			petId:     SamplePet1.Id,
+			petOwner:  SampleUser1.Username,
+			expectErr: true,
+		},
+		{
+			name: "authorizer error",
+			petDao: FakePetDao{
+				updateErr: assert.AnError,
+			},
+			userDao: FakeUserDao{
+				getByUsernameUser: SampleUser1,
+			},
+			authorizer: FakeAuthorizer{
+				IsAuthorizedErr: assert.AnError,
+			},
+			petId:     SamplePet1.Id,
+			petOwner:  SampleUser1.Username,
+			expectErr: true,
 		},
 		{
 			name: "user DAO get error",
@@ -334,6 +368,9 @@ func TestPetUpdateOwner(t *testing.T) {
 			},
 			userDao: FakeUserDao{
 				getByUsernameErr: assert.AnError,
+			},
+			authorizer: FakeAuthorizer{
+				IsAuthorizedResult: true,
 			},
 			petId:     SamplePet1.Id,
 			petOwner:  SampleUser1.Username,
@@ -347,6 +384,9 @@ func TestPetUpdateOwner(t *testing.T) {
 			userDao: FakeUserDao{
 				getByUsernameUser: SampleUser1,
 			},
+			authorizer: FakeAuthorizer{
+				IsAuthorizedResult: true,
+			},
 			petId:     SamplePet1.Id,
 			petOwner:  SampleUser1.Username,
 			expectErr: true,
@@ -359,6 +399,9 @@ func TestPetUpdateOwner(t *testing.T) {
 			userDao: FakeUserDao{
 				getByUsernameUser: SampleUser1,
 			},
+			authorizer: FakeAuthorizer{
+				IsAuthorizedResult: true,
+			},
 			petId:     SamplePet1.Id,
 			petOwner:  SampleUser1.Username,
 			expectErr: true,
@@ -368,10 +411,10 @@ func TestPetUpdateOwner(t *testing.T) {
 	// Run
 	for _, test := range tests {
 		// Setup
-		service := service.NewPetService(&test.petDao, &test.userDao, nil)
+		service := service.NewPetService(&test.petDao, &test.userDao, &test.authorizer, nil)
 
 		// Execute
-		pet, err := service.UpdateOwner(test.petId, test.petOwner)
+		pet, err := service.UpdateOwner("requestor", test.petId, test.petOwner)
 
 		// Verify
 		if !test.expectErr {

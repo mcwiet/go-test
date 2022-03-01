@@ -26,6 +26,27 @@ func (e *FakeEncoder) Decode(input string) (string, error) {
 	}
 }
 
+type FakeAuthorizer struct {
+	AddPermissionSuccess    bool
+	AddPermissionErr        error
+	IsAuthorizedResult      bool
+	IsAuthorizedErr         error
+	RemovePermissionSuccess bool
+	RemovePermissionErr     error
+}
+
+func (f *FakeAuthorizer) AddPermission(string, string, string) (bool, error) {
+	return f.AddPermissionSuccess, f.AddPermissionErr
+}
+
+func (f *FakeAuthorizer) IsAuthorized(string, string, string) (bool, error) {
+	return f.IsAuthorizedResult, f.IsAuthorizedErr
+}
+
+func (f *FakeAuthorizer) RemovePermission(string, string, string) (bool, error) {
+	return f.RemovePermissionSuccess, f.IsAuthorizedErr
+}
+
 type FakePetDao struct {
 	deleteErr          error
 	getByIdPet         model.Pet

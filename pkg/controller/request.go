@@ -4,12 +4,17 @@ import (
 	"encoding/json"
 )
 
-// Standard request format
 type Request struct {
 	Arguments map[string]interface{} `json:"arguments"`
 	Info      struct {
 		FieldName      string `json:"fieldName"`
 		ParentTypeName string `json:"parentTypeName"`
+	}
+	Identity struct {
+		Claims struct {
+			Username string `json:"cognito:username"`
+			Email    string `json:"email"`
+		}
 	}
 }
 

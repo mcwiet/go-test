@@ -6,10 +6,13 @@ import (
 	"log"
 	"os"
 
+	"github.com/casbin/casbin/v2"
+	"github.com/mcwiet/go-test/pkg/authorization"
 	"github.com/mcwiet/go-test/pkg/controller"
 	"github.com/mcwiet/go-test/pkg/data"
 	"github.com/mcwiet/go-test/pkg/encoding"
 	"github.com/mcwiet/go-test/pkg/service"
+	"github.com/newbmiao/dynacasbin"
 
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -28,14 +31,20 @@ func init() {
 	cognitoClient := cognitoidentityprovider.New(session)
 	cursorEncoder := encoding.NewCursorEncoder()
 
+	// Authorization
+	permissionsTableName := os.Getenv("DDB_PERMISSIONS_TABLE_NAME")
+	adapter, _ := dynacasbin.NewAdapter(nil, permissionsTableName)
+	enforcer, _ := casbin.NewEnforcer("rbac_model.conf", adapter)
+	authorizer := authorization.NewCasbinAuthorizer(enforcer)
+
 	// Data
-	tableName := os.Getenv("DDB_TABLE_NAME")
-	petDao := data.NewPetDao(ddbClient, tableName)
+	primaryTableName := os.Getenv("DDB_PRIMARY_TABLE_NAME")
+	petDao := data.NewPetDao(ddbClient, primaryTableName)
 	userPoolId := os.Getenv("USER_POOL_ID")
 	userDao := data.NewUserDao(cognitoClient, userPoolId)
 
 	// Service
-	petService := service.NewPetService(&petDao, &userDao, &cursorEncoder)
+	petService := service.NewPetService(&petDao, &userDao, &authorizer, &cursorEncoder)
 	userService := service.NewUserService(&userDao, &cursorEncoder)
 
 	// Controller
@@ -43,8 +52,8 @@ func init() {
 	userController = controller.NewUserController(&userService)
 }
 
-func handle(ctx context.Context, rawRequest interface{}) (interface{}, error) {
-	request := controller.NewRequest(rawRequest)
+func handle(ctx context.Context, req interface{}) (interface{}, error) {
+	request := controller.NewRequest(req)
 	var response controller.Response
 
 	log.Println(request.Info.ParentTypeName + " " + request.Info.FieldName)
