@@ -46,8 +46,12 @@ A few established GraphQL schemas, like GitHub's, were referenced for patterns a
 ### Design Comments
 
 - Each API request has 3 layers: controller (parse the HTTP request and call services), services (run business logic) and data (interact with the data store)
-- Dependency injection is used as much as possible to make unit testing easier (enable use of stubs and mocks)
+- Dependency injection is used frequently to make unit testing easier and abide by clean architecture (enable use of stubs and mocks)
 - Initial unit tests are simple and generally test a "working path" and an "error path"
+- Authorization is mix of RBAC and ABAC - a user may be authorized to perform an action based on a role/group (e.g. admin) or based on attributes (e.g. requestor is the owner of the target pet)
+  - **Pros**: easy mapping of security requirements to code, unit testable, no separate storage of permissions (e.g. data table which lists each pet permission a user has)
+  - **Cons**: certain permission changes could require code change rather than changing data at runtime, risk of unintentionally removing a user's access to a resource which they could previously access
+  - Took approach of custom code rather than library like Casbin to keep code simple (no need to learn domain-specific policy languages) and more easily implement certain features (e.g. check if one of user's groups is the 'admin' group)
 - Dependencies between CDK stacks are implemented as SSM parameters (rather than stack outputs / exports); this leads to reduced coupling and allows stacks to be deleted without first deleting their dependent stacks ([see here for more context](https://tusharsharma.dev/posts/aws-cfn-with-ssm-parameters))
 - To delete an environment, delete the CloudFormation stacks and manually delete any resources where the status was marked as **DELETE_SKIPPED** (such as a DynamoDB Table or Cognito User Pool)
 
