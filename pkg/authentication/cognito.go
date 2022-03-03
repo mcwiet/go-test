@@ -73,8 +73,10 @@ func buildUserToken(accessToken string, idToken string, refreshToken string) (Us
 	}
 
 	groups := []string{}
-	for _, group := range idClaims["cognito:groups"].([]interface{}) {
-		groups = append(groups, fmt.Sprintf("%v", group))
+	if idClaims["cognito:groups"] != nil {
+		for _, group := range idClaims["cognito:groups"].([]interface{}) {
+			groups = append(groups, fmt.Sprintf("%v", group))
+		}
 	}
 
 	token := UserToken{
