@@ -53,7 +53,7 @@ func createPet(t *testing.T) model.Pet {
 	request.Var("name", petName)
 	request.Var("age", petAge)
 	request.Var("owner", petOwner)
-	request.Header.Set("Authorization", UserToken.AccessTokenString)
+	request.Header.Set("Authorization", UserToken.IdTokenString)
 
 	// Execute
 	var response map[string]interface{}
@@ -86,7 +86,7 @@ func deletePet(t *testing.T, pet *model.Pet) {
 		}
 	`)
 	request.Var("id", pet.Id)
-	request.Header.Set("Authorization", UserToken.AccessTokenString)
+	request.Header.Set("Authorization", UserToken.IdTokenString)
 
 	// Execute
 	var response map[string]interface{}
@@ -110,7 +110,7 @@ func getPet(t *testing.T, id string, expectedPet *model.Pet) {
 		}
 	`)
 	request.Var("id", id)
-	request.Header.Set("Authorization", UserToken.AccessTokenString)
+	request.Header.Set("Authorization", UserToken.IdTokenString)
 
 	// Execute
 	var response map[string]interface{}
@@ -148,7 +148,7 @@ func listPets(t *testing.T) {
 			}
 		}
 	`)
-	request.Header.Set("Authorization", UserToken.AccessTokenString)
+	request.Header.Set("Authorization", UserToken.IdTokenString)
 
 	// Execute
 	var response map[string]interface{}
@@ -183,7 +183,7 @@ func updatePetOwner(t *testing.T, pet model.Pet, newOwner string) {
 	`)
 	request.Var("id", pet.Id)
 	request.Var("owner", newOwner)
-	request.Header.Set("Authorization", UserToken.AccessTokenString)
+	request.Header.Set("Authorization", UserToken.IdTokenString)
 
 	// Execute
 	var response map[string]interface{}

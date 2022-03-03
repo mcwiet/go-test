@@ -30,7 +30,7 @@ func getUser(t *testing.T, username string) {
 		}
 	`)
 	request.Var("username", username)
-	request.Header.Set("Authorization", UserToken.AccessTokenString)
+	request.Header.Set("Authorization", UserToken.IdTokenString)
 
 	// Execute
 	var response map[string]interface{}
@@ -63,7 +63,7 @@ func listUsers(t *testing.T) {
 			}
 		}
 	`)
-	request.Header.Set("Authorization", UserToken.AccessTokenString)
+	request.Header.Set("Authorization", UserToken.IdTokenString)
 
 	// Execute
 	var response map[string]interface{}

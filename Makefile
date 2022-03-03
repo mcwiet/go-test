@@ -81,7 +81,7 @@ else
 	@ echo "Updated attributes - password set"
 	@ aws cognito-idp admin-update-user-attributes --user-pool-id ${USER_POOL_ID} --username ${TEST_USER_EMAIL} --user-attributes Name=email_verified,Value=true
 	@ echo "Updated attributes - email verified"
-	@ echo "✅ Done creating ${ENV} user '${TEST_USER_EMAIL}'..."
+	@ echo "✅ Done creating ${ENV} user '${TEST_USER_EMAIL}'"
 	@ echo "🚨 MANUAL ACTION: Update ${ENV_FILE} file with user credentials (if needed)"
 endif
 endif
@@ -101,7 +101,7 @@ ifndef TEST_USER_EMAIL
 else
 	@ echo "⏳ Start deleting ${ENV} user '${TEST_USER_EMAIL}'..."
 	@ aws cognito-idp admin-delete-user --user-pool-id ${USER_POOL_ID} --username ${TEST_USER_EMAIL}
-	@ echo "✅ Done deleting ${ENV} user '${TEST_USER_EMAIL}'..."
+	@ echo "✅ Done deleting ${ENV} user '${TEST_USER_EMAIL}'"
 endif
 
 ## Deploy the infrastructure
@@ -121,6 +121,21 @@ invoke-api: build-infra
 	@ echo "⏳ Invoking API with event '${EVENTS_DIR}/${API_REQUEST}.json'..."
 	@ sam local invoke go-${ENV}-api-lambda -e ${EVENTS_DIR}/${API_REQUEST}.json -t ${CDK_DIR}/go-${ENV}-api.template.json
 	@ echo "\n✅ Done invoking API"
+
+## Adds the test user to the admin group
+promote-test-user-admin:
+	@ $(eval USER_POOL_ID=$(shell ${CMD_USER_POOL_ID}))
+ifndef TEST_USER_EMAIL
+	@ echo "🚨 MANUAL ACTION: Set value for TEST_USER_EMAIL"
+else
+ifndef TEST_USER_PASSWORD
+	@ echo "🚨 MANUAL ACTION: Set value for TEST_USER_PASSWORD"
+else
+	@ echo "⏳ Promoting ${ENV} user '${TEST_USER_EMAIL}' to admin..."
+	@ aws cognito-idp admin-add-user-to-group --user-pool-id ${USER_POOL_ID} --username ${TEST_USER_EMAIL} --group-name admin
+	@ echo "✅ Done promoting ${ENV} user '${TEST_USER_EMAIL}' to admin"
+endif
+endif
 
 ## Run integration tests (does not cache results)
 test-integration:
