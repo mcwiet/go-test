@@ -16,7 +16,7 @@ func TestUserApi(t *testing.T) {
 	listUsers(t)
 
 	// Get a user
-	getUser(t, AuthToken.Payload.Username)
+	getUser(t, UserToken.Username)
 }
 
 func getUser(t *testing.T, username string) {
@@ -30,7 +30,7 @@ func getUser(t *testing.T, username string) {
 		}
 	`)
 	request.Var("username", username)
-	request.Header.Set("Authorization", AuthToken.String)
+	request.Header.Set("Authorization", UserToken.IdTokenString)
 
 	// Execute
 	var response map[string]interface{}
@@ -63,7 +63,7 @@ func listUsers(t *testing.T) {
 			}
 		}
 	`)
-	request.Header.Set("Authorization", AuthToken.String)
+	request.Header.Set("Authorization", UserToken.IdTokenString)
 
 	// Execute
 	var response map[string]interface{}

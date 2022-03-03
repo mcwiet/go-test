@@ -17,6 +17,7 @@ CDK_DIR = ./cdk.out
 CMD_API_URL = aws ssm get-parameter --name /go/${ENV}/appsync-url | jq '.Parameter.Value'
 CMD_USER_POOL_ID = aws ssm get-parameter --name /go/${ENV}/user-pool-id | jq '.Parameter.Value'
 CMD_USER_POOL_APP_CLIENT_ID = aws ssm get-parameter --name /go/${ENV}/user-pool-api-client-id | jq '.Parameter.Value'
+GO_CMD = go
 EVENTS_DIR = ./test/_request
 TRUE_CONDITIONS = true TRUE 1
 
@@ -35,7 +36,7 @@ build: build-api build-infra
 ## Build the API application
 build-api:
 	@ echo "⏳ Start building API..."
-	@ go build -o ${BUILD_DIR}/${APP_NAME_API} ./cmd/api
+	@ ${GO_CMD} build -o ${BUILD_DIR}/${APP_NAME_API} ./cmd/api
 	@ echo "✅ Done building API"
 
 ## Build the infrastructure
@@ -80,7 +81,7 @@ else
 	@ echo "Updated attributes - password set"
 	@ aws cognito-idp admin-update-user-attributes --user-pool-id ${USER_POOL_ID} --username ${TEST_USER_EMAIL} --user-attributes Name=email_verified,Value=true
 	@ echo "Updated attributes - email verified"
-	@ echo "✅ Done creating ${ENV} user '${TEST_USER_EMAIL}'..."
+	@ echo "✅ Done creating ${ENV} user '${TEST_USER_EMAIL}'"
 	@ echo "🚨 MANUAL ACTION: Update ${ENV_FILE} file with user credentials (if needed)"
 endif
 endif
@@ -100,7 +101,7 @@ ifndef TEST_USER_EMAIL
 else
 	@ echo "⏳ Start deleting ${ENV} user '${TEST_USER_EMAIL}'..."
 	@ aws cognito-idp admin-delete-user --user-pool-id ${USER_POOL_ID} --username ${TEST_USER_EMAIL}
-	@ echo "✅ Done deleting ${ENV} user '${TEST_USER_EMAIL}'..."
+	@ echo "✅ Done deleting ${ENV} user '${TEST_USER_EMAIL}'"
 endif
 
 ## Deploy the infrastructure
@@ -112,7 +113,7 @@ deploy-infra:
 ## Install dependencies
 install:
 	@ echo "⏳ Start installing dependencies..."
-	@ go mod download
+	@ ${GO_CMD} mod download
 	@ echo "✅ Done installing dependencies"
 
 ## Invoke the API; set API_REQUEST=[name of request] (e.g. use 'pet' for ./test/_request/pet.json)
@@ -121,10 +122,25 @@ invoke-api: build-infra
 	@ sam local invoke go-${ENV}-api-lambda -e ${EVENTS_DIR}/${API_REQUEST}.json -t ${CDK_DIR}/go-${ENV}-api.template.json
 	@ echo "\n✅ Done invoking API"
 
+## Adds the test user to the admin group
+promote-test-user-admin:
+	@ $(eval USER_POOL_ID=$(shell ${CMD_USER_POOL_ID}))
+ifndef TEST_USER_EMAIL
+	@ echo "🚨 MANUAL ACTION: Set value for TEST_USER_EMAIL"
+else
+ifndef TEST_USER_PASSWORD
+	@ echo "🚨 MANUAL ACTION: Set value for TEST_USER_PASSWORD"
+else
+	@ echo "⏳ Promoting ${ENV} user '${TEST_USER_EMAIL}' to admin..."
+	@ aws cognito-idp admin-add-user-to-group --user-pool-id ${USER_POOL_ID} --username ${TEST_USER_EMAIL} --group-name admin
+	@ echo "✅ Done promoting ${ENV} user '${TEST_USER_EMAIL}' to admin"
+endif
+endif
+
 ## Run integration tests (does not cache results)
 test-integration:
 	@ echo "⏳ Start running ${ENV} integration tests..."
-	@ go test ./test/integration/... -count=1
+	@ ${GO_CMD} test ./test/integration/... -count=1
 	@ echo "✅ Done running ${ENV} integration tests"
 
 ## Run unit tests on library code (i.e. pkg/ directory)
@@ -133,16 +149,16 @@ test-unit:
 	@ rm -rf .coverage
 ifeq (${SAVE_TEST_COVERAGE},$(filter ${SAVE_TEST_COVERAGE},${TRUE_CONDITIONS}))
 	@ mkdir .coverage
-	@ go test ./pkg/... -coverprofile ".coverage/pkg.out" 
+	@ ${GO_CMD} test ./pkg/... -coverprofile ".coverage/pkg.out" 
 else
-	@ go test ./pkg/... -cover
+	@ ${GO_CMD} test ./pkg/... -cover
 endif
 	@ echo "✅ Done running unit tests"
 
 ## Build, package, and update the API application Lambda code (expects infrastructure to have been deployed)
 update-api:
 	@ echo "⏳ Start updating API Lambda code..."
-	@ GOARCH=${AWS_LAMBDA_GOARCH} GOOS=${AWS_LAMBDA_GOOS} go build -o ${BUILD_DIR}/${APP_NAME_API} ./cmd/api
+	@ GOARCH=${AWS_LAMBDA_GOARCH} GOOS=${AWS_LAMBDA_GOOS} ${GO_CMD} build -o ${BUILD_DIR}/${APP_NAME_API} ./cmd/api
 	@ rm -f ${BUILD_DIR}/bootstrap ${BUILD_DIR}/bootstrap.zip
 	@ cp ${BUILD_DIR}/${APP_NAME_API} ${BUILD_DIR}/bootstrap
 	@ zip -jr ${BUILD_DIR}/bootstrap.zip ${BUILD_DIR}/bootstrap

@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 
+	"github.com/mcwiet/go-test/pkg/authorization"
 	"github.com/mcwiet/go-test/pkg/controller"
 	"github.com/mcwiet/go-test/pkg/data"
 	"github.com/mcwiet/go-test/pkg/encoding"
@@ -28,26 +29,32 @@ func init() {
 	cognitoClient := cognitoidentityprovider.New(session)
 	cursorEncoder := encoding.NewCursorEncoder()
 
-	tableName := os.Getenv("DDB_TABLE_NAME")
-	petDao := data.NewPetDao(ddbClient, tableName)
-	petService := service.NewPetService(&petDao, &cursorEncoder)
-	petController = controller.NewPetController(&petService)
+	// Authorization
+	petAuth := authorization.NewPetAuthorizer()
 
+	// Data
+	primaryTableName := os.Getenv("DDB_PRIMARY_TABLE_NAME")
+	petDao := data.NewPetDao(ddbClient, primaryTableName)
 	userPoolId := os.Getenv("USER_POOL_ID")
 	userDao := data.NewUserDao(cognitoClient, userPoolId)
+
+	// Service
+	petService := service.NewPetService(&petDao, &userDao, &petAuth, &cursorEncoder)
 	userService := service.NewUserService(&userDao, &cursorEncoder)
+
+	// Controller
+	petController = controller.NewPetController(&petService)
 	userController = controller.NewUserController(&userService)
 }
 
-func handle(ctx context.Context, rawRequest interface{}) (interface{}, error) {
-	request := controller.NewRequest(rawRequest)
+func handle(ctx context.Context, req interface{}) (interface{}, error) {
+	request := NewRequest(req)
+	log.Println(request.ParentTypeName + " " + request.FieldName)
+
 	var response controller.Response
-
-	log.Println(request.Info.ParentTypeName + " " + request.Info.FieldName)
-
-	switch request.Info.ParentTypeName {
+	switch request.ParentTypeName {
 	case "Query":
-		switch request.Info.FieldName {
+		switch request.FieldName {
 		case "pet":
 			response = petController.HandleGet(request)
 		case "pets":
@@ -60,7 +67,7 @@ func handle(ctx context.Context, rawRequest interface{}) (interface{}, error) {
 			response = controller.Response{Error: errors.New("query not recognized")}
 		}
 	case "Mutation":
-		switch request.Info.FieldName {
+		switch request.FieldName {
 		case "createPet":
 			response = petController.HandleCreate(request)
 		case "deletePet":

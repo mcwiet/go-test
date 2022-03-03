@@ -66,23 +66,23 @@ func NewApiStack(scope constructs.Construct, id string, props *ApiStackProps) aw
 	createResolver(api, "Mutation", "deletePet", lambdaSource)
 	createResolver(api, "Mutation", "updatePetOwner", lambdaSource)
 
-	// Dynamo DB table
-	tableName := *stackName + "-primary-table"
-	partitionKey := awsdynamodb.Attribute{Name: jsii.String("Id"), Type: awsdynamodb.AttributeType_STRING}
-	sortKey := awsdynamodb.Attribute{Name: jsii.String("Sort"), Type: awsdynamodb.AttributeType_STRING}
-	table := awsdynamodb.NewTable(stack, &tableName, &awsdynamodb.TableProps{
-		TableName:    &tableName,
-		PartitionKey: &partitionKey,
-		SortKey:      &sortKey,
+	// Primary Dynamo DB table
+	primaryTableName := *stackName + "-primary-table"
+	primaryTablePartitionKey := awsdynamodb.Attribute{Name: jsii.String("Id"), Type: awsdynamodb.AttributeType_STRING}
+	primaryTableSortKey := awsdynamodb.Attribute{Name: jsii.String("Sort"), Type: awsdynamodb.AttributeType_STRING}
+	primaryTable := awsdynamodb.NewTable(stack, &primaryTableName, &awsdynamodb.TableProps{
+		TableName:    &primaryTableName,
+		PartitionKey: &primaryTablePartitionKey,
+		SortKey:      &primaryTableSortKey,
 		BillingMode:  awsdynamodb.BillingMode_PAY_PER_REQUEST,
 	})
-	table.AddGlobalSecondaryIndex(&awsdynamodb.GlobalSecondaryIndexProps{
+	primaryTable.AddGlobalSecondaryIndex(&awsdynamodb.GlobalSecondaryIndexProps{
 		IndexName:      jsii.String("sort-key-gsi"),
 		ProjectionType: awsdynamodb.ProjectionType_ALL,
-		PartitionKey:   &sortKey,
+		PartitionKey:   &primaryTableSortKey,
 	})
 
-	// Permission for Lambda to access Dynamo DB table
+	// Permission for Lambda to access Primary Dynamo DB table
 	lambda.AddToRolePolicy(awsiam.NewPolicyStatement(&awsiam.PolicyStatementProps{
 		Effect: awsiam.Effect_ALLOW,
 		Actions: jsii.Strings(
@@ -95,7 +95,7 @@ func NewApiStack(scope constructs.Construct, id string, props *ApiStackProps) aw
 			"dynamodb:DeleteItem",
 			"dynamodb:UpdateItem",
 			"dynamodb:PutItem"),
-		Resources: jsii.Strings(*table.TableArn(), *table.TableArn()+"/*"),
+		Resources: jsii.Strings(*primaryTable.TableArn(), *primaryTable.TableArn()+"/*"),
 	}))
 
 	// Permission for Lambda to access Cognito User Pool
@@ -111,7 +111,7 @@ func NewApiStack(scope constructs.Construct, id string, props *ApiStackProps) aw
 	}))
 
 	// Add environment variables to Lambda to reference other infra
-	lambda.AddEnvironment(jsii.String("DDB_TABLE_NAME"), &tableName, nil)
+	lambda.AddEnvironment(jsii.String("DDB_PRIMARY_TABLE_NAME"), &primaryTableName, nil)
 	lambda.AddEnvironment(jsii.String("USER_POOL_ID"), &userPoolId, nil)
 
 	return stack

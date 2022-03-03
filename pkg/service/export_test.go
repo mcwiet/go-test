@@ -4,10 +4,16 @@ import (
 	"encoding/base64"
 
 	"github.com/mcwiet/go-test/pkg/model"
+	"github.com/mcwiet/go-test/pkg/service"
 )
 
 var (
-	SampleEncoder = FakeEncoder{}
+	SampleEncoder  = FakeEncoder{}
+	SampleIdentity = model.Identity{
+		Username: "test-admin-user",
+		Groups:   map[string]bool{"admin": true},
+		Email:    "test@email.com",
+	}
 )
 
 type FakeEncoder struct {
@@ -24,6 +30,14 @@ func (e *FakeEncoder) Decode(input string) (string, error) {
 	} else {
 		return "", e.decodeErr
 	}
+}
+
+type FakePetAuthorizer struct {
+	IsAuthorizedResult bool
+}
+
+func (f *FakePetAuthorizer) IsAuthorized(model.Identity, model.Pet, service.PetAction) bool {
+	return f.IsAuthorizedResult
 }
 
 type FakePetDao struct {

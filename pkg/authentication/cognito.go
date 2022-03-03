@@ -1,6 +1,9 @@
 package authentication
 
 import (
+	"errors"
+	"fmt"
+
 	cognito "github.com/aws/aws-sdk-go/service/cognitoidentityprovider"
 	"github.com/aws/jsii-runtime-go"
 	"github.com/dgrijalva/jwt-go"
@@ -19,9 +22,13 @@ type CognitoTokenPayload struct {
 	Username string
 }
 
-type CognitoToken struct {
-	String  string
-	Payload CognitoTokenPayload
+type UserToken struct {
+	AccessTokenString  string
+	IdTokenString      string
+	RefreshTokenString string
+	Username           string
+	Email              string
+	Groups             []string
 }
 
 // Creates a new authenticator object
@@ -33,7 +40,7 @@ func NewCognitoAuthenticator(provider CognitoIdentityProvider, appClientId strin
 }
 
 // Login to the Cognito User Pool
-func (a *CognitoAuthenticator) Login(email string, password string) (CognitoToken, error) {
+func (a *CognitoAuthenticator) Login(email string, password string) (UserToken, error) {
 	authTry := &cognito.InitiateAuthInput{
 		AuthFlow: jsii.String("USER_PASSWORD_AUTH"),
 		AuthParameters: map[string]*string{
@@ -45,35 +52,52 @@ func (a *CognitoAuthenticator) Login(email string, password string) (CognitoToke
 
 	authResp, err := a.provider.InitiateAuth(authTry)
 	if err != nil {
-		return CognitoToken{}, err
+		return UserToken{}, err
 	}
 
-	var tokenStr string
+	var accessToken, idToken, refreshToken string
 	if authResp != nil && authResp.AuthenticationResult != nil {
-		tokenStr = *authResp.AuthenticationResult.AccessToken
+		accessToken = *authResp.AuthenticationResult.AccessToken
+		idToken = *authResp.AuthenticationResult.IdToken
+		refreshToken = *authResp.AuthenticationResult.RefreshToken
 	}
 
-	return getTokenFromString(tokenStr)
+	return buildUserToken(accessToken, idToken, refreshToken)
 }
 
 // Turn a token string into a token object (does not verify token!)
-func getTokenFromString(tokenStr string) (CognitoToken, error) {
-	decodedToken, _, err := new(jwt.Parser).ParseUnverified(tokenStr, jwt.MapClaims{})
+func buildUserToken(accessToken string, idToken string, refreshToken string) (UserToken, error) {
+	idClaims, err := getClaims(idToken)
 	if err != nil {
-		return CognitoToken{}, err
+		return UserToken{}, errors.New("could not parse user's ID token")
 	}
 
-	claims, ok := decodedToken.Claims.(jwt.MapClaims)
-	if !ok {
-		return CognitoToken{}, err
+	groups := []string{}
+	if idClaims["cognito:groups"] != nil {
+		for _, group := range idClaims["cognito:groups"].([]interface{}) {
+			groups = append(groups, fmt.Sprintf("%v", group))
+		}
 	}
 
-	token := CognitoToken{
-		String: tokenStr,
-		Payload: CognitoTokenPayload{
-			Username: claims["username"].(string),
-		},
+	token := UserToken{
+		AccessTokenString:  accessToken,
+		IdTokenString:      idToken,
+		RefreshTokenString: refreshToken,
+		Username:           idClaims["cognito:username"].(string),
+		Email:              idClaims["email"].(string),
+		Groups:             groups,
 	}
 
 	return token, err
+}
+
+func getClaims(token string) (jwt.MapClaims, error) {
+	decoded, _, err := new(jwt.Parser).ParseUnverified(token, jwt.MapClaims{})
+	if err != nil {
+		return jwt.MapClaims{}, err
+	}
+
+	claims := decoded.Claims.(jwt.MapClaims)
+
+	return claims, nil
 }

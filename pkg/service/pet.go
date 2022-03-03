@@ -1,6 +1,8 @@
 package service
 
 import (
+	"errors"
+
 	"github.com/google/uuid"
 	"github.com/mcwiet/go-test/pkg/model"
 )
@@ -14,6 +16,10 @@ type PetDao interface {
 	Update(model.Pet) error
 }
 
+type Authorizer interface {
+	IsAuthorized(model.Identity, model.Pet, PetAction) bool
+}
+
 type CursorEncoder interface {
 	Encode(string) string
 	Decode(string) (string, error)
@@ -21,15 +27,27 @@ type CursorEncoder interface {
 
 // Object containing data needed to use the Pet service
 type PetService struct {
-	petDao  PetDao
-	encoder CursorEncoder
+	authorizer Authorizer
+	petDao     PetDao
+	userDao    UserDao
+	encoder    CursorEncoder
 }
 
+// Permissible pet actions
+type PetAction int
+
+const (
+	PetActionUndefined PetAction = iota
+	PetActionUpdateOwner
+)
+
 // Creates a Pet service object
-func NewPetService(petDao PetDao, encoder CursorEncoder) PetService {
+func NewPetService(petDao PetDao, userDao UserDao, authorizer Authorizer, encoder CursorEncoder) PetService {
 	return PetService{
-		petDao:  petDao,
-		encoder: encoder,
+		authorizer: authorizer,
+		petDao:     petDao,
+		userDao:    userDao,
+		encoder:    encoder,
 	}
 }
 
@@ -99,10 +117,22 @@ func (s *PetService) List(first int, after string) (model.PetConnection, error) 
 }
 
 // Updates the owner of a pet
-func (s *PetService) UpdateOwner(id string, owner string) (model.Pet, error) {
+func (s *PetService) UpdateOwner(requestor model.Identity, id string, owner string) (model.Pet, error) {
 	pet, err := s.petDao.GetById(id)
 	if err != nil {
-		return model.Pet{}, err
+		return model.Pet{}, errors.New("could not find pet ID " + id)
+	}
+
+	authorized := s.authorizer.IsAuthorized(requestor, pet, PetActionUpdateOwner)
+	if !authorized {
+		return model.Pet{}, errors.New("not authorized to update the owner on this pet")
+	}
+
+	if owner != "" {
+		_, err = s.userDao.GetByUsername(owner)
+		if err != nil {
+			return model.Pet{}, errors.New(owner + " is not a valid user")
+		}
 	}
 
 	pet.Owner = owner
