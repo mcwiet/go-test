@@ -41,14 +41,6 @@ const (
 	PetActionUpdateOwner
 )
 
-func (a PetAction) String() string {
-	switch a {
-	case PetActionUpdateOwner:
-		return "pet_update_owner"
-	}
-	return "unknown"
-}
-
 // Creates a Pet service object
 func NewPetService(petDao PetDao, userDao UserDao, authorizer Authorizer, encoder CursorEncoder) PetService {
 	return PetService{
