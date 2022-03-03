@@ -26,7 +26,7 @@ func (s *FakePetService) GetById(id string) (model.Pet, error) {
 func (s *FakePetService) List(first int, after string) (model.PetConnection, error) {
 	return s.listConnection, s.listErr
 }
-func (s *FakePetService) UpdateOwner(requestorId string, id string, owner string) (model.Pet, error) {
+func (s *FakePetService) UpdateOwner(requestor model.Identity, id string, owner string) (model.Pet, error) {
 	return s.updateOwnerPet, s.updateOwnerErr
 }
 

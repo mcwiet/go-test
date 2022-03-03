@@ -17,9 +17,7 @@ type PetDao interface {
 }
 
 type Authorizer interface {
-	AddPermission(subject string, object string, action string) (bool, error)
-	IsAuthorized(subject string, object string, action string) (bool, error)
-	RemovePermission(subject string, object string, action string) (bool, error)
+	IsAuthorized(model.Identity, model.Pet, PetAction) bool
 }
 
 type CursorEncoder interface {
@@ -127,27 +125,26 @@ func (s *PetService) List(first int, after string) (model.PetConnection, error) 
 }
 
 // Updates the owner of a pet
-func (s *PetService) UpdateOwner(requestor string, id string, owner string) (model.Pet, error) {
-	authorized, err := s.authorizer.IsAuthorized(requestor, "/pet/"+id, PetActionUpdateOwner.String())
-	if !authorized || err != nil {
-		return model.Pet{}, errors.New("not authorized to update the owner on this pet")
-	}
-
+func (s *PetService) UpdateOwner(requestor model.Identity, id string, owner string) (model.Pet, error) {
 	pet, err := s.petDao.GetById(id)
 	if err != nil {
 		return model.Pet{}, errors.New("could not find pet ID " + id)
 	}
 
-	_, err = s.userDao.GetByUsername(owner)
-	if err != nil {
-		return model.Pet{}, errors.New(owner + " is not a valid user")
+	authorized := s.authorizer.IsAuthorized(requestor, pet, PetActionUpdateOwner)
+	if !authorized {
+		return model.Pet{}, errors.New("not authorized to update the owner on this pet")
+	}
+
+	if owner != "" {
+		_, err = s.userDao.GetByUsername(owner)
+		if err != nil {
+			return model.Pet{}, errors.New(owner + " is not a valid user")
+		}
 	}
 
 	pet.Owner = owner
 	err = s.petDao.Update(pet)
-
-	s.authorizer.AddPermission(owner, "/pet/"+id, PetActionUpdateOwner.String())
-	s.authorizer.RemovePermission(requestor, "/pet/"+id, PetActionUpdateOwner.String())
 
 	return pet, err
 }

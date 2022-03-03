@@ -33,6 +33,14 @@ func NewAuthStack(scope constructs.Construct, id string, props *AuthStackProps) 
 	NewInfraParameter(stack, props.EnvName, ParamUserPoolArn, *userPool.UserPoolArn())
 	NewInfraParameter(stack, props.EnvName, ParamUserPoolId, *userPool.UserPoolId())
 
+	// Cognito User Pool Admin Group
+	userPoolAdminGroupName := *stackName + "-user-pool-admin-group"
+	awscognito.NewCfnUserPoolGroup(stack, &userPoolAdminGroupName, &awscognito.CfnUserPoolGroupProps{
+		GroupName:   jsii.String("admin"),
+		Description: jsii.String("Application administrators"),
+		UserPoolId:  userPool.UserPoolId(),
+	})
+
 	// API App Client
 	appClientName := userPoolName + "-api-client"
 	appClient := userPool.AddClient(&appClientName, &awscognito.UserPoolClientOptions{

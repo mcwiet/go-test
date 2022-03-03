@@ -308,7 +308,7 @@ func TestPetUpdateOwner(t *testing.T) {
 		name       string
 		petDao     FakePetDao
 		userDao    FakeUserDao
-		authorizer FakeAuthorizer
+		authorizer FakePetAuthorizer
 		petId      string
 		petOwner   string
 		expectErr  bool
@@ -324,11 +324,26 @@ func TestPetUpdateOwner(t *testing.T) {
 			userDao: FakeUserDao{
 				getByUsernameUser: SampleUser1,
 			},
-			authorizer: FakeAuthorizer{
+			authorizer: FakePetAuthorizer{
 				IsAuthorizedResult: true,
 			},
 			petId:     SamplePet1.Id,
 			petOwner:  SampleUser1.Username,
+			expectErr: false,
+		},
+		{
+			name: "remove owner (empty string)",
+			petDao: FakePetDao{
+				getByIdPet: SamplePet1,
+			},
+			userDao: FakeUserDao{
+				getByUsernameUser: SampleUser1,
+			},
+			authorizer: FakePetAuthorizer{
+				IsAuthorizedResult: true,
+			},
+			petId:     SamplePet1.Id,
+			petOwner:  "",
 			expectErr: false,
 		},
 		{
@@ -339,23 +354,8 @@ func TestPetUpdateOwner(t *testing.T) {
 			userDao: FakeUserDao{
 				getByUsernameUser: SampleUser1,
 			},
-			authorizer: FakeAuthorizer{
+			authorizer: FakePetAuthorizer{
 				IsAuthorizedResult: false,
-			},
-			petId:     SamplePet1.Id,
-			petOwner:  SampleUser1.Username,
-			expectErr: true,
-		},
-		{
-			name: "authorizer error",
-			petDao: FakePetDao{
-				updateErr: assert.AnError,
-			},
-			userDao: FakeUserDao{
-				getByUsernameUser: SampleUser1,
-			},
-			authorizer: FakeAuthorizer{
-				IsAuthorizedErr: assert.AnError,
 			},
 			petId:     SamplePet1.Id,
 			petOwner:  SampleUser1.Username,
@@ -369,7 +369,7 @@ func TestPetUpdateOwner(t *testing.T) {
 			userDao: FakeUserDao{
 				getByUsernameErr: assert.AnError,
 			},
-			authorizer: FakeAuthorizer{
+			authorizer: FakePetAuthorizer{
 				IsAuthorizedResult: true,
 			},
 			petId:     SamplePet1.Id,
@@ -384,7 +384,7 @@ func TestPetUpdateOwner(t *testing.T) {
 			userDao: FakeUserDao{
 				getByUsernameUser: SampleUser1,
 			},
-			authorizer: FakeAuthorizer{
+			authorizer: FakePetAuthorizer{
 				IsAuthorizedResult: true,
 			},
 			petId:     SamplePet1.Id,
@@ -399,7 +399,7 @@ func TestPetUpdateOwner(t *testing.T) {
 			userDao: FakeUserDao{
 				getByUsernameUser: SampleUser1,
 			},
-			authorizer: FakeAuthorizer{
+			authorizer: FakePetAuthorizer{
 				IsAuthorizedResult: true,
 			},
 			petId:     SamplePet1.Id,
@@ -414,7 +414,7 @@ func TestPetUpdateOwner(t *testing.T) {
 		service := service.NewPetService(&test.petDao, &test.userDao, &test.authorizer, nil)
 
 		// Execute
-		pet, err := service.UpdateOwner("requestor", test.petId, test.petOwner)
+		pet, err := service.UpdateOwner(SampleIdentity, test.petId, test.petOwner)
 
 		// Verify
 		if !test.expectErr {

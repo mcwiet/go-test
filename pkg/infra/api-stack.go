@@ -98,31 +98,6 @@ func NewApiStack(scope constructs.Construct, id string, props *ApiStackProps) aw
 		Resources: jsii.Strings(*primaryTable.TableArn(), *primaryTable.TableArn()+"/*"),
 	}))
 
-	// Permissions Dynamo DB table
-	permissionsTableName := *stackName + "-permissions-table"
-	permissionsTablePartitionKey := awsdynamodb.Attribute{Name: jsii.String("ID"), Type: awsdynamodb.AttributeType_STRING}
-	permissionsTable := awsdynamodb.NewTable(stack, &permissionsTableName, &awsdynamodb.TableProps{
-		TableName:    &permissionsTableName,
-		PartitionKey: &permissionsTablePartitionKey,
-		BillingMode:  awsdynamodb.BillingMode_PAY_PER_REQUEST,
-	})
-
-	// Permission for Lambda to access Permissions Dynamo DB table
-	lambda.AddToRolePolicy(awsiam.NewPolicyStatement(&awsiam.PolicyStatementProps{
-		Effect: awsiam.Effect_ALLOW,
-		Actions: jsii.Strings(
-			"dynamodb:BatchGetItem",
-			"dynamodb:DescribeTable",
-			"dynamodb:GetItem",
-			"dynamodb:Query",
-			"dynamodb:Scan",
-			"dynamodb:BatchWriteItem",
-			"dynamodb:DeleteItem",
-			"dynamodb:UpdateItem",
-			"dynamodb:PutItem"),
-		Resources: jsii.Strings(*permissionsTable.TableArn(), *permissionsTable.TableArn()+"/*"),
-	}))
-
 	// Permission for Lambda to access Cognito User Pool
 	userPoolArn := GetInfraParameter(stack, props.EnvName, ParamUserPoolArn)
 	lambda.AddToRolePolicy(awsiam.NewPolicyStatement(&awsiam.PolicyStatementProps{
@@ -137,7 +112,6 @@ func NewApiStack(scope constructs.Construct, id string, props *ApiStackProps) aw
 
 	// Add environment variables to Lambda to reference other infra
 	lambda.AddEnvironment(jsii.String("DDB_PRIMARY_TABLE_NAME"), &primaryTableName, nil)
-	lambda.AddEnvironment(jsii.String("DDB_PERMISSIONS_TABLE_NAME"), &primaryTableName, nil)
 	lambda.AddEnvironment(jsii.String("USER_POOL_ID"), &userPoolId, nil)
 
 	return stack

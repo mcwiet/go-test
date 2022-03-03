@@ -8,21 +8,16 @@ require (
 	github.com/aws/constructs-go/constructs/v10 v10.0.67
 	github.com/aws/jsii-runtime-go v1.54.0
 	github.com/google/uuid v1.3.0
-	github.com/newbmiao/dynacasbin v0.0.2
 	github.com/openlyinc/pointy v1.1.2
 )
 
 require (
-	github.com/Knetic/govaluate v3.0.1-0.20171022003610-9aa49832a739+incompatible // indirect
-	github.com/cenkalti/backoff/v4 v4.1.2 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
-	github.com/gofrs/uuid v4.2.0+incompatible // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	github.com/kr/pretty v0.1.0 // indirect
 	github.com/matryer/is v1.4.0 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
-	golang.org/x/net v0.0.0-20220127200216-cd36cc0744dd // indirect
 	gopkg.in/check.v1 v1.0.0-20190902080502-41f04d3bba15 // indirect
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
 )
@@ -32,9 +27,7 @@ require (
 	github.com/aws/aws-cdk-go/awscdkappsyncalpha/v2 v2.13.0-alpha.0
 	github.com/aws/aws-cdk-go/awscdklambdagoalpha/v2 v2.13.0-alpha.0
 	github.com/aws/aws-sdk-go v1.43.2
-	github.com/casbin/casbin/v2 v2.41.1
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
-	github.com/guregu/dynamo v1.13.0 // indirect
 	github.com/machinebox/graphql v0.2.2
 	github.com/mitchellh/mapstructure v1.4.3
 	github.com/stretchr/testify v1.7.0

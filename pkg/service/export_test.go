@@ -4,10 +4,16 @@ import (
 	"encoding/base64"
 
 	"github.com/mcwiet/go-test/pkg/model"
+	"github.com/mcwiet/go-test/pkg/service"
 )
 
 var (
-	SampleEncoder = FakeEncoder{}
+	SampleEncoder  = FakeEncoder{}
+	SampleIdentity = model.Identity{
+		Username: "test-admin-user",
+		Groups:   map[string]bool{"admin": true},
+		Email:    "test@email.com",
+	}
 )
 
 type FakeEncoder struct {
@@ -26,25 +32,12 @@ func (e *FakeEncoder) Decode(input string) (string, error) {
 	}
 }
 
-type FakeAuthorizer struct {
-	AddPermissionSuccess    bool
-	AddPermissionErr        error
-	IsAuthorizedResult      bool
-	IsAuthorizedErr         error
-	RemovePermissionSuccess bool
-	RemovePermissionErr     error
+type FakePetAuthorizer struct {
+	IsAuthorizedResult bool
 }
 
-func (f *FakeAuthorizer) AddPermission(string, string, string) (bool, error) {
-	return f.AddPermissionSuccess, f.AddPermissionErr
-}
-
-func (f *FakeAuthorizer) IsAuthorized(string, string, string) (bool, error) {
-	return f.IsAuthorizedResult, f.IsAuthorizedErr
-}
-
-func (f *FakeAuthorizer) RemovePermission(string, string, string) (bool, error) {
-	return f.RemovePermissionSuccess, f.IsAuthorizedErr
+func (f *FakePetAuthorizer) IsAuthorized(model.Identity, model.Pet, service.PetAction) bool {
+	return f.IsAuthorizedResult
 }
 
 type FakePetDao struct {

@@ -17,6 +17,7 @@ CDK_DIR = ./cdk.out
 CMD_API_URL = aws ssm get-parameter --name /go/${ENV}/appsync-url | jq '.Parameter.Value'
 CMD_USER_POOL_ID = aws ssm get-parameter --name /go/${ENV}/user-pool-id | jq '.Parameter.Value'
 CMD_USER_POOL_APP_CLIENT_ID = aws ssm get-parameter --name /go/${ENV}/user-pool-api-client-id | jq '.Parameter.Value'
+GO_CMD = go
 EVENTS_DIR = ./test/_request
 TRUE_CONDITIONS = true TRUE 1
 
@@ -35,7 +36,7 @@ build: build-api build-infra
 ## Build the API application
 build-api:
 	@ echo "⏳ Start building API..."
-	@ go build -o ${BUILD_DIR}/${APP_NAME_API} ./cmd/api
+	@ ${GO_CMD} build -o ${BUILD_DIR}/${APP_NAME_API} ./cmd/api
 	@ echo "✅ Done building API"
 
 ## Build the infrastructure
@@ -112,7 +113,7 @@ deploy-infra:
 ## Install dependencies
 install:
 	@ echo "⏳ Start installing dependencies..."
-	@ go mod download
+	@ ${GO_CMD} mod download
 	@ echo "✅ Done installing dependencies"
 
 ## Invoke the API; set API_REQUEST=[name of request] (e.g. use 'pet' for ./test/_request/pet.json)
@@ -124,7 +125,7 @@ invoke-api: build-infra
 ## Run integration tests (does not cache results)
 test-integration:
 	@ echo "⏳ Start running ${ENV} integration tests..."
-	@ go test ./test/integration/... -count=1
+	@ ${GO_CMD} test ./test/integration/... -count=1
 	@ echo "✅ Done running ${ENV} integration tests"
 
 ## Run unit tests on library code (i.e. pkg/ directory)
@@ -133,16 +134,16 @@ test-unit:
 	@ rm -rf .coverage
 ifeq (${SAVE_TEST_COVERAGE},$(filter ${SAVE_TEST_COVERAGE},${TRUE_CONDITIONS}))
 	@ mkdir .coverage
-	@ go test ./pkg/... -coverprofile ".coverage/pkg.out" 
+	@ ${GO_CMD} test ./pkg/... -coverprofile ".coverage/pkg.out" 
 else
-	@ go test ./pkg/... -cover
+	@ ${GO_CMD} test ./pkg/... -cover
 endif
 	@ echo "✅ Done running unit tests"
 
 ## Build, package, and update the API application Lambda code (expects infrastructure to have been deployed)
 update-api:
 	@ echo "⏳ Start updating API Lambda code..."
-	@ GOARCH=${AWS_LAMBDA_GOARCH} GOOS=${AWS_LAMBDA_GOOS} go build -o ${BUILD_DIR}/${APP_NAME_API} ./cmd/api
+	@ GOARCH=${AWS_LAMBDA_GOARCH} GOOS=${AWS_LAMBDA_GOOS} ${GO_CMD} build -o ${BUILD_DIR}/${APP_NAME_API} ./cmd/api
 	@ rm -f ${BUILD_DIR}/bootstrap ${BUILD_DIR}/bootstrap.zip
 	@ cp ${BUILD_DIR}/${APP_NAME_API} ${BUILD_DIR}/bootstrap
 	@ zip -jr ${BUILD_DIR}/bootstrap.zip ${BUILD_DIR}/bootstrap

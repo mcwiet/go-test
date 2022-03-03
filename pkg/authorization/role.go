@@ -3,13 +3,13 @@ package authorization
 type Role int
 
 const (
-	Undefined Role = iota
-	Admin
+	RoleUndefined Role = iota
+	RoleAdmin
 )
 
 func (r Role) String() string {
 	switch r {
-	case Admin:
+	case RoleAdmin:
 		return "admin"
 	}
 	return "unknown"

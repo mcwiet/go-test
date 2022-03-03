@@ -23,7 +23,7 @@ func TestPetApi(t *testing.T) {
 	getPet(t, pet1.Id, &pet1)
 
 	// Update the pet owner
-	updatePetOwner(t, pet1, UserToken.Username)
+	updatePetOwner(t, pet1, "")
 
 	// Delete the pets
 	deletePet(t, &pet1)
@@ -37,7 +37,7 @@ func createPet(t *testing.T) model.Pet {
 	// Setup
 	petName := "Integration Test"
 	petAge := 10
-	petOwner := ""
+	petOwner := UserToken.Username
 	request := graphql.NewRequest(`
 		mutation ($name: String!, $age: Int!, $owner: String) {
 			createPet (input: { name: $name, age: $age, owner: $owner }) {

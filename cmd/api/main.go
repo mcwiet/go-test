@@ -6,13 +6,11 @@ import (
 	"log"
 	"os"
 
-	"github.com/casbin/casbin/v2"
 	"github.com/mcwiet/go-test/pkg/authorization"
 	"github.com/mcwiet/go-test/pkg/controller"
 	"github.com/mcwiet/go-test/pkg/data"
 	"github.com/mcwiet/go-test/pkg/encoding"
 	"github.com/mcwiet/go-test/pkg/service"
-	"github.com/newbmiao/dynacasbin"
 
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -32,10 +30,7 @@ func init() {
 	cursorEncoder := encoding.NewCursorEncoder()
 
 	// Authorization
-	permissionsTableName := os.Getenv("DDB_PERMISSIONS_TABLE_NAME")
-	adapter, _ := dynacasbin.NewAdapter(nil, permissionsTableName)
-	enforcer, _ := casbin.NewEnforcer("rbac_model.conf", adapter)
-	authorizer := authorization.NewCasbinAuthorizer(enforcer)
+	petAuth := authorization.NewPetAuthorizer()
 
 	// Data
 	primaryTableName := os.Getenv("DDB_PRIMARY_TABLE_NAME")
@@ -44,7 +39,7 @@ func init() {
 	userDao := data.NewUserDao(cognitoClient, userPoolId)
 
 	// Service
-	petService := service.NewPetService(&petDao, &userDao, &authorizer, &cursorEncoder)
+	petService := service.NewPetService(&petDao, &userDao, &petAuth, &cursorEncoder)
 	userService := service.NewUserService(&userDao, &cursorEncoder)
 
 	// Controller
@@ -53,14 +48,13 @@ func init() {
 }
 
 func handle(ctx context.Context, req interface{}) (interface{}, error) {
-	request := controller.NewRequest(req)
+	request := NewRequest(req)
+	log.Println(request.ParentTypeName + " " + request.FieldName)
+
 	var response controller.Response
-
-	log.Println(request.Info.ParentTypeName + " " + request.Info.FieldName)
-
-	switch request.Info.ParentTypeName {
+	switch request.ParentTypeName {
 	case "Query":
-		switch request.Info.FieldName {
+		switch request.FieldName {
 		case "pet":
 			response = petController.HandleGet(request)
 		case "pets":
@@ -73,7 +67,7 @@ func handle(ctx context.Context, req interface{}) (interface{}, error) {
 			response = controller.Response{Error: errors.New("query not recognized")}
 		}
 	case "Mutation":
-		switch request.Info.FieldName {
+		switch request.FieldName {
 		case "createPet":
 			response = petController.HandleCreate(request)
 		case "deletePet":
