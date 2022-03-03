@@ -22,19 +22,26 @@ func (p *fakeProvider) InitiateAuth(input *cognito.InitiateAuthInput) (*cognito.
 
 // Define common data
 var (
-	accessTokenString        = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6Im1pa2UifQ.juIlHgvyROIutaxRV95WBIr9Cn4snjqWMHO385Io_uA"
-	idTokenString            = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6Im1pa2VAZW1haWwuY29tIn0.AtNfbHDL86yYD3MulZO5jzAsZRRSmgMjNmY5EmSLFO4"
-	refreshTokenString       = ""
-	sampleInitiateAuthOutput = cognito.InitiateAuthOutput{
+	SampleAccessTokenString  = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6Im1pa2UifQ.juIlHgvyROIutaxRV95WBIr9Cn4snjqWMHO385Io_uA"
+	SampleIdTokenString      = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJjb2duaXRvOnVzZXJuYW1lIjoibWlrZSIsImNvZ25pdG86Z3JvdXBzIjpbImdyb3VwIl0sImVtYWlsIjoibWlrZUBlbWFpbC5jb20ifQ.A9WKwOIkoRuOYYMaY05uBYyNwHJ7mNONZXQCyqkoPpI"
+	SampleRefreshTokenString = "refresh"
+	SampleUsername           = "mike"            // same as in ID token string
+	SampleEmail              = "mike@email.com"  // same as in ID token string
+	SampleGroups             = []string{"group"} // same as in ID token string
+	SampleInitiateAuthOutput = cognito.InitiateAuthOutput{
 		AuthenticationResult: &cognito.AuthenticationResultType{
-			AccessToken:  &accessTokenString,
-			IdToken:      &idTokenString,
-			RefreshToken: &refreshTokenString,
+			AccessToken:  &SampleAccessTokenString,
+			IdToken:      &SampleIdTokenString,
+			RefreshToken: &SampleRefreshTokenString,
 		},
 	}
-	sampleToken = authentication.UserToken{
-		AccessTokenString: *sampleInitiateAuthOutput.AuthenticationResult.AccessToken,
-		Username:          "mike",
+	SampleToken = authentication.UserToken{
+		AccessTokenString:  *SampleInitiateAuthOutput.AuthenticationResult.AccessToken,
+		IdTokenString:      *SampleInitiateAuthOutput.AuthenticationResult.IdToken,
+		RefreshTokenString: *SampleInitiateAuthOutput.AuthenticationResult.RefreshToken,
+		Username:           SampleUsername,
+		Email:              SampleEmail,
+		Groups:             SampleGroups,
 	}
 )
 
@@ -43,7 +50,7 @@ func TestLogin(t *testing.T) {
 	type Test struct {
 		name          string
 		provider      fakeProvider
-		expectedToken string
+		expectedToken authentication.UserToken
 		expectErr     bool
 	}
 
@@ -51,8 +58,8 @@ func TestLogin(t *testing.T) {
 	tests := []Test{
 		{
 			name:          "valid input",
-			provider:      fakeProvider{intiateAuthOutput: sampleInitiateAuthOutput},
-			expectedToken: *sampleInitiateAuthOutput.AuthenticationResult.AccessToken,
+			provider:      fakeProvider{intiateAuthOutput: SampleInitiateAuthOutput},
+			expectedToken: SampleToken,
 			expectErr:     false,
 		},
 		{
@@ -73,7 +80,7 @@ func TestLogin(t *testing.T) {
 		// Verify
 		if !test.expectErr {
 			assert.Nil(t, err, test.name)
-			assert.Equal(t, *sampleInitiateAuthOutput.AuthenticationResult.AccessToken, token.AccessTokenString, test.name)
+			assert.Equal(t, *SampleInitiateAuthOutput.AuthenticationResult.AccessToken, token.AccessTokenString, test.name)
 		} else {
 			assert.NotNil(t, err, test.name)
 		}

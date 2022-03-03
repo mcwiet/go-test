@@ -2,6 +2,7 @@ package authentication
 
 import (
 	"errors"
+	"fmt"
 
 	cognito "github.com/aws/aws-sdk-go/service/cognitoidentityprovider"
 	"github.com/aws/jsii-runtime-go"
@@ -27,6 +28,7 @@ type UserToken struct {
 	RefreshTokenString string
 	Username           string
 	Email              string
+	Groups             []string
 }
 
 // Creates a new authenticator object
@@ -65,21 +67,23 @@ func (a *CognitoAuthenticator) Login(email string, password string) (UserToken, 
 
 // Turn a token string into a token object (does not verify token!)
 func buildUserToken(accessToken string, idToken string, refreshToken string) (UserToken, error) {
-	accessClaims, err := getClaims(accessToken)
-	if err != nil {
-		return UserToken{}, errors.New("could not parse user's access token")
-	}
 	idClaims, err := getClaims(idToken)
 	if err != nil {
 		return UserToken{}, errors.New("could not parse user's ID token")
+	}
+
+	groups := []string{}
+	for _, group := range idClaims["cognito:groups"].([]interface{}) {
+		groups = append(groups, fmt.Sprintf("%v", group))
 	}
 
 	token := UserToken{
 		AccessTokenString:  accessToken,
 		IdTokenString:      idToken,
 		RefreshTokenString: refreshToken,
-		Username:           accessClaims["username"].(string),
+		Username:           idClaims["cognito:username"].(string),
 		Email:              idClaims["email"].(string),
+		Groups:             groups,
 	}
 
 	return token, err
@@ -91,10 +95,7 @@ func getClaims(token string) (jwt.MapClaims, error) {
 		return jwt.MapClaims{}, err
 	}
 
-	claims, ok := decoded.Claims.(jwt.MapClaims)
-	if !ok {
-		return jwt.MapClaims{}, err
-	}
+	claims := decoded.Claims.(jwt.MapClaims)
 
 	return claims, nil
 }
