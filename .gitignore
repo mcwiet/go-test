@@ -4,6 +4,9 @@
 # IDE
 .vscode/
 
+# Dependencies
+node_modules/
+
 # Sensitive
 *.secrets
 *.env
@@ -14,4 +17,3 @@ dist/
 
 # Test output
 .coverage/
-
