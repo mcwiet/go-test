@@ -2,7 +2,6 @@ package infra
 
 import (
 	"github.com/aws/aws-cdk-go/awscdk/v2"
-	"github.com/aws/aws-cdk-go/awscdk/v2/awscognito"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awsdynamodb"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awsiam"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awslambda"
@@ -35,20 +34,16 @@ func NewApiStack(scope constructs.Construct, id string, props *ApiStackProps) aw
 
 	// AppSync API
 	apiName := *stackName + "-appsync"
-	userPoolId := GetInfraParameter(stack, props.EnvName, ParamUserPoolId)
-	userPool := awscognito.UserPool_FromUserPoolId(stack, &userPoolId, &userPoolId)
 	api := awscdkappsyncalpha.NewGraphqlApi(stack, &apiName, &awscdkappsyncalpha.GraphqlApiProps{
 		Name:   &apiName,
 		Schema: schema,
 		AuthorizationConfig: &awscdkappsyncalpha.AuthorizationConfig{
 			DefaultAuthorization: &awscdkappsyncalpha.AuthorizationMode{
-				AuthorizationType: awscdkappsyncalpha.AuthorizationType_USER_POOL,
-				UserPoolConfig: &awscdkappsyncalpha.UserPoolConfig{
-					UserPool: userPool,
-				},
+				AuthorizationType: awscdkappsyncalpha.AuthorizationType_IAM,
 			},
 		},
 	})
+	NewInfraParameter(stack, props.EnvName, ParamAppSyncId, *api.ApiId())
 	NewInfraParameter(stack, props.EnvName, ParamAppSyncUrl, *api.GraphqlUrl())
 
 	// Data source(s)
@@ -65,6 +60,35 @@ func NewApiStack(scope constructs.Construct, id string, props *ApiStackProps) aw
 	createResolver(api, "Mutation", "createPet", lambdaSource)
 	createResolver(api, "Mutation", "deletePet", lambdaSource)
 	createResolver(api, "Mutation", "updatePetOwner", lambdaSource)
+
+	// Unauthenticated User API Permissions
+	unauthUserRoleArn := GetInfraParameter(stack, props.EnvName, ParamUnauthenticatedUserRoleArn)
+	unauthUserRole := awsiam.Role_FromRoleArn(stack, jsii.String(*stackName+"unauth-role"), &unauthUserRoleArn, nil)
+	unauthUserRole.AddToPrincipalPolicy(awsiam.NewPolicyStatement(&awsiam.PolicyStatementProps{
+		Effect:  awsiam.Effect_ALLOW,
+		Actions: jsii.Strings("appsync:GraphQL"),
+		Resources: jsii.Strings(
+			*api.Arn()+"/types/Query/fields/pet",
+			*api.Arn()+"/types/Query/fields/pets",
+		),
+	}))
+
+	// Authenticated User API Permissions
+	authUserRoleArn := GetInfraParameter(stack, props.EnvName, ParamAuthenticatedUserRoleArn)
+	authUserRole := awsiam.Role_FromRoleArn(stack, jsii.String(*stackName+"auth-role"), &authUserRoleArn, nil)
+	authUserRole.AddToPrincipalPolicy(awsiam.NewPolicyStatement(&awsiam.PolicyStatementProps{
+		Effect:  awsiam.Effect_ALLOW,
+		Actions: jsii.Strings("appsync:GraphQL"),
+		Resources: jsii.Strings(
+			*api.Arn()+"/types/Query/fields/pet",
+			*api.Arn()+"/types/Query/fields/pets",
+			*api.Arn()+"/types/Query/fields/user",
+			*api.Arn()+"/types/Query/fields/users",
+			*api.Arn()+"/types/Mutation/fields/createPet",
+			*api.Arn()+"/types/Mutation/fields/deletePet",
+			*api.Arn()+"/types/Mutation/fields/updatePetOwner",
+		),
+	}))
 
 	// Primary Dynamo DB table
 	primaryTableName := *stackName + "-primary-table"
@@ -111,6 +135,7 @@ func NewApiStack(scope constructs.Construct, id string, props *ApiStackProps) aw
 	}))
 
 	// Add environment variables to Lambda to reference other infra
+	userPoolId := GetInfraParameter(stack, props.EnvName, ParamUserPoolId)
 	lambda.AddEnvironment(jsii.String("DDB_PRIMARY_TABLE_NAME"), &primaryTableName, nil)
 	lambda.AddEnvironment(jsii.String("USER_POOL_ID"), &userPoolId, nil)
 

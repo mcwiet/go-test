@@ -11,6 +11,9 @@
 # production
 /build
 
+# temporary schema file for amplify codegen
+/schema.graphql
+
 # misc
 .DS_Store
 .env.local

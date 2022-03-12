@@ -7,10 +7,14 @@ import (
 
 // Defining all parameter names here - helps prevent typos and keep parameters organized
 const (
-	ParamAppSyncUrl          = "appsync-url"
-	ParamUserPoolArn         = "user-pool-arn"
-	ParamUserPoolId          = "user-pool-id"
-	ParamUserPoolApiClientId = "user-pool-api-client-id"
+	ParamAppSyncId                  = "appsync-id"
+	ParamAppSyncUrl                 = "appsync-url"
+	ParamAuthenticatedUserRoleArn   = "authenticated-user-role-arn"
+	ParamIdentityPoolId             = "identity-pool-id"
+	ParamUserPoolArn                = "user-pool-arn"
+	ParamUserPoolId                 = "user-pool-id"
+	ParamUserPoolApiClientId        = "user-pool-api-client-id"
+	ParamUnauthenticatedUserRoleArn = "unauthenticated-user-role-arn"
 )
 
 // Returns the name for an SSM parameter
