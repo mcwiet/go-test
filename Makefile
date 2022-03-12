@@ -177,8 +177,8 @@ test-integration:
 	@ echo "✅ Done running ${ENV} integration tests"
 
 ## Run unit tests on library code (i.e. pkg/ directory)
-test-unit: 
-	@ echo "⏳ Start running unit tests..."
+test-unit-library: 
+	@ echo "⏳ Start running library unit tests..."
 	@ rm -rf .coverage
 ifeq (${SAVE_TEST_COVERAGE},$(filter ${SAVE_TEST_COVERAGE},${TRUE_CONDITIONS}))
 	@ mkdir .coverage
@@ -186,7 +186,18 @@ ifeq (${SAVE_TEST_COVERAGE},$(filter ${SAVE_TEST_COVERAGE},${TRUE_CONDITIONS}))
 else
 	@ ${GO_CMD} test ./pkg/... -cover
 endif
-	@ echo "✅ Done running unit tests"
+	@ echo "✅ Done running library unit tests"
+
+## Run unit tests on web app code (i.e. web/ directory)
+test-unit-web-app: 
+	@ echo "⏳ Start running web app unit tests..."
+	@ rm -rf .coverage
+ifeq (${SAVE_TEST_COVERAGE},$(filter ${SAVE_TEST_COVERAGE},${TRUE_CONDITIONS}))
+	@ cd ${WEB_APP_DIR} && npm run test -- --watchAll=false --silent
+else
+	@ cd ${WEB_APP_DIR} && npm run test -- --watchAll=false --silent
+endif
+	@ echo "✅ Done running web app unit tests"
 
 ## Build, package, and update the API application Lambda code (expects infrastructure to have been deployed)
 update-api:

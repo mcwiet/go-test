@@ -27,15 +27,19 @@ function App() {
     getData();
 
     async function getData() {
-      const response = await API.graphql(graphqlOperation(petsQuery, { input: { first: "100" } }));
-      const data = (response as any).data.pets.edges as PetEdge[];
-      var details = new Map<string, boolean>();
-      data.forEach((edge) => {
-        details.set(edge.node.id, false);
-      });
+      try {
+        const response = await API.graphql(graphqlOperation(petsQuery, { input: { first: "100" } }));
+        const data = (response as any).data.pets.edges as PetEdge[];
+        var details = new Map<string, boolean>();
+        data.forEach((edge) => {
+          details.set(edge.node.id, false);
+        });
 
-      setPets(data);
-      setShowPetDetails(details);
+        setPets(data);
+        setShowPetDetails(details);
+      } catch (e) {
+        console.warn(e);
+      }
     }
   }, []);
 
@@ -48,6 +52,7 @@ function App() {
     <div className="App">
       <header className="App-header">
         <img src={logo} className="App-logo" alt="logo" />
+        <h2>Pets</h2>
         {pets && (
           <List sx={{ width: "100%", maxWidth: 720, bgcolor: "transparent" }}>
             {pets.map((pet) => (

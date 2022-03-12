@@ -1,8 +1,17 @@
 import { render, screen } from "@testing-library/react";
+import { graphqlOperation } from "aws-amplify";
+import { pets as petsQuery } from "./graphql/queries";
 import App from "./App";
 
-test("renders learn react link", () => {
+jest.mock("aws-amplify");
+
+test("renders pets header", () => {
   render(<App />);
-  const linkElement = screen.getByText(/learn react/i);
-  expect(linkElement).toBeInTheDocument();
+  const header = screen.getByText("Pets");
+  expect(header).toBeInTheDocument();
+});
+
+test("queries for pets", () => {
+  render(<App />);
+  expect(graphqlOperation).toHaveBeenLastCalledWith(petsQuery, expect.anything());
 });
