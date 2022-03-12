@@ -86,24 +86,12 @@ func NewAuthStack(scope constructs.Construct, id string, props *AuthStackProps) 
 	})
 	NewInfraParameter(stack, props.EnvName, ParamUnauthenticatedUserRoleArn, *unauthRole.RoleArn())
 
-	// Authenticated User Role
-	authRoleName := *stackName + "-authenticated-user-role"
-	authRole := awsiam.NewRole(stack, &authRoleName, &awsiam.RoleProps{
-		RoleName: &authRoleName,
-		AssumedBy: awsiam.NewFederatedPrincipal(jsii.String("cognito-identity.amazonaws.com"), &map[string]interface{}{
-			"StringEquals":           map[string]interface{}{"cognito-identity.amazonaws.com:aud": identityPool.Ref()},
-			"ForAnyValue:StringLike": map[string]interface{}{"cognito-identity.amazonaws.com:amr": "authenticated"},
-		}, jsii.String("sts:AssumeRoleWithWebIdentity")),
-	})
-	NewInfraParameter(stack, props.EnvName, ParamAuthenticatedUserRoleArn, *authRole.RoleArn())
-
 	// Cognito Identity Pool Role Attachment
 	identityPoolRoleAttachmentName := *stackName + "identity-pool-role-attachment"
 	awscognito.NewCfnIdentityPoolRoleAttachment(stack, &identityPoolRoleAttachmentName, &awscognito.CfnIdentityPoolRoleAttachmentProps{
 		IdentityPoolId: identityPool.Ref(),
 		Roles: map[string]*string{
 			"unauthenticated": unauthRole.RoleArn(),
-			"authenticated":   authRole.RoleArn(),
 		},
 	})
 

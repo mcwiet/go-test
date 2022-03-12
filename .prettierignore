@@ -1,0 +1,5 @@
+# Ignore everything
+/*
+
+# Only user prettier for web app
+!/web

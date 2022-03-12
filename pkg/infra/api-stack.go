@@ -67,27 +67,9 @@ func NewApiStack(scope constructs.Construct, id string, props *ApiStackProps) aw
 	unauthUserRole.AddToPrincipalPolicy(awsiam.NewPolicyStatement(&awsiam.PolicyStatementProps{
 		Effect:  awsiam.Effect_ALLOW,
 		Actions: jsii.Strings("appsync:GraphQL"),
-		Resources: jsii.Strings(
-			*api.Arn()+"/types/Query/fields/pet",
-			*api.Arn()+"/types/Query/fields/pets",
-		),
-	}))
-
-	// Authenticated User API Permissions
-	authUserRoleArn := GetInfraParameter(stack, props.EnvName, ParamAuthenticatedUserRoleArn)
-	authUserRole := awsiam.Role_FromRoleArn(stack, jsii.String(*stackName+"auth-role"), &authUserRoleArn, nil)
-	authUserRole.AddToPrincipalPolicy(awsiam.NewPolicyStatement(&awsiam.PolicyStatementProps{
-		Effect:  awsiam.Effect_ALLOW,
-		Actions: jsii.Strings("appsync:GraphQL"),
-		Resources: jsii.Strings(
-			*api.Arn()+"/types/Query/fields/pet",
-			*api.Arn()+"/types/Query/fields/pets",
-			*api.Arn()+"/types/Query/fields/user",
-			*api.Arn()+"/types/Query/fields/users",
-			*api.Arn()+"/types/Mutation/fields/createPet",
-			*api.Arn()+"/types/Mutation/fields/deletePet",
-			*api.Arn()+"/types/Mutation/fields/updatePetOwner",
-		),
+		// Give the role access to the full API and manage specific permissions within the schema; required to add AppSync directives in the schema
+		// to indicate which API's can be accessed by each authentication type (Cognito vs IAM) so avoid managing permissions in two places (here and schema)
+		Resources: jsii.Strings(*api.Arn() + "/types/*"),
 	}))
 
 	// Primary Dynamo DB table

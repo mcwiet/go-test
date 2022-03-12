@@ -7,105 +7,112 @@ schema {
 
 type Query {
   pet(input: PetInput!): Pet!
+    @aws_iam @aws_cognito_user_pools
   pets(input: PetsInput!): PetConnection!
+    @aws_iam @aws_cognito_user_pools
   user(input: UserInput!): User!
+    @aws_iam @aws_cognito_user_pools
   users(input: UsersInput!): UserConnection!
+    @aws_iam @aws_cognito_user_pools
 }
 
 # ----- MUTATIONS -----
 
 type Mutation {
   createPet(input: CreatePetInput!): CreatePetPayload!
+    @aws_cognito_user_pools
   deletePet(input: DeletePetInput!): DeletePetPayload!
+    @aws_cognito_user_pools
   updatePetOwner(input: UpdatePetOwnerInput!): UpdatePetOwnerPayload!
+    @aws_cognito_user_pools
 }
 
 # ----- COMMON TYPES -----
 
-type PageInfo {
+type PageInfo @aws_iam @aws_cognito_user_pools {
   endCursor: String
   hasNextPage: Boolean!
 }
 
 # ----- USER TYPES -----
 
-type User {
+input UserInput @aws_iam @aws_cognito_user_pools {
+  username: String!
+}
+
+type User @aws_iam @aws_cognito_user_pools {
   username: String!
   email: String
   name: String
 }
 
-type UserEdge {
+input UsersInput @aws_iam @aws_cognito_user_pools {
+  first: Int!
+  after: String
+}
+
+type UserEdge @aws_iam @aws_cognito_user_pools {
   node: User!
 }
 
-type UserConnection {
+type UserConnection @aws_iam @aws_cognito_user_pools {
   totalCount: Int!
   edges: [UserEdge!]
   pageInfo: PageInfo!
 }
 
-input UserInput {
-  username: String!
-}
-
-input UsersInput {
-  first: Int!
-  after: String
-}
-
 # ----- PET TYPES -----
 
-type Pet {
+input PetInput @aws_iam @aws_cognito_user_pools {
+  id: ID!
+}
+
+type Pet @aws_iam @aws_cognito_user_pools {
   id: ID!
   name: String!
   age: Int!
   owner: String
 }
 
-type PetEdge {
+input PetsInput @aws_iam @aws_cognito_user_pools {
+  first: Int!
+  after: String
+}
+
+type PetEdge @aws_iam @aws_cognito_user_pools {
   node: Pet!
   cursor: String!
 }
 
-type PetConnection {
+type PetConnection @aws_iam @aws_cognito_user_pools {
   totalCount: Int!
   edges: [PetEdge!]
   pageInfo: PageInfo!
 }
 
-input CreatePetInput {
+input CreatePetInput @aws_cognito_user_pools {
   name: String!
   age: Int!
   owner: String
 }
 
-type CreatePetPayload {
+type CreatePetPayload @aws_cognito_user_pools {
   pet: Pet!
 }
 
-input DeletePetInput {
+input DeletePetInput @aws_cognito_user_pools {
   id: ID!
 }
 
-type DeletePetPayload {
+type DeletePetPayload @aws_cognito_user_pools {
   id: ID!
 }
 
-input PetInput {
-  id: ID!
-}
-
-input PetsInput {
-  first: Int!
-  after: String
-}
-
-input UpdatePetOwnerInput {
+input UpdatePetOwnerInput @aws_cognito_user_pools {
   id: ID!
   owner: String!
 }
 
-type UpdatePetOwnerPayload {
+type UpdatePetOwnerPayload @aws_cognito_user_pools {
   pet: Pet!
 }

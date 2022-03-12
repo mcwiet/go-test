@@ -9,7 +9,6 @@ import (
 const (
 	ParamAppSyncId                  = "appsync-id"
 	ParamAppSyncUrl                 = "appsync-url"
-	ParamAuthenticatedUserRoleArn   = "authenticated-user-role-arn"
 	ParamIdentityPoolId             = "identity-pool-id"
 	ParamUserPoolArn                = "user-pool-arn"
 	ParamUserPoolId                 = "user-pool-id"
