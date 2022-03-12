@@ -38,6 +38,16 @@ func main() {
 		EnvName: env,
 	})
 
+	// Web App
+	webAppStackName := stackNamePrefix + "-web-app"
+	infra.NewWebAppStack(app, webAppStackName, &infra.WebAppStackProps{
+		StackProps: awscdk.StackProps{
+			StackName: &webAppStackName,
+			Env:       newCdkEnvironment(),
+		},
+		EnvName: env,
+	})
+
 	// Define dependencies (from parameters)
 	apiStack.AddDependency(authStack, jsii.String("AppSync API needs reference to Cognito User Pool"))
 

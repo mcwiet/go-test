@@ -15,6 +15,8 @@ const (
 	ParamUserPoolId                 = "user-pool-id"
 	ParamUserPoolApiClientId        = "user-pool-api-client-id"
 	ParamUnauthenticatedUserRoleArn = "unauthenticated-user-role-arn"
+	ParamWebAppBucketName           = "web-app-bucket-name"
+	ParamWebAppDistributionId       = "web-app-distribution-id"
 )
 
 // Returns the name for an SSM parameter

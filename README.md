@@ -24,8 +24,10 @@ This document will assume you have the ability to run commands from the Makefile
 The instructions below provide steps for setting up an environment both locally and in AWS. For a full list of supported Makefile commands, use either run `make` or `make help` to list all commands and a brief description.
 
 1. Run `make build-infra deploy-infra` to build and deploy a development environment to an AWS account
-1. Run `make build-env` to create the `.env` environment file (pulls values from the freshly deployed infrastructure)
-1. Update the `.env` file with credentials for a test user (for activities such as automated integration testing), then run `make create-test-user` to add that user to the Cognito User Pool
+1. Run `make build-env-file` to create the `.env` environment file (pulls values from the freshly deployed infrastructure)
+1. Update the `.env` file with credentials for a test user (for activities like automated integration testing)
+1. Run `make create-test-user` to add the test user to the Cognito User Pool
+1. Run `make promote-test-user` to make the test user an admin, capable of executing all necessary API commands
 1. Run `make test-unit` to run unit tests locally
 1. Run `make test-integration` to run integration tests against the deployed environment in AWS
 1. Run `make invoke-api-sam API_REQUEST=pet` to invoke the API Lambda locally in Docker, using requests stored in `test/_request/`
