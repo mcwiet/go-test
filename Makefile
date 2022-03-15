@@ -12,20 +12,26 @@ export
 APP_NAME_API = api
 AWS_LAMBDA_GOOS = linux
 AWS_LAMBDA_GOARCH = amd64
-BUILD_DIR = ./dist
-CDK_DIR = ./cdk.out
+
+DIR_PWD = $(shell pwd)
+DIR_API_EVENTS = ${DIR_PWD}/test/_request
+DIR_BUILD = ${DIR_PWD}/dist
+DIR_CDK = ${DIR_PWD}/cdk.out
+DIR_TEST_COVERAGE = ${DIR_PWD}/.coverage
+DIR_WEB = ${DIR_PWD}/web
+DIR_WEB_BUILD = ${DIR_WEB}/build
+
+CMD_GO = go
+
 CMD_API_ID = aws ssm get-parameter --name /go/${ENV}/appsync-id | jq '.Parameter.Value'
 CMD_API_URL = aws ssm get-parameter --name /go/${ENV}/appsync-url | jq '.Parameter.Value'
 CMD_IDENTITY_POOL_ID = aws ssm get-parameter --name /go/${ENV}/identity-pool-id | jq '.Parameter.Value'
 CMD_USER_POOL_ID = aws ssm get-parameter --name /go/${ENV}/user-pool-id | jq '.Parameter.Value'
 CMD_USER_POOL_APP_CLIENT_ID = aws ssm get-parameter --name /go/${ENV}/user-pool-api-client-id | jq '.Parameter.Value'
-CMD_WEB_APP_BUCKET_NAME = aws ssm get-parameter --name /go/${ENV}/web-app-bucket-name | jq '.Parameter.Value'
-CMD_WEB_APP_DISTRIBUTION_ID = aws ssm get-parameter --name /go/${ENV}/web-app-distribution-id | jq '.Parameter.Value'
-GO_CMD = go
-EVENTS_DIR = ./test/_request
+CMD_WEB_BUCKET_NAME = aws ssm get-parameter --name /go/${ENV}/web-app-bucket-name | jq '.Parameter.Value'
+CMD_WEB_DISTRIBUTION_ID = aws ssm get-parameter --name /go/${ENV}/web-app-distribution-id | jq '.Parameter.Value'
+
 TRUE_CONDITIONS = true TRUE 1
-WEB_APP_DIR = ./web
-WEB_APP_BUILD_DIR = ${WEB_APP_DIR}/build
 
 # Conditional constants
 ENV ?= development
@@ -36,13 +42,13 @@ SAVE_TEST_COVERAGE ?= false
 #################################################################################
 
 ## Build everything
-build: build-api build-infra build-web-app
+build: build-api build-infra build-web
 	@ echo "✅ Done building everything"
 
 ## Build the API application
 build-api:
 	@ echo "⏳ Start building API..."
-	@ ${GO_CMD} build -o ${BUILD_DIR}/${APP_NAME_API} ./cmd/api
+	@ ${CMD_GO} build -o ${DIR_BUILD}/${APP_NAME_API} ./cmd/api
 	@ echo "✅ Done building API"
 
 ## Build the infrastructure
@@ -52,9 +58,9 @@ build-infra:
 	@ echo "✅ Done building ${ENV} infrastructure"
 
 ## Build the web UI application
-build-web-app:
+build-web:
 	@ echo "⏳ Start building web app..."
-	@ cd ${WEB_APP_DIR} && npm run build
+	@ cd ${DIR_WEB} && npm run build
 	@ echo "✅ Done building web app"
 
 ## Build an env file containing values for infrastructure-dependent environment variables
@@ -64,8 +70,8 @@ build-env-file:
 	@ $(eval IDENTITY_POOL_ID=$(shell ${CMD_IDENTITY_POOL_ID}))
 	@ $(eval USER_POOL_ID=$(shell ${CMD_USER_POOL_ID}))
 	@ $(eval USER_POOL_APP_CLIENT_ID=$(shell ${CMD_USER_POOL_APP_CLIENT_ID}))
-	@ $(eval WEB_APP_BUCKET_NAME=$(shell ${CMD_WEB_APP_BUCKET_NAME}))
-	@ $(eval WEB_APP_DISTRIBUTION_ID=$(shell ${CMD_WEB_APP_DISTRIBUTION_ID}))
+	@ $(eval WEB_BUCKET_NAME=$(shell ${CMD_WEB_BUCKET_NAME}))
+	@ $(eval WEB_DISTRIBUTION_ID=$(shell ${CMD_WEB_DISTRIBUTION_ID}))
 	@ echo "🚨 FYI: Deleting existing ${ENV_FILE} file"
 	@ rm -f ${ENV_FILE}
 	@ echo "⏳ Start building ${ENV_FILE} file for ${ENV}..."
@@ -77,10 +83,10 @@ build-env-file:
 	@ echo "USER_POOL_APP_CLIENT_ID=${USER_POOL_APP_CLIENT_ID}" >> ${ENV_FILE}
 	@ echo "API_ID=${API_ID}" >> ${ENV_FILE}
 	@ echo "API_URL=${API_URL}" >> ${ENV_FILE}
-	@ echo "WEB_APP_BUCKET_NAME=${WEB_APP_BUCKET_NAME}" >> ${ENV_FILE}
-	@ echo "WEB_APP_DISTRIBUTION_ID=${WEB_APP_DISTRIBUTION_ID}" >> ${ENV_FILE}
+	@ echo "WEB_BUCKET_NAME=${WEB_BUCKET_NAME}" >> ${ENV_FILE}
+	@ echo "WEB_DISTRIBUTION_ID=${WEB_DISTRIBUTION_ID}" >> ${ENV_FILE}
 	@ echo "" >> ${ENV_FILE}
-	@ echo "# 🚨 CAUTION - REACT_APP VARIABLES GET EMBEDDED IN BUILD OUTPUT 🚨" >> ${ENV_FILE}
+	@ echo "# 🚨 CAUTION - 'REACT_APP...' VARIABLES GET EMBEDDED IN WEB BUILD OUTPUT 🚨" >> ${ENV_FILE}
 	@ echo "REACT_APP_AWS_REGION=${AWS_REGION}" >> ${ENV_FILE}
 	@ echo "REACT_APP_API_URL=${API_URL}" >> ${ENV_FILE}
 	@ echo "REACT_APP_IDENTITY_POOL_ID=${IDENTITY_POOL_ID}" >> ${ENV_FILE}
@@ -113,9 +119,9 @@ endif
 ## Clean all build output
 clean:
 	@ echo "⏳ Start cleaning..."
-	@ rm -rf ${BUILD_DIR}
-	@ rm -rf ${CDK_DIR}
-	@ rm -rf ${WEB_APP_BUILD_DIR}
+	@ rm -rf ${DIR_BUILD}
+	@ rm -rf ${DIR_CDK}
+	@ rm -rf ${DIR_WEB_BUILD}
 	@ echo "✅ Done cleaning"
 
 ## Delete a user in the user pool for the current environment
@@ -136,23 +142,23 @@ deploy-infra:
 	@ echo "✅ Done deploying ${ENV} infrastructure"
 
 ## Run the Amplify codegen tool for the web frontend
-generate-web-app-schema:
+generate-web-schema:
 	@ echo "⏳ Start generating the web app schema code..."
-	@ cd ${WEB_APP_DIR} && aws appsync get-introspection-schema --api-id ${API_ID} --format SDL ./schema.graphql && amplify codegen
-	@ rm ${WEB_APP_DIR}/schema.graphql
+	@ cd ${DIR_WEB} && aws appsync get-introspection-schema --api-id ${API_ID} --format SDL ./schema.graphql && amplify codegen
+	@ rm ${DIR_WEB}/schema.graphql
 	@ echo "✅ Done generating web app the schema code"
 
 ## Install dependencies
 install:
 	@ echo "⏳ Start installing dependencies..."
-	@ ${GO_CMD} mod download
-	@ cd ${WEB_APP_DIR} && npm install
+	@ ${CMD_GO} mod download
+	@ cd ${DIR_WEB} && npm install
 	@ echo "✅ Done installing dependencies"
 
 ## Invoke the API; set API_REQUEST=[name of request] (e.g. use 'pet' for ./test/_request/pet.json)
 invoke-api: build-infra
-	@ echo "⏳ Invoking API with event '${EVENTS_DIR}/${API_REQUEST}.json'..."
-	@ sam local invoke go-${ENV}-api-lambda -e ${EVENTS_DIR}/${API_REQUEST}.json -t ${CDK_DIR}/go-${ENV}-api.template.json
+	@ echo "⏳ Invoking API with event '${DIR_API_EVENTS}/${API_REQUEST}.json'..."
+	@ sam local invoke go-${ENV}-api-lambda -e ${DIR_API_EVENTS}/${API_REQUEST}.json -t ${DIR_CDK}/go-${ENV}-api.template.json
 	@ echo "\n✅ Done invoking API"
 
 ## Adds the test user to the admin group
@@ -173,49 +179,52 @@ endif
 ## Run integration tests (does not cache results)
 test-integration:
 	@ echo "⏳ Start running ${ENV} integration tests..."
-	@ ${GO_CMD} test ./test/integration/... -count=1
+	@ ${CMD_GO} test ./test/integration/... -count=1
 	@ echo "✅ Done running ${ENV} integration tests"
 
+## Run unit tests all unit tests
+test-unit: test-unit-pkg test-unit-web
+	@ echo "✅ Done running all unit tests"
+
 ## Run unit tests on library code (i.e. pkg/ directory)
-test-unit-library: 
+test-unit-pkg: 
 	@ echo "⏳ Start running library unit tests..."
-	@ rm -rf .coverage
 ifeq (${SAVE_TEST_COVERAGE},$(filter ${SAVE_TEST_COVERAGE},${TRUE_CONDITIONS}))
-	@ mkdir .coverage
-	@ ${GO_CMD} test ./pkg/... -coverprofile ".coverage/pkg.out" 
+	@ mkdir -p ${DIR_TEST_COVERAGE}
+	@ ${CMD_GO} test ./pkg/... -coverprofile "${DIR_TEST_COVERAGE}/pkg.out" 
 else
-	@ ${GO_CMD} test ./pkg/... -cover
+	@ ${CMD_GO} test ./pkg/... -cover
 endif
 	@ echo "✅ Done running library unit tests"
 
 ## Run unit tests on web app code (i.e. web/ directory)
-test-unit-web-app: 
+test-unit-web: 
 	@ echo "⏳ Start running web app unit tests..."
-	@ rm -rf .coverage
 ifeq (${SAVE_TEST_COVERAGE},$(filter ${SAVE_TEST_COVERAGE},${TRUE_CONDITIONS}))
-	@ cd ${WEB_APP_DIR} && npm run test -- --watchAll=false --silent
+	@ mkdir -p ${DIR_TEST_COVERAGE}
+	@ cd ${DIR_WEB} && npm run test-save-coverage -- --coverageDirectory=${DIR_TEST_COVERAGE}
 else
-	@ cd ${WEB_APP_DIR} && npm run test -- --watchAll=false --silent
+	@ cd ${DIR_WEB} && npm run test
 endif
 	@ echo "✅ Done running web app unit tests"
 
 ## Build, package, and update the API application Lambda code (expects infrastructure to have been deployed)
 update-api:
 	@ echo "⏳ Start updating API Lambda code..."
-	@ GOARCH=${AWS_LAMBDA_GOARCH} GOOS=${AWS_LAMBDA_GOOS} ${GO_CMD} build -o ${BUILD_DIR}/${APP_NAME_API} ./cmd/api
-	@ rm -f ${BUILD_DIR}/bootstrap ${BUILD_DIR}/bootstrap.zip
-	@ cp ${BUILD_DIR}/${APP_NAME_API} ${BUILD_DIR}/bootstrap
-	@ zip -jr ${BUILD_DIR}/bootstrap.zip ${BUILD_DIR}/bootstrap
-	@ aws lambda update-function-code --function-name go-${ENV}-api-lambda --zip-file fileb://${BUILD_DIR}/bootstrap.zip
-	@ rm -f ${BUILD_DIR}/bootstrap ${BUILD_DIR}/bootstrap.zip
+	@ GOARCH=${AWS_LAMBDA_GOARCH} GOOS=${AWS_LAMBDA_GOOS} ${CMD_GO} build -o ${DIR_BUILD}/${APP_NAME_API} ./cmd/api
+	@ rm -f ${DIR_BUILD}/bootstrap ${DIR_BUILD}/bootstrap.zip
+	@ cp ${DIR_BUILD}/${APP_NAME_API} ${DIR_BUILD}/bootstrap
+	@ zip -jr ${DIR_BUILD}/bootstrap.zip ${DIR_BUILD}/bootstrap
+	@ aws lambda update-function-code --function-name go-${ENV}-api-lambda --zip-file fileb://${DIR_BUILD}/bootstrap.zip
+	@ rm -f ${DIR_BUILD}/bootstrap ${DIR_BUILD}/bootstrap.zip
 	@ echo "✅ Done updating API Lambda code"
 
 ## Build, package, and update the web app (expects infrastructure to have been deployed)
-update-web-app:
+update-web:
 	@ echo "⏳ Start updating web app..."
-	@ cd ${WEB_APP_DIR} && npm run build
-	@ aws s3 sync ${WEB_APP_BUILD_DIR} s3://${WEB_APP_BUCKET_NAME} --delete
-	@ aws cloudfront create-invalidation --distribution-id ${WEB_APP_DISTRIBUTION_ID} --paths "/*"
+	@ cd ${DIR_WEB} && npm run build
+	@ aws s3 sync ${DIR_WEB_BUILD} s3://${WEB_BUCKET_NAME} --delete
+	@ aws cloudfront create-invalidation --distribution-id ${WEB_DISTRIBUTION_ID} --paths "/*"
 	@ echo "✅ Done updating web app"
 
 #################################################################################
