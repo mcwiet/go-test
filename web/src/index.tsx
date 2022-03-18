@@ -3,10 +3,19 @@ import ReactDOM from "react-dom";
 import "./index.css";
 import App from "./App";
 import reportWebVitals from "./reportWebVitals";
+import Nav from "./nav/Nav";
+import { BrowserRouter, Route, Routes } from "react-router-dom";
+import ViewPets from "./pages/ViewPets";
 
 ReactDOM.render(
   <React.StrictMode>
-    <App />
+    <BrowserRouter>
+      <Nav />
+      <Routes>
+        <Route path="/" element={<App />} />
+        <Route path="pets" element={<ViewPets />} />
+      </Routes>
+    </BrowserRouter>
   </React.StrictMode>,
   document.getElementById("root")
 );
