@@ -1,26 +1,31 @@
-import * as React from "react";
 import AppBar from "@mui/material/AppBar";
-import Box from "@mui/material/Box";
-import Toolbar from "@mui/material/Toolbar";
-import IconButton from "@mui/material/IconButton";
-import Typography from "@mui/material/Typography";
-import Menu from "@mui/material/Menu";
-import Container from "@mui/material/Container";
 import Avatar from "@mui/material/Avatar";
+import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
+import Container from "@mui/material/Container";
+import IconButton from "@mui/material/IconButton";
+import Menu from "@mui/material/Menu";
+import Toolbar from "@mui/material/Toolbar";
 import Tooltip from "@mui/material/Tooltip";
-import MenuItem from "@mui/material/MenuItem";
+import Typography from "@mui/material/Typography";
+import * as React from "react";
 import { Link } from "react-router-dom";
+import { Auth } from "../service";
 
 const pages = new Map<string, string>([
   ["Home", "/"],
   ["View", "/pets"],
-  ["Add", "/"],
+  ["Add", "/pet/add"],
 ]);
-const settings = ["Logout"];
+const unauthSettings = new Map<string, string>([["Login", "/login"]]);
+const authSettings = new Map<string, string>([
+  ["Profile", "/profile"],
+  ["Logout", "/logout"],
+]);
 
 const ResponsiveAppBar = () => {
   const [anchorElUser, setAnchorElUser] = React.useState<null | HTMLElement>(null);
+  const { currentUser } = Auth.useAuth();
 
   const handleOpenUserMenu = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorElUser(event.currentTarget);
@@ -55,7 +60,7 @@ const ResponsiveAppBar = () => {
               </IconButton>
             </Tooltip>
             <Menu
-              sx={{ mt: "45px" }}
+              sx={{ mt: "45px", width: "450px" }}
               id="menu-appbar"
               anchorEl={anchorElUser}
               anchorOrigin={{
@@ -70,10 +75,12 @@ const ResponsiveAppBar = () => {
               open={Boolean(anchorElUser)}
               onClose={handleCloseUserMenu}
             >
-              {settings.map((setting) => (
-                <MenuItem key={setting} onClick={handleCloseUserMenu}>
-                  <Typography textAlign="center">{setting}</Typography>
-                </MenuItem>
+              {Array.from((currentUser ? authSettings : unauthSettings).entries()).map((setting) => (
+                <Link to={setting[1]} key={setting[0]} style={{ textDecoration: "none" }}>
+                  <Button key={setting[0]} sx={{ color: "black", display: "block" }}>
+                    {setting[0]}
+                  </Button>
+                </Link>
               ))}
             </Menu>
           </Box>

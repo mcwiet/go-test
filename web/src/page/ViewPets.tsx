@@ -1,13 +1,13 @@
-import "../App.css";
-import { API, graphqlOperation } from "aws-amplify";
-import { pets as petsQuery } from "../graphql/queries";
-import { useEffect, useState } from "react";
-import { PetEdge } from "../api";
-import { Collapse, List, ListItemButton, ListItemText } from "@mui/material";
 import { ExpandLess, ExpandMore } from "@mui/icons-material";
+import { Collapse, List, ListItemButton, ListItemText } from "@mui/material";
+import { useEffect, useState } from "react";
+import "../App.css";
+import { SchemaType } from "../graphql";
+import { PageProps } from "../model";
+import { Pet } from "../service";
 
-function ViewPets() {
-  const [pets, setPets] = useState<PetEdge[]>([]);
+function ViewPets(props: PageProps) {
+  const [pets, setPets] = useState<SchemaType.PetEdge[]>([]);
   const [showPetDetails, setShowPetDetails] = useState<Map<string, boolean>>(new Map<string, boolean>());
 
   useEffect(() => {
@@ -15,20 +15,20 @@ function ViewPets() {
 
     async function getData() {
       try {
-        const response = await API.graphql(graphqlOperation(petsQuery, { input: { first: "100" } }));
-        const data = (response as any).data.pets.edges as PetEdge[];
+        const response = await Pet.listPets(props.user, { first: 100 });
+
         var details = new Map<string, boolean>();
-        data.forEach((edge) => {
+        response.data.forEach((edge) => {
           details.set(edge.node.id, false);
         });
 
-        setPets(data);
+        setPets(response.data);
         setShowPetDetails(details);
       } catch (e) {
         console.warn(e);
       }
     }
-  }, []);
+  }, [props.user]);
 
   const handleClick = (id: string) => {
     const updated = showPetDetails.set(id, !showPetDetails.get(id));

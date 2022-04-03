@@ -20,6 +20,8 @@ DIR_CDK = ${DIR_PWD}/cdk.out
 DIR_TEST_COVERAGE = ${DIR_PWD}/.coverage
 DIR_WEB = ${DIR_PWD}/web
 DIR_WEB_BUILD = ${DIR_WEB}/build
+DIR_WEB_SRC = ${DIR_WEB}/src
+DIR_WEB_MODEL = ${DIR_WEB_SRC}/model
 
 CMD_GO = go
 
@@ -90,6 +92,8 @@ build-env-file:
 	@ echo "REACT_APP_AWS_REGION=${AWS_REGION}" >> ${ENV_FILE}
 	@ echo "REACT_APP_API_URL=${API_URL}" >> ${ENV_FILE}
 	@ echo "REACT_APP_IDENTITY_POOL_ID=${IDENTITY_POOL_ID}" >> ${ENV_FILE}
+	@ echo "REACT_APP_USER_POOL_ID=${USER_POOL_ID}" >> ${ENV_FILE}
+	@ echo "REACT_APP_USER_POOL_APP_CLIENT_ID=${USER_POOL_APP_CLIENT_ID}" >> ${ENV_FILE}
 	@ echo "" >> ${ENV_FILE}
 	@ echo "# --- MANUAL VALUES ---" >> ${ENV_FILE}
 	@ echo "TEST_USER_EMAIL=${TEST_USER_EMAIL}" >> ${ENV_FILE}
@@ -145,6 +149,7 @@ deploy-infra:
 generate-web-schema:
 	@ echo "⏳ Start generating the web app schema code..."
 	@ cd ${DIR_WEB} && aws appsync get-introspection-schema --api-id ${API_ID} --format SDL ./schema.graphql && amplify codegen
+	@ mv -f ${DIR_WEB_SRC}/api.ts ${DIR_WEB_MODEL}/api.ts 
 	@ rm ${DIR_WEB}/schema.graphql
 	@ echo "✅ Done generating web app the schema code"
 

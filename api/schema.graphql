@@ -36,17 +36,17 @@ type PageInfo @aws_iam @aws_cognito_user_pools {
 
 # ----- USER TYPES -----
 
-input UserInput @aws_iam @aws_cognito_user_pools {
+input UserInput {
   username: String!
 }
 
-type User @aws_iam @aws_cognito_user_pools {
+type User {
   username: String!
   email: String
   name: String
 }
 
-input UsersInput @aws_iam @aws_cognito_user_pools {
+input UsersInput {
   first: Int!
   after: String
 }
@@ -63,7 +63,7 @@ type UserConnection @aws_iam @aws_cognito_user_pools {
 
 # ----- PET TYPES -----
 
-input PetInput @aws_iam @aws_cognito_user_pools {
+input PetInput {
   id: ID!
 }
 
@@ -74,7 +74,7 @@ type Pet @aws_iam @aws_cognito_user_pools {
   owner: String
 }
 
-input PetsInput @aws_iam @aws_cognito_user_pools {
+input PetsInput {
   first: Int!
   after: String
 }
@@ -90,7 +90,7 @@ type PetConnection @aws_iam @aws_cognito_user_pools {
   pageInfo: PageInfo!
 }
 
-input CreatePetInput @aws_cognito_user_pools {
+input CreatePetInput {
   name: String!
   age: Int!
   owner: String
@@ -100,7 +100,7 @@ type CreatePetPayload @aws_cognito_user_pools {
   pet: Pet!
 }
 
-input DeletePetInput @aws_cognito_user_pools {
+input DeletePetInput {
   id: ID!
 }
 
@@ -108,7 +108,7 @@ type DeletePetPayload @aws_cognito_user_pools {
   id: ID!
 }
 
-input UpdatePetOwnerInput @aws_cognito_user_pools {
+input UpdatePetOwnerInput {
   id: ID!
   owner: String!
 }

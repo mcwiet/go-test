@@ -1,25 +1,47 @@
+import "@aws-amplify/ui-react/styles.css";
+import { Amplify, Auth as AmplifyAuth } from "aws-amplify";
+import { BrowserRouter, Route, Routes } from "react-router-dom";
 import "./App.css";
-import logo from "./logo.svg";
-import { Amplify } from "aws-amplify";
+import Nav from "./nav/Nav";
+import { Home, Login, Logout, ViewPets } from "./page";
+import AddPet from "./page/AddPet";
+import { Auth } from "./service";
 
-const myAppConfig = {
+const authConfig = {
   aws_appsync_graphqlEndpoint: process.env["REACT_APP_API_URL"],
   aws_appsync_region: process.env["REACT_APP_AWS_REGION"],
-  aws_appsync_authenticationType: "AWS_IAM",
+  aws_appsync_authenticationType: "AMAZON_COGNITO_USER_POOL",
   Auth: {
     identityPoolId: process.env["REACT_APP_IDENTITY_POOL_ID"],
     region: process.env["REACT_APP_AWS_REGION"],
+    userPoolId: process.env["REACT_APP_USER_POOL_ID"],
+    userPoolWebClientId: process.env["REACT_APP_USER_POOL_APP_CLIENT_ID"],
+    jwtToken: async () => {
+      try {
+        return (await AmplifyAuth.currentSession()).getIdToken().getJwtToken();
+      } catch {
+        return null;
+      }
+    },
   },
 };
 
-Amplify.configure(myAppConfig);
+Amplify.configure(authConfig);
 
 function App() {
+  const { currentUser } = Auth.useAuth();
+
   return (
-    <div className="Page">
-      <h2>Home</h2>
-      <img src={logo} className="App-logo" alt="logo" />
-    </div>
+    <BrowserRouter>
+      <Nav />
+      <Routes>
+        <Route path="/" element={<Home user={currentUser} />} />
+        <Route path="pets" element={<ViewPets user={currentUser} />} />
+        <Route path="pet/add" element={<AddPet user={currentUser} />} />
+        <Route path="login" element={<Login />} />
+        <Route path="logout" element={<Logout />} />
+      </Routes>
+    </BrowserRouter>
   );
 }
 
