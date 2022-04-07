@@ -8,13 +8,13 @@ import { Pet } from "../service";
 
 function AddPet(props: PageProps) {
   const { register, handleSubmit } = useForm();
-  const onSubmit = (data: any) => {
-    create(data as CreatePetInput);
 
-    async function create(pet: CreatePetInput) {
+  const onSubmit = (data: any) => {
+    const create = async (pet: CreatePetInput) => {
       await Pet.createPet(props.user, pet);
-      console.log("created!");
-    }
+    };
+
+    create(data as CreatePetInput);
   };
 
   return props.user ? (

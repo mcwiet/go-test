@@ -10,7 +10,7 @@ import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import * as React from "react";
 import { Link } from "react-router-dom";
-import { Auth } from "../service";
+import { PageProps } from "../model";
 
 const pages = new Map<string, string>([
   ["Home", "/"],
@@ -18,14 +18,10 @@ const pages = new Map<string, string>([
   ["Add", "/pet/add"],
 ]);
 const unauthSettings = new Map<string, string>([["Login", "/login"]]);
-const authSettings = new Map<string, string>([
-  ["Profile", "/profile"],
-  ["Logout", "/logout"],
-]);
+const authSettings = new Map<string, string>([["Logout", "/logout"]]);
 
-const ResponsiveAppBar = () => {
+const Nav = (props: PageProps) => {
   const [anchorElUser, setAnchorElUser] = React.useState<null | HTMLElement>(null);
-  const { currentUser } = Auth.useAuth();
 
   const handleOpenUserMenu = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorElUser(event.currentTarget);
@@ -53,10 +49,10 @@ const ResponsiveAppBar = () => {
             ))}
           </Box>
 
-          <Box sx={{ flexGrow: 0 }}>
+          <Box>
             <Tooltip title="Open settings">
               <IconButton onClick={handleOpenUserMenu} sx={{ p: 0 }}>
-                <Avatar />
+                <Avatar>{props.user ? props.user.email[0].toUpperCase() : null}</Avatar>
               </IconButton>
             </Tooltip>
             <Menu
@@ -75,7 +71,7 @@ const ResponsiveAppBar = () => {
               open={Boolean(anchorElUser)}
               onClose={handleCloseUserMenu}
             >
-              {Array.from((currentUser ? authSettings : unauthSettings).entries()).map((setting) => (
+              {Array.from((props.user ? authSettings : unauthSettings).entries()).map((setting) => (
                 <Link to={setting[1]} key={setting[0]} style={{ textDecoration: "none" }}>
                   <Button key={setting[0]} sx={{ color: "black", display: "block" }}>
                     {setting[0]}
@@ -89,4 +85,4 @@ const ResponsiveAppBar = () => {
     </AppBar>
   );
 };
-export default ResponsiveAppBar;
+export default Nav;

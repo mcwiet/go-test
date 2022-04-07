@@ -33,7 +33,7 @@ function App() {
 
   return (
     <BrowserRouter>
-      <Nav />
+      <Nav user={currentUser} />
       <Routes>
         <Route path="/" element={<Home user={currentUser} />} />
         <Route path="pets" element={<ViewPets user={currentUser} />} />

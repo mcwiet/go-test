@@ -11,23 +11,18 @@ function ViewPets(props: PageProps) {
   const [showPetDetails, setShowPetDetails] = useState<Map<string, boolean>>(new Map<string, boolean>());
 
   useEffect(() => {
-    getData();
+    const getPets = async () => {
+      const response = await Pet.listPets(props.user, { first: 100 });
+      var details = new Map<string, boolean>();
+      response.data?.forEach((edge) => {
+        details.set(edge.node.id, false);
+      });
 
-    async function getData() {
-      try {
-        const response = await Pet.listPets(props.user, { first: 100 });
+      setPets(response.data);
+      setShowPetDetails(details);
+    };
 
-        var details = new Map<string, boolean>();
-        response.data.forEach((edge) => {
-          details.set(edge.node.id, false);
-        });
-
-        setPets(response.data);
-        setShowPetDetails(details);
-      } catch (e) {
-        console.warn(e);
-      }
-    }
+    getPets();
   }, [props.user]);
 
   const handleClick = (id: string) => {
