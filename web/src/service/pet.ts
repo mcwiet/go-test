@@ -38,3 +38,23 @@ export async function createPet(
   }
   return ret;
 }
+
+export async function updatePetOwner(
+  user: User | null | undefined,
+  input: SchemaType.UpdatePetOwnerInput
+): Promise<Response<SchemaType.Pet>> {
+  const ret: Response<SchemaType.Pet> = {
+    data: null as unknown as SchemaType.Pet,
+    error: null,
+  };
+  try {
+    const response = await Graphql.Mutate<SchemaType.UpdatePetOwnerMutation>(user, SchemaMutation.updatePetOwner, {
+      input: input,
+    });
+    ret.data = response.data?.updatePetOwner.pet as SchemaType.Pet;
+  } catch (e) {
+    console.error(e);
+    ret.error = "Error updating pet owner";
+  }
+  return ret;
+}
